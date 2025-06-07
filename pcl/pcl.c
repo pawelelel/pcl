@@ -40,7 +40,7 @@ char* GetTitle(struct Console* console) {
 /**
  * Sets a new title to console window
  *
- * @returns 1 if eveything went well otherwise returns 0
+ * @return 1 if eveything went well otherwise returns 0
  */
 int SetTitle(struct Console* console, const char* title) {
 	//if(!SetWindowTextA(console->windowHandle, title))
@@ -51,6 +51,13 @@ int SetTitle(struct Console* console, const char* title) {
 	return 1;
 }
 
+/**
+ * 
+ * @param console pointer to structure console
+ * @param width console width
+ * @param height console height
+ * @return 1 if eveything went well otherwise returns negative
+ */
 int GetConsoleDimentions(const struct Console* console, int* width, int* height) {
 	if (width == NULL) {
 		return -1;
