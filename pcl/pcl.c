@@ -1,5 +1,5 @@
 //
-// Created by pawci on 14.05.2025.
+// Created by pawel on 14.05.2025.
 //
 
 #include <pcl.h>
@@ -30,9 +30,8 @@ void End(struct Console* console) {
 /**
  * @returns char* a pointer to name of console
  */
-char* GetTitle(struct Console* console) {
+char* GetTitle() {
 	char* title = malloc(MAX_PATH * sizeof(char));
-	//GetWindowTextA(console->windowHandle, title, MAX_PATH);
 	GetConsoleTitleA(title, MAX_PATH);
 	return title;
 }
@@ -40,10 +39,10 @@ char* GetTitle(struct Console* console) {
 /**
  * Sets a new title to console window
  *
+ * @param title new console title
  * @return 1 if eveything went well otherwise returns 0
  */
-int SetTitle(struct Console* console, const char* title) {
-	//if(!SetWindowTextA(console->windowHandle, title))
+int SetTitle(const char* title) {
 	if(!SetConsoleTitleA(title))
 	{
 		return 0;
@@ -52,7 +51,6 @@ int SetTitle(struct Console* console, const char* title) {
 }
 
 /**
- * 
  * @param console pointer to structure console
  * @param width console width
  * @param height console height

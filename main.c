@@ -1,6 +1,7 @@
 #include <pcl.h>
 
 int main(void) {
-	hello();
+	struct Console* console = Start();
+	End(console);
 	return 0;
 }
