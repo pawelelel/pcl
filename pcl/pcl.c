@@ -3,10 +3,8 @@
 //
 
 #include <pcl.h>
-#include <stdio.h>
-#include <windows.h>
 
-struct Console* Start(void) {
+struct Console* start(void) {
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 	console->outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -15,34 +13,20 @@ struct Console* Start(void) {
 	return console;
 }
 
-/**
- * Ends a console window
- *
- * @param console pointer to struct Console
- */
-void End(struct Console* console) {
+void end(struct Console* console) {
 	CloseHandle(console->inputHandle);
 	CloseHandle(console->outputHandle);
 	CloseHandle(console->errorHandle);
 	free(console);
 }
 
-/**
- * @returns char* a pointer to name of console
- */
-char* GetTitle() {
+char* gettitle() {
 	char* title = malloc(MAX_PATH * sizeof(char));
 	GetConsoleTitleA(title, MAX_PATH);
 	return title;
 }
 
-/**
- * Sets a new title to console window
- *
- * @param title new console title
- * @return 1 if eveything went well otherwise returns 0
- */
-int SetTitle(const char* title) {
+int settitle(const char* title) {
 	if(!SetConsoleTitleA(title))
 	{
 		return 0;
@@ -50,13 +34,7 @@ int SetTitle(const char* title) {
 	return 1;
 }
 
-/**
- * @param console pointer to structure console
- * @param width console width
- * @param height console height
- * @return 1 if eveything went well otherwise returns negative
- */
-int GetConsoleDimentions(const struct Console* console, int* width, int* height) {
+int getdimensions(const struct Console* console, int* width, int* height) {
 	if (width == NULL) {
 		return -1;
 	}
@@ -84,4 +62,40 @@ int GetConsoleDimentions(const struct Console* console, int* width, int* height)
 	*width = info.dwSize.X;
 	*height = info.dwSize.Y;
 	return 0;
+}
+
+char getchar(void) {
+}
+
+void setchar(char c) {
+}
+
+void setcharc(char c, int row, int col) {
+}
+
+void scanf(char *format, ...) {
+}
+
+void setstringf(char *format, ...) {
+}
+
+void setstringfc(char *format, int row, int col, ...) {
+}
+
+void getstring(char *buffer) {
+}
+
+void getstrings(char *buffer, size_t size) {
+}
+
+void setstring(char *string) {
+}
+
+void setstringc(char *string, int row, int col) {
+}
+
+void clear() {
+}
+
+void setcursorposition(int row, int col) {
 }
