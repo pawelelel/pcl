@@ -9,7 +9,9 @@
 
 struct Console {
 	HANDLE inputHandle;
-	HANDLE outputHandle;
+	int currentOutput;
+	HANDLE outputHandle1;
+	HANDLE outputHandle2;
 	HANDLE errorHandle;
 	HANDLE windowHandle;
 };
@@ -58,14 +60,15 @@ int getdimensions(const struct Console* console, int* width, int* height);
  *
  * @return char
  */
-char getchar(void);
+char getchr(void);
 
 /**
  * Sets char on cursor position. Changes cursor position
  *
+ * @param console pointer to structure console
  * @param c char to set
  */
-void setchar(char c);
+void setchar(const struct Console* console, char c);
 
 /**
  * Sets char on specified position. Do not changes cursor position
@@ -82,7 +85,7 @@ void setcharc(char c, int row, int col);
  * @param format format string
  * @param ... scanned variables
  */
-void scanf(char* format, ...);
+void getstringf(char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Changes cursor position
@@ -135,15 +138,25 @@ void setstringc(char* string, int row, int col);
 
 /**
  * Clears console
+ * 
+ * @param console pointer to struct Console
  */
-void clear();
+void clear(const struct Console* console);
 
 /**
  * Sets cursor position
  *
+ * @param console pointer to struct Console
  * @param row row number
  * @param col column number
  */
-void setcursorposition(int row, int col);
+void setcursorposition(const struct Console* console, int row, int col);
+
+/**
+ * Prints console window
+ *
+ * @param console pointer to struct Console
+ */
+void refresh(struct Console* console);
 
 #endif //PCL_H
