@@ -243,7 +243,7 @@ void refresh(struct Console *console) {
 
 
 	HANDLE h = NULL;
-	short width, height;
+	int width, height;
 	getdimensions(console, &width, &height);
 	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
 	COORD coordsize;
@@ -270,6 +270,7 @@ void refresh(struct Console *console) {
 		case 2: {
 			h = console->outputHandle1;
 			console->currentOutput = 1;
+
 			BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
 			BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
 			break;
