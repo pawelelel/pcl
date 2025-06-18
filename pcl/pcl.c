@@ -16,6 +16,24 @@ struct Console* start(void) {
 	console->outputHandle1 = GetStdHandle(STD_OUTPUT_HANDLE);
 	console->outputHandle2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 
+	int width, height;
+	getdimensions(console, &width, &height);
+	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
+	COORD coordsize;
+	coordsize.X = width;
+	coordsize.Y = height;
+	COORD coordtop;
+	coordtop.X = 0;
+	coordtop.Y = 0;
+	SMALL_RECT rect;
+	rect.Left = 0;
+	rect.Top = 0;
+	rect.Right = width - 1;
+	rect.Bottom = height - 1;
+	BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
+	BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
+	free(buffer);
+
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->windowHandle = GetCurrentProcess();
 	return console;
@@ -80,6 +98,7 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 
 	CONSOLE_SCREEN_BUFFER_INFO info;
@@ -224,18 +243,41 @@ void refresh(struct Console *console) {
 
 
 	HANDLE h = NULL;
+	short width, height;
+	getdimensions(console, &width, &height);
+	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
+	COORD coordsize;
+	coordsize.X = width;
+	coordsize.Y = height;
+	COORD coordtop;
+	coordtop.X = 0;
+	coordtop.Y = 0;
+	SMALL_RECT rect;
+	rect.Left = 0;
+	rect.Top = 0;
+	rect.Right = width - 1;
+	rect.Bottom = height - 1;
+
 	switch (console->currentOutput) {
 		case 1: {
 			h = console->outputHandle2;
 			console->currentOutput = 2;
+
+			BOOL result = ReadConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
+			BOOL result2 = WriteConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
 			break;
 		}
 		case 2: {
 			h = console->outputHandle1;
 			console->currentOutput = 1;
+			BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
+			BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
 			break;
 		}
+		default: break;
 	}
+
+	free(buffer);
 
 	SetConsoleActiveScreenBuffer(h);
 }
