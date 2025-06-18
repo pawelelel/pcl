@@ -53,9 +53,6 @@ int settitle(const char* title) {
 }
 
 int getdimensions(const struct Console* console, int* width, int* height) {
-	//TODO implement error handling
-
-
 	if (width == NULL) {
 		return -1;
 	}
@@ -67,15 +64,10 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 		*height = 0;
 		return -3;
 	}
-	if (console->outputHandle1 == INVALID_HANDLE_VALUE) {
+	if (console->outputHandle1 == INVALID_HANDLE_VALUE || console->outputHandle2 == INVALID_HANDLE_VALUE) {
 		*width = 0;
 		*height = 0;
 		return -4;
-	}
-	if (console->outputHandle2 == INVALID_HANDLE_VALUE) {
-		*width = 0;
-		*height = 0;
-		return -5;
 	}
 
 	HANDLE h = NULL;

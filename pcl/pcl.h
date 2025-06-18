@@ -51,7 +51,12 @@ int settitle(const char* title);
  * @param console pointer to structure console
  * @param width console width
  * @param height console height
- * @return 1 if eveything went well otherwise returns negative
+ * @return 1 if eveything went well otherwise returns negative:<br>
+ * (-1) width parameter is NULL <br>
+ * (-2) height parameter is NULL <br>
+ * (-3) console parameter is NULL <br>
+ * (-4) library has not been initialized properly <br>
+ * (-5) win api internal error <br>
  */
 int getdimensions(const struct Console* console, int* width, int* height);
 
@@ -138,7 +143,7 @@ void setstringc(char* string, int row, int col);
 
 /**
  * Clears console
- * 
+ *
  * @param console pointer to struct Console
  */
 void clear(const struct Console* console);
