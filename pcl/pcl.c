@@ -176,8 +176,14 @@ void getstringbuffer(struct Console* console, char *buffer, size_t size) {
 	//TODO implement
 }
 
-void setstring(struct Console* console, char *string) {
-	//TODO implement
+void setstring(const struct Console* console, const char *string) {
+	//TODO implement error handling
+
+
+	size_t size = strlen(string);
+	for (size_t i = 0; i < size; i++) {
+		setchar(console, string[i]);
+	}
 }
 
 void setstringcursor(struct Console* console, char *string, int row, int col) {

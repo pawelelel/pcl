@@ -120,6 +120,7 @@ void getstring(struct Console* console, char* buffer);
 /**
  * Gets chars from stdin till detects '\n' or reaches buffer size
  *
+ * @param console pointer to struct Console
  * @param buffer input buffer
  * @param size buffer size
  */
@@ -128,9 +129,10 @@ void getstringbuffer(struct Console* console, char* buffer, size_t size);
 /**
  * Prints string on cursor position. Changes cursor position
  *
+ * @param console pointer to struct Console
  * @param string input
  */
-void setstring(struct Console* console, char* string);
+void setstring(const struct Console* console, const char* string);
 
 /**
  * Prints string on cursor position. Do not changes cursor position
@@ -147,6 +149,14 @@ void setstringcursor(struct Console* console, char* string, int row, int col);
  * @param console pointer to struct Console
  */
 void clear(const struct Console* console);
+
+/**
+ * Fills console with specified char
+ *
+ * @param console pointer to struct Console
+ * @param c char to be filled
+ */
+void fill(const struct Console* console, const char c);
 
 /**
  * Sets cursor position
