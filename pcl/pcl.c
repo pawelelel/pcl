@@ -187,6 +187,9 @@ void setstring(const struct Console* console, const char *string) {
 }
 
 void setstringcursor(struct Console* console, char *string, int row, int col) {
+	//TODO implement error handling
+
+
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
 	setcursorposition(console, row, col);
