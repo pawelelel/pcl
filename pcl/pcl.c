@@ -136,8 +136,25 @@ void setchar(const struct Console* console, char c) {
 	WriteConsole(h, &c, 1, NULL, NULL);
 }
 
-void setcharc(char c, int row, int col) {
-	//TODO implement
+void setcharcursor(struct Console* console, char c, int row, int col) {
+	int nowrow, nowcol;
+	getcursorposition(console, &nowrow, &nowcol);
+	setcursorposition(console, row, col);
+
+	HANDLE h = NULL;
+	switch (console->currentOutput) {
+		case 1: {
+			h = console->outputHandle2;
+			break;
+		}
+		case 2: {
+			h = console->outputHandle1;
+			break;
+		}
+	}
+	WriteConsole(h, &c, 1, NULL, NULL);
+
+	setcursorposition(console, nowrow, nowcol - 1);
 }
 
 void getstringf(char *format, ...) {
