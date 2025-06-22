@@ -50,7 +50,7 @@ void end(struct Console* console) {
 	free(console);
 }
 
-char* gettitle() {
+char* gettitle(struct Console* console) {
 	//TODO implement error handling
 
 
@@ -59,7 +59,7 @@ char* gettitle() {
 	return title;
 }
 
-int settitle(const char* title) {
+int settitle(struct Console* console, const char* title) {
 	//TODO implement error handling
 
 
@@ -113,15 +113,14 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 	return 1;
 }
 
-char getchr(void) {
+char getchr(struct Console* console) {
 	//TODO implement
+	return -1;
 }
 
 void setchar(const struct Console* console, char c) {
 	//TODO implement error handling
 
-
-	//putchar(c);
 	HANDLE h = NULL;
 	switch (console->currentOutput) {
 		case 1: {
@@ -157,31 +156,31 @@ void setcharcursor(struct Console* console, char c, int row, int col) {
 	setcursorposition(console, nowrow, nowcol - 1);
 }
 
-void getstringf(char *format, ...) {
+void getstringformatted(struct Console* console, char *format, ...) {
 	//TODO implement
 }
 
-void setstringf(char *format, ...) {
+void setstringformatted(struct Console* console, char *format, ...) {
 	//TODO implement
 }
 
-void setstringfc(char *format, int row, int col, ...) {
+void setstringformattedcursor(struct Console* console, char *format, int row, int col, ...) {
 	//TODO implement
 }
 
-void getstring(char *buffer) {
+void getstring(struct Console* console, char *buffer) {
 	//TODO implement
 }
 
-void getstrings(char *buffer, size_t size) {
+void getstringbuffer(struct Console* console, char *buffer, size_t size) {
 	//TODO implement
 }
 
-void setstring(char *string) {
+void setstring(struct Console* console, char *string) {
 	//TODO implement
 }
 
-void setstringc(char *string, int row, int col) {
+void setstringcursor(struct Console* console, char *string, int row, int col) {
 	//TODO implement
 }
 
@@ -275,7 +274,7 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 	return 1;
 }
 
-void refresh(struct Console *console) {
+void refresh(struct Console* console) {
 	//TODO implement error handling
 
 

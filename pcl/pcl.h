@@ -35,7 +35,7 @@ void end(struct Console* console);
  *
  * @returns char* a pointer to name of console
  */
-char* gettitle();
+char* gettitle(struct Console* console);
 
 /**
  * Sets a new title to console window
@@ -43,7 +43,7 @@ char* gettitle();
  * @param title new console title
  * @return 1 if eveything went well otherwise returns 0
  */
-int settitle(const char* title);
+int settitle(struct Console* console, const char* title);
 
 /**
  * Returns console dimensions
@@ -65,7 +65,7 @@ int getdimensions(const struct Console* console, int* width, int* height);
  *
  * @return char
  */
-char getchr(void);
+char getchr(struct Console* console);
 
 /**
  * Sets char on cursor position. Changes cursor position
@@ -82,7 +82,7 @@ void setchar(const struct Console* console, char c);
  * @param row row number
  * @param col column number
  */
-void setcharc(char c, int row, int col);
+void setcharcursor(struct Console* console, char c, int row, int col);
 
 /**
  * Works as standard scanf
@@ -90,7 +90,7 @@ void setcharc(char c, int row, int col);
  * @param format format string
  * @param ... scanned variables
  */
-void getstringf(char* format, ...);
+void getstringformatted(struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Changes cursor position
@@ -98,7 +98,7 @@ void getstringf(char* format, ...);
  * @param format format string
  * @param ... variables to format
  */
-void setstringf(char* format, ...);
+void setstringformatted(struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Do not changes cursor position
@@ -108,14 +108,14 @@ void setstringf(char* format, ...);
  * @param col column number
  * @param ... variables to format
  */
-void setstringfc(char* format, int row, int col, ...);
+void setstringformattedcursor(struct Console* console, char* format, int row, int col, ...);
 
 /**
  * Gets chars from stdin till detects '\n'
  *
  * @param buffer input buffer
  */
-void getstring(char* buffer);
+void getstring(struct Console* console, char* buffer);
 
 /**
  * Gets chars from stdin till detects '\n' or reaches buffer size
@@ -123,14 +123,14 @@ void getstring(char* buffer);
  * @param buffer input buffer
  * @param size buffer size
  */
-void getstrings(char* buffer, size_t size);
+void getstringbuffer(struct Console* console, char* buffer, size_t size);
 
 /**
  * Prints string on cursor position. Changes cursor position
  *
  * @param string input
  */
-void setstring(char* string);
+void setstring(struct Console* console, char* string);
 
 /**
  * Prints string on cursor position. Do not changes cursor position
@@ -139,7 +139,7 @@ void setstring(char* string);
  * @param row row number
  * @param col column number
  */
-void setstringc(char* string, int row, int col);
+void setstringcursor(struct Console* console, char* string, int row, int col);
 
 /**
  * Clears console
@@ -156,6 +156,16 @@ void clear(const struct Console* console);
  * @param col column number
  */
 void setcursorposition(const struct Console* console, int row, int col);
+
+/**
+ * Returns cursor position
+ *
+ * @param console pointer to struct console
+ * @param row row number
+ * @param col column number
+ * @return 1 if eveything went well otherwise returns negative:<br>
+ */
+int getcursorposition(const struct Console* console, int* row, int* col);
 
 /**
  * Prints console window
