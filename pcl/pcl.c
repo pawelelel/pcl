@@ -219,6 +219,35 @@ void clear(const struct Console* console) {
 	setcursorposition(console, 0, 0);
 }
 
+void fill(const struct Console* console, const char c) {
+	//TODO implement error handling
+
+
+	int width = 0, height = 0;
+	if (getdimensions(console, &width, &height) != 1) {
+		//TODO error code
+		return;
+	}
+
+	DWORD written;
+	COORD topleft = {0, 0};
+	HANDLE h = NULL;
+	switch (console->currentOutput) {
+		case 1: {
+			h = console->outputHandle2;
+			break;
+		}
+		case 2: {
+			h = console->outputHandle1;
+			break;
+		}
+	}
+	FillConsoleOutputCharacter(h, c, width * height, topleft, &written);
+	FillConsoleOutputAttribute(h, 7, width * height, topleft, &written);
+
+	setcursorposition(console, 0, 0);
+}
+
 void setcursorposition(const struct Console* console, int row, int col) {
 	//TODO implement error handling
 
