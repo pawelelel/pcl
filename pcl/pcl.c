@@ -238,6 +238,26 @@ void setcursorposition(const struct Console* console, int row, int col) {
 	return;
 }
 
+int getcursorposition(const struct Console* console, int *row, int *col) {
+	HANDLE h = NULL;
+	switch (console->currentOutput) {
+		case 1: {
+			h = console->outputHandle2;
+			break;
+		}
+		case 2: {
+			h = console->outputHandle1;
+			break;
+		}
+	}
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	GetConsoleScreenBufferInfo(h, &info);
+
+	*row = info.dwCursorPosition.Y;
+	*col = info.dwCursorPosition.X;
+	return 1;
+}
+
 void refresh(struct Console *console) {
 	//TODO implement error handling
 
