@@ -153,7 +153,7 @@ void setcharcursor(struct Console* console, char c, int row, int col) {
 	}
 	WriteConsole(h, &c, 1, NULL, NULL);
 
-	setcursorposition(console, nowrow, nowcol - 1);
+	setcursorposition(console, nowrow, nowcol);
 }
 
 void getstringformatted(struct Console* console, char *format, ...) {
@@ -187,7 +187,13 @@ void setstring(const struct Console* console, const char *string) {
 }
 
 void setstringcursor(struct Console* console, char *string, int row, int col) {
-	//TODO implement
+	int nowrow, nowcol;
+	getcursorposition(console, &nowrow, &nowcol);
+	setcursorposition(console, row, col);
+
+	setstring(console, string);
+
+	setcursorposition(console, nowrow, nowcol);
 }
 
 void clear(const struct Console* console) {
