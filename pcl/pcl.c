@@ -161,7 +161,23 @@ void getstringformatted(struct Console* console, char *format, ...) {
 }
 
 void setstringformatted(struct Console* console, char *format, ...) {
-	//TODO implement
+	//TODO implement error handling
+
+
+	va_list ap, apcopy;
+	va_start(ap, format);
+	va_copy(apcopy, ap);
+
+	int size = vsnprintf(nullptr, 0, format, apcopy);
+	va_end(apcopy);
+
+	char* memory = malloc((size + 1) * sizeof(char));
+
+	vsnprintf(memory, size + 1, format, ap);
+	va_end(ap);
+
+	setstring(console, memory);
+	free(memory);
 }
 
 void setstringformattedcursor(struct Console* console, char *format, int row, int col, ...) {
