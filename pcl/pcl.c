@@ -20,18 +20,24 @@ struct Console* start(void) {
 	getdimensions(console, &width, &height);
 	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
 	COORD coordsize;
-	coordsize.X = width;
-	coordsize.Y = height;
+	coordsize.X = (short)width;
+	coordsize.Y = (short)height;
 	COORD coordtop;
 	coordtop.X = 0;
 	coordtop.Y = 0;
 	SMALL_RECT rect;
 	rect.Left = 0;
 	rect.Top = 0;
-	rect.Right = width - 1;
-	rect.Bottom = height - 1;
+	rect.Right = (short)(width - 1);
+	rect.Bottom = (short)(height - 1);
 	BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
+	if (!result) {
+		return NULL;
+	}
 	BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
+	if (!result2) {
+		return NULL;
+	}
 	free(buffer);
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
@@ -131,11 +137,12 @@ void setchar(const struct Console* console, char c) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	WriteConsole(h, &c, 1, NULL, NULL);
 }
 
-void setcharcursor(struct Console* console, char c, int row, int col) {
+void setcharcursor(const struct Console* console, char c, int row, int col) {
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
 	setcursorposition(console, row, col);
@@ -150,6 +157,7 @@ void setcharcursor(struct Console* console, char c, int row, int col) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	WriteConsole(h, &c, 1, NULL, NULL);
 
@@ -160,7 +168,7 @@ void getstringformatted(struct Console* console, char *format, ...) {
 	//TODO implement
 }
 
-void setstringformatted(struct Console* console, char *format, ...) {
+void setstringformatted(const struct Console* console, char *format, ...) {
 	//TODO implement error handling
 
 
@@ -168,7 +176,7 @@ void setstringformatted(struct Console* console, char *format, ...) {
 	va_start(ap, format);
 	va_copy(apcopy, ap);
 
-	int size = vsnprintf(nullptr, 0, format, apcopy);
+	int size = vsnprintf(NULL, 0, format, apcopy);
 	va_end(apcopy);
 
 	char* memory = malloc((size + 1) * sizeof(char));
@@ -195,14 +203,19 @@ void getstringbuffer(struct Console* console, char *buffer, size_t size) {
 void setstring(const struct Console* console, const char *string) {
 	//TODO implement error handling
 
-
+	if (console == NULL) {
+		return;
+	}
+	if (string == NULL) {
+		return;
+	}
 	size_t size = strlen(string);
 	for (size_t i = 0; i < size; i++) {
 		setchar(console, string[i]);
 	}
 }
 
-void setstringcursor(struct Console* console, char *string, int row, int col) {
+void setstringcursor(const struct Console* console, const char *string, const int row, const int col) {
 	//TODO implement error handling
 
 
@@ -237,6 +250,7 @@ void clear(const struct Console* console) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	FillConsoleOutputCharacter(h, ' ', width * height, topleft, &written);
 	FillConsoleOutputAttribute(h, 7, width * height, topleft, &written);
@@ -266,6 +280,7 @@ void fill(const struct Console* console, const char c) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	FillConsoleOutputCharacter(h, c, width * height, topleft, &written);
 	FillConsoleOutputAttribute(h, 7, width * height, topleft, &written);
@@ -292,8 +307,8 @@ void setcursorposition(const struct Console* console, int row, int col) {
 	}
 
 	COORD coord;
-	coord.X = col;
-	coord.Y = row;
+	coord.X = (short)col;
+	coord.Y = (short)row;
 	HANDLE h = NULL;
 	switch (console->currentOutput) {
 		case 1: {
@@ -304,17 +319,26 @@ void setcursorposition(const struct Console* console, int row, int col) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	if (SetConsoleCursorPosition(h, coord) == 0) {
 		//TODO error code
 		return;
 	}
-
-	//TODO good code
-	return;
 }
 
 int getcursorposition(const struct Console* console, int *row, int *col) {
+	if (console == NULL) {
+		return -1;
+	}
+	if (row == NULL) {
+		return -2;
+	}
+	if (col == NULL) {
+		return -3;
+	}
+
+
 	HANDLE h = NULL;
 	switch (console->currentOutput) {
 		case 1: {
@@ -325,6 +349,7 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 			h = console->outputHandle1;
 			break;
 		}
+		default: break;
 	}
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	GetConsoleScreenBufferInfo(h, &info);
@@ -343,16 +368,16 @@ void refresh(struct Console* console) {
 	getdimensions(console, &width, &height);
 	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
 	COORD coordsize;
-	coordsize.X = width;
-	coordsize.Y = height;
+	coordsize.X = (short)width;
+	coordsize.Y = (short)height;
 	COORD coordtop;
 	coordtop.X = 0;
 	coordtop.Y = 0;
 	SMALL_RECT rect;
 	rect.Left = 0;
 	rect.Top = 0;
-	rect.Right = width - 1;
-	rect.Bottom = height - 1;
+	rect.Right = (short)(width - 1);
+	rect.Bottom = (short)(height - 1);
 
 	switch (console->currentOutput) {
 		case 1: {
@@ -360,7 +385,13 @@ void refresh(struct Console* console) {
 			console->currentOutput = 2;
 
 			BOOL result = ReadConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
+			if (!result) {
+				return;
+			}
 			BOOL result2 = WriteConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
+			if (!result2) {
+				return;
+			}
 			break;
 		}
 		case 2: {
@@ -368,7 +399,13 @@ void refresh(struct Console* console) {
 			console->currentOutput = 1;
 
 			BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
+			if (!result) {
+				return;
+			}
 			BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
+			if (!result2) {
+				return;
+			}
 			break;
 		}
 		default: break;

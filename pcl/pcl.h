@@ -82,7 +82,7 @@ void setchar(const struct Console* console, char c);
  * @param row row number
  * @param col column number
  */
-void setcharcursor(struct Console* console, char c, int row, int col);
+void setcharcursor(const struct Console* console, char c, int row, int col);
 
 /**
  * Works as standard scanf
@@ -98,7 +98,7 @@ void getstringformatted(struct Console* console, char* format, ...);
  * @param format format string
  * @param ... variables to format
  */
-void setstringformatted(struct Console* console, char* format, ...);
+void setstringformatted(const struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Do not changes cursor position
@@ -141,7 +141,7 @@ void setstring(const struct Console* console, const char* string);
  * @param row row number
  * @param col column number
  */
-void setstringcursor(struct Console* console, char* string, int row, int col);
+void setstringcursor(const struct Console* console, const char* string, int row, int col);
 
 /**
  * Clears console
