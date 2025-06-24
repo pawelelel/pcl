@@ -120,7 +120,34 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 }
 
 char getchr(struct Console* console) {
-	//TODO implement
+	//TODO implement error handling
+
+	INPUT_RECORD buffer[1];
+	DWORD read;
+	ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+	switch (buffer[0].EventType) {
+		case KEY_EVENT: {
+			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+		}
+		case MOUSE_EVENT: {
+			//TODO think
+			break;
+		}
+		case WINDOW_BUFFER_SIZE_EVENT: {
+			//TODO implement
+			break;
+		}
+		case FOCUS_EVENT: {
+			//TODO implement
+			break;
+		}
+		case MENU_EVENT: {
+			// pass; according to docs
+			//https://learn.microsoft.com/en-us/windows/console/input-record-str
+			break;
+		}
+		default: ;
+	}
 	return -1;
 }
 
@@ -189,6 +216,9 @@ void setstringformatted(const struct Console* console, char *format, ...) {
 }
 
 void setstringformattedcursor(struct Console* console, char *format, int row, int col, ...) {
+	//TODO implement error handling
+
+
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
 	setcursorposition(console, row, col);
