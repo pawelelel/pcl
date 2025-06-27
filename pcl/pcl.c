@@ -257,11 +257,58 @@ void setstringformattedcursor(struct Console* console, char *format, int row, in
 }
 
 void getstring(struct Console* console, char *buffer, size_t size) {
-	//TODO implement
+	//TODO implement error handling
+
+	if (buffer == NULL) {
+		return;
+	}
+
+	int i = 0;
+	while (i != size - 1) {
+		INPUT_RECORD buff[1];
+		DWORD read;
+		ReadConsoleInput(console->inputHandle, buff, 1, &read);
+
+		if (buff[0].EventType == KEY_EVENT) {
+			if (buff[0].Event.KeyEvent.bKeyDown) {
+				char c = buff[0].Event.KeyEvent.uChar.AsciiChar;
+				if (c == '\n' || c == '\r') {
+					break;
+				}
+				if (c != 0 && isprint(c)) {
+					buffer[i] = c;
+					i++;
+				}
+			}
+		}
+	}
+	buffer[i] = '\0';
 }
 
-void getstringbuffer(struct Console* console, char *buffer, size_t size) {
-	//TODO implement
+void getstringbuffer(const struct Console* console, char *buffer, const size_t size) {
+	//TODO implement error handling
+
+	if (buffer == NULL) {
+		return;
+	}
+
+	int i = 0;
+	while (i != size - 1) {
+		INPUT_RECORD buff[1];
+		DWORD read;
+		ReadConsoleInput(console->inputHandle, buff, 1, &read);
+
+		if (buff[0].EventType == KEY_EVENT) {
+			if (buff[0].Event.KeyEvent.bKeyDown) {
+				char c = buff[0].Event.KeyEvent.uChar.AsciiChar;
+				if (c != 0 && isprint(c)) {
+					buffer[i] = c;
+					i++;
+				}
+			}
+		}
+	}
+	buffer[i] = '\0';
 }
 
 void setstring(const struct Console* console, const char *string) {
