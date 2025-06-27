@@ -14,6 +14,7 @@ struct Console {
 	HANDLE outputHandle2;
 	HANDLE errorHandle;
 	HANDLE windowHandle;
+	int blockInput;
 };
 
 /**
@@ -65,7 +66,7 @@ int getdimensions(const struct Console* console, int* width, int* height);
  *
  * @return char
  */
-char getchr(struct Console* console);
+char getchr(const struct Console* console);
 
 /**
  * Sets char on cursor position. Changes cursor position
@@ -111,14 +112,14 @@ void setstringformatted(const struct Console* console, char* format, ...);
 void setstringformattedcursor(struct Console* console, char* format, int row, int col, ...);
 
 /**
- * Gets chars from stdin till detects '\n'
+ * Gets chars from stdin till detects '\n' or reaches buffer size
  *
  * @param buffer input buffer
  */
-void getstring(struct Console* console, char* buffer);
+void getstring(struct Console* console, char* buffer, size_t size);
 
 /**
- * Gets chars from stdin till detects '\n' or reaches buffer size
+ * Gets chars from stdin till reaches buffer size
  *
  * @param console pointer to struct Console
  * @param buffer input buffer

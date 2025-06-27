@@ -119,15 +119,30 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 	return 1;
 }
 
-char getchr(struct Console* console) {
+char getchr(const struct Console* console) {
 	//TODO implement error handling
+
+	// no blocking input
+	INPUT_RECORD lpBuffer[1];
+	DWORD word;
+	BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
+	if (word == 0) {
+		return 0;
+	}
 
 	INPUT_RECORD buffer[1];
 	DWORD read;
 	ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+
+	if (read == 0) {
+		return 0;
+	}
+
 	switch (buffer[0].EventType) {
 		case KEY_EVENT: {
-			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+			if (buffer[0].Event.KeyEvent.bKeyDown) {
+				return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+			}
 		}
 		case MOUSE_EVENT: {
 			//TODO think
@@ -148,7 +163,7 @@ char getchr(struct Console* console) {
 		}
 		default: ;
 	}
-	return -1;
+	return 0;
 }
 
 void setchar(const struct Console* console, char c) {
@@ -241,7 +256,7 @@ void setstringformattedcursor(struct Console* console, char *format, int row, in
 	setcursorposition(console, nowrow, nowcol);
 }
 
-void getstring(struct Console* console, char *buffer) {
+void getstring(struct Console* console, char *buffer, size_t size) {
 	//TODO implement
 }
 
