@@ -206,8 +206,51 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 	setcursorposition(console, nowrow, nowcol);
 }
 
-void getstringformatted(struct Console* console, char *format, ...) {
+int getstringformatted(struct Console* console, char *format, ...) {
 	//TODO implement
+
+	va_list args;
+	va_start(args, format);
+	const size_t len = strlen(format);
+	for (int i = 0; i < len; ++i) {
+		char c = format[i];
+		if (c == '%') {
+
+			/*
+			 * %d - int
+			 * %ld - long int
+			 * %lld - long long int
+			 *
+			 * %u - unsigned int
+			 * %lu - unsigned long int
+			 * %llu - unsigned long long int
+			 *
+			 * %c - char
+			 *
+			 * %f - float
+			 * %lf - double
+			 * %llf - long double
+			 */
+			switch (format[i + 1]) {
+				case 'd': {
+					break;
+				}
+				case 'u': {
+					break;
+				}
+				case 'c': {
+					char* ch = va_arg(args, char*);
+					*ch = getchr(console);
+					break;
+				}
+				case 'f': {
+					break;
+				}
+				default:;
+			}
+		}
+	}
+	va_end(args);
 }
 
 void setstringformatted(const struct Console* console, char *format, ...) {
@@ -230,7 +273,7 @@ void setstringformatted(const struct Console* console, char *format, ...) {
 	free(memory);
 }
 
-void setstringformattedcursor(struct Console* console, char *format, int row, int col, ...) {
+void setstringformattedcursor(const struct Console* console, char *format, int row, int col, ...) {
 	//TODO implement error handling
 
 
@@ -256,7 +299,7 @@ void setstringformattedcursor(struct Console* console, char *format, int row, in
 	setcursorposition(console, nowrow, nowcol);
 }
 
-void getstring(struct Console* console, char *buffer, size_t size) {
+void getstring(const struct Console* console, char *buffer, size_t size) {
 	//TODO implement error handling
 
 	if (buffer == NULL) {

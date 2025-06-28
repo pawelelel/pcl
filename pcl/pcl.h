@@ -89,10 +89,11 @@ void setcharcursor(const struct Console* console, char c, int row, int col);
 /**
  * Works as standard scanf
  *
+ * @param console pointer to struct Console
  * @param format format string
  * @param ... scanned variables
  */
-void getstringformatted(struct Console* console, char* format, ...);
+int getstringformatted(struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Changes cursor position
@@ -110,14 +111,14 @@ void setstringformatted(const struct Console* console, char* format, ...);
  * @param col column number
  * @param ... variables to format
  */
-void setstringformattedcursor(struct Console* console, char* format, int row, int col, ...);
+void setstringformattedcursor(const struct Console* console, char* format, int row, int col, ...);
 
 /**
  * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size
  *
  * @param buffer input buffer
  */
-void getstring(struct Console* console, char* buffer, size_t size);
+void getstring(const struct Console* console, char* buffer, size_t size);
 
 /**
  * Gets chars from stdin till reaches buffer size
