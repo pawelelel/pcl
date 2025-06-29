@@ -42,6 +42,7 @@ struct Console* start(void) {
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->windowHandle = GetCurrentProcess();
+	console->blockInput = FALSE;
 	return console;
 }
 
@@ -122,48 +123,29 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 char getchr(const struct Console* console) {
 	//TODO implement error handling
 
-	// no blocking input
-	INPUT_RECORD lpBuffer[1];
-	DWORD word;
-	BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
-	if (word == 0) {
-		return 0;
-	}
-
-	INPUT_RECORD buffer[1];
-	DWORD read;
-	ReadConsoleInput(console->inputHandle, buffer, 1, &read);
-
-	if (read == 0) {
-		return 0;
-	}
-
-	switch (buffer[0].EventType) {
-		case KEY_EVENT: {
-			if (buffer[0].Event.KeyEvent.bKeyDown) {
-				return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+	while (1) {
+		// no blocking input
+		if (!console->blockInput) {
+			INPUT_RECORD lpBuffer[1];
+			DWORD word;
+			BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
+			if (word == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
+				return 0;
 			}
 		}
-		case MOUSE_EVENT: {
-			//TODO think
-			break;
+
+		INPUT_RECORD buffer[1];
+		DWORD read;
+		ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+
+		if (read == 0) {
+			return 0;
 		}
-		case WINDOW_BUFFER_SIZE_EVENT: {
-			//TODO implement
-			break;
+
+		if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
+			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
 		}
-		case FOCUS_EVENT: {
-			//TODO implement
-			break;
-		}
-		case MENU_EVENT: {
-			// pass; according to docs
-			//https://learn.microsoft.com/en-us/windows/console/input-record-str
-			break;
-		}
-		default: ;
 	}
-	return 0;
 }
 
 void setchar(const struct Console* console, char c) {
