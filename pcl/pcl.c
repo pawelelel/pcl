@@ -123,29 +123,28 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 char getchr(const struct Console* console) {
 	//TODO implement error handling
 
-	while (1) {
-		// no blocking input
-		if (!console->blockInput) {
-			INPUT_RECORD lpBuffer[1];
-			DWORD word;
-			BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
-			if (word == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
-				return 0;
-			}
-		}
-
-		INPUT_RECORD buffer[1];
-		DWORD read;
-		ReadConsoleInput(console->inputHandle, buffer, 1, &read);
-
-		if (read == 0) {
+	if (console->blockInput) {
+		INPUT_RECORD lpBuffer[1];
+		DWORD word;
+		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
+		if (word == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
 			return 0;
 		}
-
-		if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
-			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
-		}
 	}
+
+	INPUT_RECORD buffer[1];
+	DWORD read;
+	ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+
+	if (read == 0) {
+		return 0;
+	}
+
+	if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
+		return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+	}
+
+	return 0;
 }
 
 void setchar(const struct Console* console, char c) {
@@ -190,49 +189,7 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 
 int getstringformatted(struct Console* console, char *format, ...) {
 	//TODO implement
-
-	va_list args;
-	va_start(args, format);
-	const size_t len = strlen(format);
-	for (int i = 0; i < len; ++i) {
-		char c = format[i];
-		if (c == '%') {
-
-			/*
-			 * %d - int
-			 * %ld - long int
-			 * %lld - long long int
-			 *
-			 * %u - unsigned int
-			 * %lu - unsigned long int
-			 * %llu - unsigned long long int
-			 *
-			 * %c - char
-			 *
-			 * %f - float
-			 * %lf - double
-			 * %llf - long double
-			 */
-			switch (format[i + 1]) {
-				case 'd': {
-					break;
-				}
-				case 'u': {
-					break;
-				}
-				case 'c': {
-					char* ch = va_arg(args, char*);
-					*ch = getchr(console);
-					break;
-				}
-				case 'f': {
-					break;
-				}
-				default:;
-			}
-		}
-	}
-	va_end(args);
+	return -1;
 }
 
 void setstringformatted(const struct Console* console, char *format, ...) {
@@ -255,7 +212,7 @@ void setstringformatted(const struct Console* console, char *format, ...) {
 	free(memory);
 }
 
-void setstringformattedcursor(const struct Console* console, char *format, int row, int col, ...) {
+void setstringformattedcursor(const struct Console* console, char* format, int row, int col, ...) {
 	//TODO implement error handling
 
 
@@ -496,6 +453,7 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 }
 
 void refresh(struct Console* console) {
+	//TODO remember about updating
 	//TODO implement error handling
 
 
@@ -549,5 +507,10 @@ void refresh(struct Console* console) {
 
 	free(buffer);
 
+	int row, col;
+	getcursorposition(console, &row, &col);
+
 	SetConsoleActiveScreenBuffer(h);
+
+	setcursorposition(console, row, col);
 }
