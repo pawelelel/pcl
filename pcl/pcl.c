@@ -187,9 +187,111 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 	setcursorposition(console, nowrow, nowcol);
 }
 
-int getstringformatted(struct Console* console, char *format, ...) {
+int getvariables(const struct Console *console, char *format, ...) {
 	//TODO implement
-	return -1;
+
+	/*
+	 * %c char
+	 * %h short
+	 * %uh unsigned short
+	 * %d int
+	 * %ud unsigned int
+	 * %l long
+	 * %ul unsigned long
+	 * %ll long long
+	 * %ull unsigned long long
+	 * %f float
+	 * %lf double
+	 *
+	 * %[int]s string
+	 */
+
+	va_list args;
+	va_start(args, format);
+	const size_t size = strlen(format);
+
+	int bufferpointer = 0;
+	char buffer[100];
+
+	int input = 0;
+
+	for (int i = 0; i < size; ++i) {
+		if (format[i] == '%') {
+			input = 2;
+			continue;
+		}
+
+		while (1) {
+			INPUT_RECORD keyboard[1];
+			DWORD read;
+			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+				buffer[bufferpointer] = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				if (format[i] != buffer[bufferpointer] && format[i] != '%' && !input) {
+					// format does not match text
+					return -2;
+				}
+
+				if (input == 2) {
+					switch (format[i]) {
+						case 'c': {
+							char* c = va_arg(args, char*);
+							*c = buffer[bufferpointer];
+							bufferpointer = 0;
+							break;
+						}
+						case 'h': {
+							short* h = va_arg(args, short*);
+							*h = 0;
+
+
+
+
+
+
+
+							int j = 0;
+							while (isdigit(buffer[j])) {
+								j++;
+							}
+
+
+
+
+
+
+
+
+							int pow = 1;
+							for (int k = j - 1; k >= 0; --k) {
+								*h += (buffer[k] - '0') * pow;
+								pow *= 10;
+							}
+							break;
+						}
+						case 'd': {
+							break;
+						}
+						case 'l': {
+							break;
+						}
+						case 'f': {
+							break;
+						}
+					}
+				}
+
+				if (input) {
+					bufferpointer++;
+				}
+				break;
+			}
+		}
+	}
+
+	va_end(args);
+
+	return 0;
 }
 
 void setstringformatted(const struct Console* console, char *format, ...) {

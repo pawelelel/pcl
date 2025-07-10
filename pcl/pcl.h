@@ -93,7 +93,7 @@ void setcharcursor(const struct Console* console, char c, int row, int col);
  * @param format format string
  * @param ... scanned variables
  */
-int getstringformatted(struct Console* console, char* format, ...);
+int getvariables(const struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Changes cursor position
