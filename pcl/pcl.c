@@ -233,16 +233,25 @@ char getsignedintvariable(const struct Console* console, char** buffer, int* buf
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
-			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+				(*buffer)[*buffercount] = '\0';
+				return ret;
+			}
 			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
 				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 				if (isdigit(c)) {
 					(*buffer)[(*buffercount)++] = c;
 					if (*buffercount % 10 == 0) {
-						realloc(*buffer, (*buffercount + 10) * sizeof(char));
+						char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
+						if (temp == NULL) {
+							free(*buffer);
+							*buffer = NULL;
+							*buffercount = 0;
+							return 0;
+						}
+						*buffer = temp;
 					}
-				}
-				else {
+				} else {
 					ret = c;
 					break;
 				}
@@ -250,13 +259,15 @@ char getsignedintvariable(const struct Console* console, char** buffer, int* buf
 		}
 	}
 
+	(*buffer)[*buffercount] = '\0';
 	return ret;
 }
 
 char getshortvariable(const struct Console* console, short* h) {
 	char* buffer = NULL;
-	int buffercount;
-	getsignedintvariable(console, buffer, &buffercount);
+	int buffercount = 0;
+
+	char ret = getsignedintvariable(console, &buffer, &buffercount);
 
 	*h = 0;
 	int power = 1;
@@ -266,74 +277,13 @@ char getshortvariable(const struct Console* console, short* h) {
 	}
 	if (buffer[0] == '-') {
 		*h *= -1;
-	}
-	else {
+	} else {
 		*h += (buffer[0] - '0') * power;
 	}
-}
-
-/*
-char getshortvariable(const struct Console* console, void* h) {
-	char ret = 0;
-	INPUT_RECORD keyboard[1];
-	DWORD read;
-
-	char* buffer = malloc(10 * sizeof(char));
-	int buffercount = 0;
-
-	while (1) {
-		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			if (isdigit(c) || c == '-') {
-				buffer[buffercount++] = c;
-				break;
-			}
-			ret = c;
-			break;
-		}
-	}
-
-	if (isdigit(ret)) {
-		while (1) {
-			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-				if (isdigit(c)) {
-					buffer[buffercount++] = c;
-					if (buffercount % 10 == 0) {
-						realloc(buffer, (buffercount + 10) * sizeof(char));
-					}
-				}
-				else {
-					ret = c;
-					break;
-				}
-			}
-		}
-	}
-
-
-	// code to change buffer into short variable
-
-	*(short*)h = 0;
-	int power = 1;
-	for (int i = buffercount - 1; i >= 1; --i) {
-		*(short*)h += (buffer[i] - '0') * power;
-		power *= 10;
-	}
-	if (buffer[0] == '-') {
-		*(short*)h *= -1;
-	}
-	else {
-		*(short*)h += (buffer[0] - '0') * power;
-	}
-
 
 	free(buffer);
 	return ret;
 }
-*/
 
 void getunsignedshortvariable(const struct Console* console, unsigned short* h) {
 
