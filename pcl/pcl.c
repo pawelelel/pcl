@@ -187,8 +187,195 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 	setcursorposition(console, nowrow, nowcol);
 }
 
+
+
+void getcharvariable(const struct Console* console, char* c) {
+	INPUT_RECORD keyboard[1];
+	DWORD read;
+
+	while (1) {
+		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			*c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			return;
+		}
+	}
+}
+
+char getsignedintvariable(const struct Console* console, char** buffer, int* buffercount) {
+	char ret = 0;
+	INPUT_RECORD keyboard[1];
+	DWORD read;
+
+	if (*buffer == NULL) {
+		*buffer = malloc(10 * sizeof(char));
+		if (*buffer == NULL) {
+			*buffercount = 0;
+			return 0;
+		}
+	}
+	*buffercount = 0;
+
+
+	while (1) {
+		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			if (isdigit(c) || c == '-') {
+				(*buffer)[(*buffercount)++] = c;
+				ret = c;
+				break;
+			}
+			ret = c;
+			break;
+		}
+	}
+
+	if (isdigit(ret) || ret == '-') {
+		while (1) {
+			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				if (isdigit(c)) {
+					(*buffer)[(*buffercount)++] = c;
+					if (*buffercount % 10 == 0) {
+						realloc(*buffer, (*buffercount + 10) * sizeof(char));
+					}
+				}
+				else {
+					ret = c;
+					break;
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+char getshortvariable(const struct Console* console, short* h) {
+	char* buffer = NULL;
+	int buffercount;
+	getsignedintvariable(console, buffer, &buffercount);
+
+	*h = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 1; --i) {
+		*h += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+	if (buffer[0] == '-') {
+		*h *= -1;
+	}
+	else {
+		*h += (buffer[0] - '0') * power;
+	}
+}
+
+/*
+char getshortvariable(const struct Console* console, void* h) {
+	char ret = 0;
+	INPUT_RECORD keyboard[1];
+	DWORD read;
+
+	char* buffer = malloc(10 * sizeof(char));
+	int buffercount = 0;
+
+	while (1) {
+		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			if (isdigit(c) || c == '-') {
+				buffer[buffercount++] = c;
+				break;
+			}
+			ret = c;
+			break;
+		}
+	}
+
+	if (isdigit(ret)) {
+		while (1) {
+			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				if (isdigit(c)) {
+					buffer[buffercount++] = c;
+					if (buffercount % 10 == 0) {
+						realloc(buffer, (buffercount + 10) * sizeof(char));
+					}
+				}
+				else {
+					ret = c;
+					break;
+				}
+			}
+		}
+	}
+
+
+	// code to change buffer into short variable
+
+	*(short*)h = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 1; --i) {
+		*(short*)h += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+	if (buffer[0] == '-') {
+		*(short*)h *= -1;
+	}
+	else {
+		*(short*)h += (buffer[0] - '0') * power;
+	}
+
+
+	free(buffer);
+	return ret;
+}
+*/
+
+void getunsignedshortvariable(const struct Console* console, unsigned short* h) {
+
+}
+
+void getintvariable(const struct Console* console, int* d) {
+
+}
+
+void getunsignedintvariable(const struct Console* console, unsigned int *ud) {
+
+}
+
+void getlongvariable(const struct Console* console, long* h) {
+
+}
+
+void getunsignedlongvariable(const struct Console* console, unsigned long* h) {
+
+}
+
+void getlonglongvariable(const struct Console* console, long long* h) {
+
+}
+
+void getunsignedlonglongvariable(const struct Console* console, unsigned long long* h) {
+
+}
+
+void getfloatvariable(const struct Console* console, float* h) {
+
+}
+
+void getdoublevariable(const struct Console* console, double* h) {
+
+}
+
 int getvariables(const struct Console *console, char *format, ...) {
 	//TODO implement
+
+	short h;
+	char c = getshortvariable(console, &h);
 
 	/*
 	 * %c char
@@ -210,83 +397,8 @@ int getvariables(const struct Console *console, char *format, ...) {
 	va_start(args, format);
 	const size_t size = strlen(format);
 
-	int bufferpointer = 0;
-	char buffer[100];
-
-	int input = 0;
-
 	for (int i = 0; i < size; ++i) {
-		if (format[i] == '%') {
-			input = 2;
-			continue;
-		}
 
-		while (1) {
-			INPUT_RECORD keyboard[1];
-			DWORD read;
-			ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				buffer[bufferpointer] = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-				if (format[i] != buffer[bufferpointer] && format[i] != '%' && !input) {
-					// format does not match text
-					return -2;
-				}
-
-				if (input == 2) {
-					switch (format[i]) {
-						case 'c': {
-							char* c = va_arg(args, char*);
-							*c = buffer[bufferpointer];
-							bufferpointer = 0;
-							break;
-						}
-						case 'h': {
-							short* h = va_arg(args, short*);
-							*h = 0;
-
-
-
-
-
-
-
-							int j = 0;
-							while (isdigit(buffer[j])) {
-								j++;
-							}
-
-
-
-
-
-
-
-
-							int pow = 1;
-							for (int k = j - 1; k >= 0; --k) {
-								*h += (buffer[k] - '0') * pow;
-								pow *= 10;
-							}
-							break;
-						}
-						case 'd': {
-							break;
-						}
-						case 'l': {
-							break;
-						}
-						case 'f': {
-							break;
-						}
-					}
-				}
-
-				if (input) {
-					bufferpointer++;
-				}
-				break;
-			}
-		}
 	}
 
 	va_end(args);
@@ -558,6 +670,8 @@ void refresh(struct Console* console) {
 	//TODO remember about updating
 	//TODO implement error handling
 
+	int row, col;
+	getcursorposition(console, &row, &col);
 
 	HANDLE h = NULL;
 	int width, height;
@@ -608,9 +722,6 @@ void refresh(struct Console* console) {
 	}
 
 	free(buffer);
-
-	int row, col;
-	getcursorposition(console, &row, &col);
 
 	SetConsoleActiveScreenBuffer(h);
 
