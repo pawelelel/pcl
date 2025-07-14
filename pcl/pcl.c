@@ -202,7 +202,7 @@ void getcharvariable(const struct Console* console, char* c) {
 	}
 }
 
-char getsignedintvariable(const struct Console* console, char** buffer, int* buffercount) {
+char getsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
 	INPUT_RECORD keyboard[1];
 	DWORD read;
@@ -263,11 +263,60 @@ char getsignedintvariable(const struct Console* console, char** buffer, int* buf
 	return ret;
 }
 
+char getunsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+	char ret = 0;
+	INPUT_RECORD keyboard[1];
+	DWORD read;
+
+	if (*buffer == NULL) {
+		*buffer = malloc(10 * sizeof(char));
+		if (*buffer == NULL) {
+			*buffercount = 0;
+			return 0;
+		}
+	}
+	*buffercount = 0;
+
+	while (1) {
+		if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+			(*buffer)[*buffercount] = '\0';
+			return ret;
+		}
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			if (isdigit(c)) {
+				(*buffer)[(*buffercount)++] = c;
+				if (*buffercount % 10 == 0) {
+					char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
+					if (temp == NULL) {
+						free(*buffer);
+						*buffer = NULL;
+						*buffercount = 0;
+						return 0;
+					}
+					*buffer = temp;
+				}
+			} else {
+				ret = c;
+				break;
+			}
+		}
+	}
+
+	(*buffer)[*buffercount] = '\0';
+	return ret;
+}
+
 char getshortvariable(const struct Console* console, short* h) {
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	char ret = getsignedintvariable(console, &buffer, &buffercount);
+	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
 
 	*h = 0;
 	int power = 1;
@@ -285,47 +334,188 @@ char getshortvariable(const struct Console* console, short* h) {
 	return ret;
 }
 
-void getunsignedshortvariable(const struct Console* console, unsigned short* h) {
+char getunsignedshortvariable(const struct Console* console, unsigned short* uh) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*uh = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 0; --i) {
+		*uh += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getintvariable(const struct Console* console, int* d) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*d = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 1; --i) {
+		*d += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+	if (buffer[0] == '-') {
+		*d *= -1;
+	} else {
+		*d += (buffer[0] - '0') * power;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getunsignedintvariable(const struct Console* console, int* ud) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*ud = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 0; --i) {
+		*ud += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getlongvariable(const struct Console* console, long* ld) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*ld = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 1; --i) {
+		*ld += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+	if (buffer[0] == '-') {
+		*ld *= -1;
+	} else {
+		*ld += (buffer[0] - '0') * power;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getunsignedlongvariable(const struct Console* console, unsigned long* uld) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*uld = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 0; --i) {
+		*uld += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getlonglongvariable(const struct Console* console, long long* lld) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*lld = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 1; --i) {
+		*lld += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+	if (buffer[0] == '-') {
+		*lld *= -1;
+	} else {
+		*lld += (buffer[0] - '0') * power;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getunsignedlonglongvariable(const struct Console* console, unsigned long long* ulld) {
+	char* buffer = NULL;
+	int buffercount = 0;
+
+	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+
+	if (buffercount == 0) {
+		free(buffer);
+		return ret;
+	}
+
+	*ulld = 0;
+	int power = 1;
+	for (int i = buffercount - 1; i >= 0; --i) {
+		*ulld += (buffer[i] - '0') * power;
+		power *= 10;
+	}
+
+	free(buffer);
+	return ret;
+}
+
+char getfloatvariable(const struct Console* console, float* h) {
 
 }
 
-void getintvariable(const struct Console* console, int* d) {
-
-}
-
-void getunsignedintvariable(const struct Console* console, unsigned int *ud) {
-
-}
-
-void getlongvariable(const struct Console* console, long* h) {
-
-}
-
-void getunsignedlongvariable(const struct Console* console, unsigned long* h) {
-
-}
-
-void getlonglongvariable(const struct Console* console, long long* h) {
-
-}
-
-void getunsignedlonglongvariable(const struct Console* console, unsigned long long* h) {
-
-}
-
-void getfloatvariable(const struct Console* console, float* h) {
-
-}
-
-void getdoublevariable(const struct Console* console, double* h) {
+char getdoublevariable(const struct Console* console, double* h) {
 
 }
 
 int getvariables(const struct Console *console, char *format, ...) {
 	//TODO implement
 
-	short h;
-	char c = getshortvariable(console, &h);
+	unsigned short h;
+	char c = getunsignedshortvariable(console, &h);
 
 	/*
 	 * %c char
