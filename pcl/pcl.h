@@ -16,6 +16,7 @@ struct Console {
 	HANDLE windowHandle;
 	//TODO implement
 	int blockInput;
+	int blockTimeout;
 };
 
 /**

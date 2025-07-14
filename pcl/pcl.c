@@ -188,7 +188,8 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 }
 
 
-
+//TODO memory security
+//TODO implement error handling
 void getcharvariable(const struct Console* console, char* c) {
 	INPUT_RECORD keyboard[1];
 	DWORD read;
@@ -417,7 +418,7 @@ char getlongvariable(const struct Console* console, long* ld) {
 	}
 
 	*ld = 0;
-	int power = 1;
+	long power = 1;
 	for (int i = buffercount - 1; i >= 1; --i) {
 		*ld += (buffer[i] - '0') * power;
 		power *= 10;
@@ -444,7 +445,7 @@ char getunsignedlongvariable(const struct Console* console, unsigned long* uld) 
 	}
 
 	*uld = 0;
-	int power = 1;
+	unsigned long power = 1;
 	for (int i = buffercount - 1; i >= 0; --i) {
 		*uld += (buffer[i] - '0') * power;
 		power *= 10;
@@ -466,7 +467,7 @@ char getlonglongvariable(const struct Console* console, long long* lld) {
 	}
 
 	*lld = 0;
-	int power = 1;
+	unsigned long long power = 1;
 	for (int i = buffercount - 1; i >= 1; --i) {
 		*lld += (buffer[i] - '0') * power;
 		power *= 10;
@@ -493,7 +494,7 @@ char getunsignedlonglongvariable(const struct Console* console, unsigned long lo
 	}
 
 	*ulld = 0;
-	int power = 1;
+	unsigned long long power = 1;
 	for (int i = buffercount - 1; i >= 0; --i) {
 		*ulld += (buffer[i] - '0') * power;
 		power *= 10;
@@ -503,19 +504,93 @@ char getunsignedlonglongvariable(const struct Console* console, unsigned long lo
 	return ret;
 }
 
-char getfloatvariable(const struct Console* console, float* h) {
+char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+	char ret = 0;
+	INPUT_RECORD keyboard[1];
+	DWORD read;
 
+	if (*buffer == NULL) {
+		*buffer = malloc(10 * sizeof(char));
+		if (*buffer == NULL) {
+			*buffercount = 0;
+			return 0;
+		}
+	}
+	*buffercount = 0;
+
+
+	while (1) {
+		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			if (isdigit(c) || c == '-') {
+				(*buffer)[(*buffercount)++] = c;
+				ret = c;
+				break;
+			}
+			ret = c;
+			break;
+		}
+	}
+
+	if (isdigit(ret) || ret == '-') {
+		while (1) {
+			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+				(*buffer)[*buffercount] = '\0';
+				return ret;
+			}
+			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				if (isdigit(c) || c == '.') {
+					(*buffer)[(*buffercount)++] = c;
+					if (*buffercount % 10 == 0) {
+						char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
+						if (temp == NULL) {
+							free(*buffer);
+							*buffer = NULL;
+							*buffercount = 0;
+							return 0;
+						}
+						*buffer = temp;
+					}
+				} else {
+					ret = c;
+					break;
+				}
+			}
+		}
+	}
+
+	(*buffer)[*buffercount] = '\0';
+	return ret;
 }
 
-char getdoublevariable(const struct Console* console, double* h) {
+char getfloatvariable(const struct Console* console, float* f) {
+	char* buffer = NULL;
+	int buffercount = 0;
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	*f = strtof(buffer, NULL);
+	return ret;
+}
 
+char getdoublevariable(const struct Console* console, double* lf) {
+	char* buffer = NULL;
+	int buffercount = 0;
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	*lf = strtod(buffer, NULL);
+	return ret;
+}
+
+char getlongdoublevariable(const struct Console* console, long double* llf) {
+	char* buffer = NULL;
+	int buffercount = 0;
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	*llf = strtold(buffer, NULL);
+	return ret;
 }
 
 int getvariables(const struct Console *console, char *format, ...) {
 	//TODO implement
-
-	unsigned short h;
-	char c = getunsignedshortvariable(console, &h);
 
 	/*
 	 * %c char
@@ -529,6 +604,7 @@ int getvariables(const struct Console *console, char *format, ...) {
 	 * %ull unsigned long long
 	 * %f float
 	 * %lf double
+	 * %llf long double
 	 *
 	 * %[int]s string
 	 */
