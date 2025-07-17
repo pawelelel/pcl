@@ -384,7 +384,7 @@ char getintvariable(const struct Console* console, int* d) {
 	return ret;
 }
 
-char getunsignedintvariable(const struct Console* console, int* ud) {
+char getunsignedintvariable(const struct Console* console, unsigned int* ud) {
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -417,17 +417,7 @@ char getlongvariable(const struct Console* console, long* ld) {
 		return ret;
 	}
 
-	*ld = 0;
-	long power = 1;
-	for (int i = buffercount - 1; i >= 1; --i) {
-		*ld += (buffer[i] - '0') * power;
-		power *= 10;
-	}
-	if (buffer[0] == '-') {
-		*ld *= -1;
-	} else {
-		*ld += (buffer[0] - '0') * power;
-	}
+	*ld = strtol(buffer, NULL, 10);
 
 	free(buffer);
 	return ret;
@@ -444,12 +434,7 @@ char getunsignedlongvariable(const struct Console* console, unsigned long* uld) 
 		return ret;
 	}
 
-	*uld = 0;
-	unsigned long power = 1;
-	for (int i = buffercount - 1; i >= 0; --i) {
-		*uld += (buffer[i] - '0') * power;
-		power *= 10;
-	}
+	*uld = strtoul(buffer, NULL, 10);
 
 	free(buffer);
 	return ret;
@@ -466,17 +451,7 @@ char getlonglongvariable(const struct Console* console, long long* lld) {
 		return ret;
 	}
 
-	*lld = 0;
-	unsigned long long power = 1;
-	for (int i = buffercount - 1; i >= 1; --i) {
-		*lld += (buffer[i] - '0') * power;
-		power *= 10;
-	}
-	if (buffer[0] == '-') {
-		*lld *= -1;
-	} else {
-		*lld += (buffer[0] - '0') * power;
-	}
+	*lld = strtoll(buffer, NULL, 10);
 
 	free(buffer);
 	return ret;
@@ -493,12 +468,7 @@ char getunsignedlonglongvariable(const struct Console* console, unsigned long lo
 		return ret;
 	}
 
-	*ulld = 0;
-	unsigned long long power = 1;
-	for (int i = buffercount - 1; i >= 0; --i) {
-		*ulld += (buffer[i] - '0') * power;
-		power *= 10;
-	}
+	*ulld = strtoull(buffer, NULL, 10);
 
 	free(buffer);
 	return ret;
@@ -544,7 +514,7 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 				if (isdigit(c) || c == '.') {
 					(*buffer)[(*buffercount)++] = c;
 					if (*buffercount % 10 == 0) {
-						char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
+						char* temp = realloc(*buffer, *buffercount * 2 * sizeof(char));
 						if (temp == NULL) {
 							free(*buffer);
 							*buffer = NULL;
@@ -589,9 +559,31 @@ char getlongdoublevariable(const struct Console* console, long double* llf) {
 	return ret;
 }
 
-int getvariables(const struct Console *console, char *format, ...) {
-	//TODO implement
+int validateformatstring(const char* format, const char** validtokens, int tokens) {
+	while (*format) {
+		if (*format == '%') {
+			format++;
+			int matched = 0;
+			for (int i = 0; i < tokens; i++) {
+				const char* token = validtokens[i] + 1;
+				const size_t size = strlen(token);
+				if (strncmp(format, token, size) == 0) {
+					format += size;
+					matched = 1;
+					break;
+				}
+			}
+			if (!matched) {
+				return 0;
+			}
+		} else {
+			format++;
+		}
+	}
+	return 1;
+}
 
+int getvariables(const struct Console *console, char *format, ...) {
 	/*
 	 * %c char
 	 * %h short
@@ -606,20 +598,109 @@ int getvariables(const struct Console *console, char *format, ...) {
 	 * %lf double
 	 * %llf long double
 	 *
-	 * %[int]s string
+	 * TODO %[int]s string
 	 */
 
+	// valid tokens sorted by length
+	const char* validtokens[] = {
+		"%llf", "%ull", "%ll", "%uh", "%ud",
+		"%lf", "%ul", "%c", "%h", "%d", "%l", "%f"
+	};
+
+	const int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
+
+	if (!validateformatstring(format, validtokens, tokenssize)) {
+		// error
+		// format string is not valid
+		return -1;
+	}
+
+	int assignedvariables = 0;
 	va_list args;
 	va_start(args, format);
-	const size_t size = strlen(format);
 
-	for (int i = 0; i < size; ++i) {
+	while (*format) {
+		char gotchar = 0;
+		if (*format == '%') {
+			format++;
+			// TODO get rid of loop / optimalize
+			for (int j = 0; j < tokenssize; j++) {
+				const char* token = validtokens[j] + 1;
+				const size_t tokensize = strlen(token);
+				if (strncmp(format, token, tokensize) == 0) {
+					// match
+					format += tokensize;
 
+					if (strcmp(token, "f") == 0) {
+						float* f = va_arg(args, float*);
+						gotchar = getfloatvariable(console, f);
+						assignedvariables++;
+					} else if (strcmp(token, "l") == 0) {
+						long* l = va_arg(args, long*);
+						gotchar = getlongvariable(console, l);
+						assignedvariables++;
+					} else if (strcmp(token, "d") == 0) {
+						int* d = va_arg(args, int*);
+						gotchar = getintvariable(console, d);
+						assignedvariables++;
+					} else if (strcmp(token, "h") == 0) {
+						short* h = va_arg(args, short*);
+						gotchar = getshortvariable(console, h);
+						assignedvariables++;
+					} else if (strcmp(token, "c") == 0) {
+						char* c = va_arg(args, char*);
+						getcharvariable(console, c);
+						assignedvariables++;
+					} else if (strcmp(token, "ul") == 0) {
+						unsigned long* ul = va_arg(args, unsigned long*);
+						gotchar = getunsignedlongvariable(console, ul);
+						assignedvariables++;
+					} else if (strcmp(token, "lf") == 0) {
+						double* lf = va_arg(args, double*);
+						gotchar = getdoublevariable(console, lf);
+						assignedvariables++;
+					} else if (strcmp(token, "ud") == 0) {
+						unsigned int* ud = va_arg(args, unsigned int*);
+						gotchar = getunsignedintvariable(console, ud);
+						assignedvariables++;
+					} else if (strcmp(token, "uh") == 0) {
+						unsigned short* uh = va_arg(args, unsigned short*);
+						gotchar = getunsignedshortvariable(console, uh);
+						assignedvariables++;
+					} else if (strcmp(token, "ll") == 0) {
+						long long* ll = va_arg(args, long long*);
+						gotchar = getlonglongvariable(console, ll);
+						assignedvariables++;
+					} else if (strcmp(token, "ull") == 0) {
+						unsigned long long* ull = va_arg(args, unsigned long long*);
+						gotchar = getunsignedlonglongvariable(console, ull);
+						assignedvariables++;
+					} else if (strcmp(token, "llf") == 0) {
+						long double* llf = va_arg(args, long double*);
+						gotchar = getlongdoublevariable(console, llf);
+						assignedvariables++;
+					}
+					break;
+				}
+			}
+		}
+
+		if (gotchar == 0) {
+			getcharvariable(console, &gotchar);
+		}
+
+		if (*format == gotchar) {
+			format++;
+		}
+		else {
+			va_end(args);
+			return -2;
+		}
 	}
 
 	va_end(args);
 
-	return 0;
+	return assignedvariables;
 }
 
 void setstringformatted(const struct Console* console, char *format, ...) {
