@@ -127,6 +127,9 @@ char getchr(const struct Console* console) {
 		INPUT_RECORD lpBuffer[1];
 		DWORD word;
 		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
+		if (b == 0) {
+			return -1;
+		}
 		if (word == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
 			return 0;
 		}
@@ -187,18 +190,20 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 	setcursorposition(console, nowrow, nowcol);
 }
 
-
-//TODO memory security
-//TODO implement error handling
-void getcharvariable(const struct Console* console, char* c) {
-	INPUT_RECORD keyboard[1];
+//TODO implement better error handling
+int getcharvariable(const struct Console* console, char* c) {
 	DWORD read;
 
 	while (1) {
-		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		INPUT_RECORD keyboard[1];
+		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (result == 0 || read != 1) {
+			// error ReadConsoleInput failed
+			return -1;
+		}
 		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
 			*c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			return;
+			return 0;
 		}
 	}
 }
@@ -219,9 +224,12 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 
 
 	while (1) {
-		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (result == 0 || read != 1) {
+			return -1;
+		}
 		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 			if (isdigit(c) || c == '-') {
 				(*buffer)[(*buffercount)++] = c;
 				ret = c;
@@ -234,12 +242,12 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
-			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 				(*buffer)[*buffercount] = '\0';
 				return ret;
 			}
 			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 				if (isdigit(c)) {
 					(*buffer)[(*buffercount)++] = c;
 					if (*buffercount % 10 == 0) {
@@ -266,7 +274,6 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 
 char getunsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
-	INPUT_RECORD keyboard[1];
 	DWORD read;
 
 	if (*buffer == NULL) {
@@ -279,12 +286,13 @@ char getunsignedintkeyboardin(const struct Console* console, char** buffer, int*
 	*buffercount = 0;
 
 	while (1) {
-		if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+		INPUT_RECORD keyboard[1];
+		if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 			(*buffer)[*buffercount] = '\0';
 			return ret;
 		}
 		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 			if (isdigit(c)) {
 				(*buffer)[(*buffercount)++] = c;
 				if (*buffercount % 10 == 0) {
@@ -309,12 +317,15 @@ char getunsignedintkeyboardin(const struct Console* console, char** buffer, int*
 }
 
 char getshortvariable(const struct Console* console, short* h) {
+	if (h == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
 	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
 
-	if (buffercount == 0) {
+	if (buffercount == 0 || ret <= 0) {
 		free(buffer);
 		return ret;
 	}
@@ -336,6 +347,9 @@ char getshortvariable(const struct Console* console, short* h) {
 }
 
 char getunsignedshortvariable(const struct Console* console, unsigned short* uh) {
+	if (uh == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -358,6 +372,9 @@ char getunsignedshortvariable(const struct Console* console, unsigned short* uh)
 }
 
 char getintvariable(const struct Console* console, int* d) {
+	if (d == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -385,6 +402,9 @@ char getintvariable(const struct Console* console, int* d) {
 }
 
 char getunsignedintvariable(const struct Console* console, unsigned int* ud) {
+	if (ud == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -407,6 +427,9 @@ char getunsignedintvariable(const struct Console* console, unsigned int* ud) {
 }
 
 char getlongvariable(const struct Console* console, long* ld) {
+	if (ld == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -424,6 +447,9 @@ char getlongvariable(const struct Console* console, long* ld) {
 }
 
 char getunsignedlongvariable(const struct Console* console, unsigned long* uld) {
+	if (uld == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -441,6 +467,9 @@ char getunsignedlongvariable(const struct Console* console, unsigned long* uld) 
 }
 
 char getlonglongvariable(const struct Console* console, long long* lld) {
+	if (lld == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -458,6 +487,9 @@ char getlonglongvariable(const struct Console* console, long long* lld) {
 }
 
 char getunsignedlonglongvariable(const struct Console* console, unsigned long long* ulld) {
+	if (ulld == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
@@ -490,7 +522,10 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 
 
 	while (1) {
-		ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		if (result == 0 || read != 1) {
+			return -1;
+		}
 		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
 			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 			if (isdigit(c) || c == '-') {
@@ -505,12 +540,12 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
-			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read == 0) {
+			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 				(*buffer)[*buffercount] = '\0';
 				return ret;
 			}
 			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+				const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 				if (isdigit(c) || c == '.') {
 					(*buffer)[(*buffercount)++] = c;
 					if (*buffercount % 10 == 0) {
@@ -536,30 +571,47 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 }
 
 char getfloatvariable(const struct Console* console, float* f) {
+	if (f == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*f = strtof(buffer, NULL);
 	return ret;
 }
 
 char getdoublevariable(const struct Console* console, double* lf) {
+	if (lf == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*lf = strtod(buffer, NULL);
 	return ret;
 }
 
 char getlongdoublevariable(const struct Console* console, long double* llf) {
+	if (llf == NULL) {
+		return -1;
+	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*llf = strtold(buffer, NULL);
 	return ret;
 }
 
-int validateformatstring(const char* format, const char** validtokens, int tokens) {
+/**
+ * Validates format string for getvariables() function
+ *
+ * @param format format string
+ * @param validtokens array of string tokens sorted by size
+ * @param tokens number of tokens
+ * @return 0 if format is invalid 1 if valid
+ */
+int validateformatstring(const char* format, const char** validtokens, const int tokens) {
 	while (*format) {
 		if (*format == '%') {
 			format++;
@@ -574,12 +626,14 @@ int validateformatstring(const char* format, const char** validtokens, int token
 				}
 			}
 			if (!matched) {
+				// format string is invalid
 				return 0;
 			}
 		} else {
 			format++;
 		}
 	}
+	// format string is valid
 	return 1;
 }
 
@@ -634,50 +688,98 @@ int getvariables(const struct Console *console, char *format, ...) {
 					if (strcmp(token, "f") == 0) {
 						float* f = va_arg(args, float*);
 						gotchar = getfloatvariable(console, f);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -2;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "l") == 0) {
 						long* l = va_arg(args, long*);
 						gotchar = getlongvariable(console, l);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -3;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "d") == 0) {
 						int* d = va_arg(args, int*);
 						gotchar = getintvariable(console, d);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -4;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "h") == 0) {
 						short* h = va_arg(args, short*);
 						gotchar = getshortvariable(console, h);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -5;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "c") == 0) {
 						char* c = va_arg(args, char*);
 						getcharvariable(console, c);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -6;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "ul") == 0) {
 						unsigned long* ul = va_arg(args, unsigned long*);
 						gotchar = getunsignedlongvariable(console, ul);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -7;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "lf") == 0) {
 						double* lf = va_arg(args, double*);
 						gotchar = getdoublevariable(console, lf);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -8;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "ud") == 0) {
 						unsigned int* ud = va_arg(args, unsigned int*);
 						gotchar = getunsignedintvariable(console, ud);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -9;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "uh") == 0) {
 						unsigned short* uh = va_arg(args, unsigned short*);
 						gotchar = getunsignedshortvariable(console, uh);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -10;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "ll") == 0) {
 						long long* ll = va_arg(args, long long*);
 						gotchar = getlonglongvariable(console, ll);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -11;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "ull") == 0) {
 						unsigned long long* ull = va_arg(args, unsigned long long*);
 						gotchar = getunsignedlonglongvariable(console, ull);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -12;
+						}
 						assignedvariables++;
 					} else if (strcmp(token, "llf") == 0) {
 						long double* llf = va_arg(args, long double*);
 						gotchar = getlongdoublevariable(console, llf);
+						if (gotchar <= 0) {
+							va_end(args);
+							return -13;
+						}
 						assignedvariables++;
 					}
 					break;
@@ -687,6 +789,10 @@ int getvariables(const struct Console *console, char *format, ...) {
 
 		if (gotchar == 0) {
 			getcharvariable(console, &gotchar);
+			if (gotchar <= 0) {
+				va_end(args);
+				return -14;
+			}
 		}
 
 		if (*format == gotchar) {
@@ -694,7 +800,7 @@ int getvariables(const struct Console *console, char *format, ...) {
 		}
 		else {
 			va_end(args);
-			return -2;
+			return -15;
 		}
 	}
 
