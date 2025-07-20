@@ -123,14 +123,23 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 char getchr(const struct Console* console) {
 	//TODO implement error handling
 
-	if (console->blockInput) {
+	if (!console->blockInput) {
+		// not blocking input
 		INPUT_RECORD lpBuffer[1];
-		DWORD word;
-		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &word);
+		DWORD read;
+		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &read);
 		if (b == 0) {
 			return -1;
 		}
-		if (word == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
+		if (read == 1 && (lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown)) {
+			// peeked something but not a keybaord input we want
+			// lets kick it out of buffer
+			INPUT_RECORD buffer[1];
+			ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+			return 0;
+		}
+		if (read == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
+			// found nothing
 			return 0;
 		}
 	}
