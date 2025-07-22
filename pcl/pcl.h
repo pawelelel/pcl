@@ -163,6 +163,18 @@ void clear(const struct Console* console);
 void fill(const struct Console* console, const char c);
 
 /**
+ * Sets 2d array on specified location. Do not changes cursor position
+ *
+ * @param console pointer to struct Console
+ * @param array array to write
+ * @param row top-left array position of array in console
+ * @param col top-left array position of array in console
+ * @param width array height
+ * @param height array wwidth
+ */
+void set2darray(const struct Console* console, const char* array, const int row, const int col, const int width, const int height);
+
+/**
  * Sets cursor position
  *
  * @param console pointer to struct Console

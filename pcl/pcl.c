@@ -1012,6 +1012,31 @@ void fill(const struct Console* console, const char c) {
 	setcursorposition(console, 0, 0);
 }
 
+void set2darray(const struct Console* console, const char* array, const int row, const int col, const int width, const int height) {
+	//TODO implement error handling
+
+	HANDLE h = NULL;
+	switch (console->currentOutput) {
+		case 1: {
+			h = console->outputHandle2;
+			break;
+		}
+		case 2: {
+			h = console->outputHandle1;
+			break;
+		}
+		default: break;
+	}
+
+	DWORD written;
+
+	for (int i = 0; i < width; ++i) {
+		const COORD topleft = {(short)col, (short)(row + i)};
+		WriteConsoleOutputCharacter(h, array, height, topleft, &written);
+		array += height;
+	}
+}
+
 void setcursorposition(const struct Console* console, int row, int col) {
 	//TODO implement error handling
 
