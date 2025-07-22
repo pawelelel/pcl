@@ -7,6 +7,7 @@
 
 struct Console* start(void) {
 	//TODO implement error handling
+	//TODO implement saving console state to restore it back at end() function
 
 
 	struct Console* console = malloc(sizeof(struct Console));
@@ -954,37 +955,12 @@ void setstringcursor(const struct Console* console, const char *string, const in
 
 void clear(const struct Console* console) {
 	//TODO implement error handling
-	//TODO use fill() function below
 
-	int width = 0, height = 0;
-	if (getdimensions(console, &width, &height) != 1) {
-		//TODO error code
-		return;
-	}
-
-	DWORD written;
-	COORD topleft = {0, 0};
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
-	FillConsoleOutputCharacter(h, ' ', width * height, topleft, &written);
-	FillConsoleOutputAttribute(h, 7, width * height, topleft, &written);
-
-	setcursorposition(console, 0, 0);
+	fill(console, ' ');
 }
 
 void fill(const struct Console* console, const char c) {
 	//TODO implement error handling
-
 
 	int width = 0, height = 0;
 	if (getdimensions(console, &width, &height) != 1) {
