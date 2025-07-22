@@ -122,6 +122,9 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 
 char getchr(const struct Console* console) {
 	//TODO implement error handling
+	//TODO add virtual key codes for arrows, special keys etc.
+	// TODO add unicode
+	// TODO "events" in struct console pointer to function when resize or click event occurs
 
 	if (!console->blockInput) {
 		// not blocking input
@@ -178,6 +181,8 @@ void setchar(const struct Console* console, char c) {
 }
 
 void setcharcursor(const struct Console* console, char c, int row, int col) {
+	//TODO implement error handling
+
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
 	setcursorposition(console, row, col);
