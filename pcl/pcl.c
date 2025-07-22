@@ -954,7 +954,7 @@ void setstringcursor(const struct Console* console, const char *string, const in
 
 void clear(const struct Console* console) {
 	//TODO implement error handling
-
+	//TODO use fill() function below
 
 	int width = 0, height = 0;
 	if (getdimensions(console, &width, &height) != 1) {
