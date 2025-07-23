@@ -58,6 +58,18 @@ void end(struct Console* console) {
 	free(console);
 }
 
+int setinputblock(struct Console *console, BOOL blockinput) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->blockInput = blockinput;
+	return 0;
+}
+
+int getinputblock(const struct Console *console) {
+	return console->blockInput;
+}
+
 char* gettitle(struct Console* console) {
 	//TODO implement error handling
 
@@ -121,14 +133,38 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 	return 1;
 }
 
+/**
+ * pure ReadConsoleInput() wrapper without any non-blocking or timeout features
+ * but TODO: checks console input buffer for other than keyboard events and fires them
+ *
+ * @param console pointer to struct Console
+ * @return char from console input buffer
+ */
+char puregetchar(const struct Console* console) {
+	DWORD read;
+	INPUT_RECORD keyboard[1];
+
+	const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+
+	if (result == 0 || read != 1) {
+		// error ReadConsoleInput failed
+		return -1;
+	}
+	if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+		const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+		return c;
+	}
+	return -2;
+}
+
 char getchr(const struct Console* console) {
 	//TODO implement error handling
 	//TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 	// TODO "events" in struct console pointer to function when resize or click event occurs
 
-	if (!console->blockInput) {
-		// not blocking input
+
+	if (!console->blockInput) { // non-blocking input behaviour
 		INPUT_RECORD lpBuffer[1];
 		DWORD read;
 		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &read);
@@ -210,6 +246,7 @@ int getcharvariable(const struct Console* console, char* c) {
 	DWORD read;
 
 	while (1) {
+		//TODO: replace with puregetchar()
 		INPUT_RECORD keyboard[1];
 		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
 		if (result == 0 || read != 1) {
@@ -239,6 +276,7 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 
 
 	while (1) {
+		//TODO: replace with puregetchar()
 		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
 		if (result == 0 || read != 1) {
 			return -1;
@@ -257,6 +295,7 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
+		//TODO: replace with puregetchar()
 			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 				(*buffer)[*buffercount] = '\0';
 				return ret;
@@ -301,6 +340,7 @@ char getunsignedintkeyboardin(const struct Console* console, char** buffer, int*
 	*buffercount = 0;
 
 	while (1) {
+		//TODO: replace with puregetchar()
 		INPUT_RECORD keyboard[1];
 		if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 			(*buffer)[*buffercount] = '\0';
@@ -537,6 +577,7 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 
 
 	while (1) {
+		//TODO: replace with puregetchar()
 		int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
 		if (result == 0 || read != 1) {
 			return -1;
@@ -555,6 +596,7 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
+		//TODO: replace with puregetchar()
 			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
 				(*buffer)[*buffercount] = '\0';
 				return ret;
@@ -879,6 +921,7 @@ void getstring(const struct Console* console, char *buffer, size_t size) {
 
 	int i = 0;
 	while (i != size - 1) {
+		//TODO: replace with puregetchar()
 		INPUT_RECORD buff[1];
 		DWORD read;
 		ReadConsoleInput(console->inputHandle, buff, 1, &read);
@@ -908,6 +951,7 @@ void getstringbuffer(const struct Console* console, char *buffer, const size_t s
 
 	int i = 0;
 	while (i != size - 1) {
+		//TODO: replace with puregetchar()
 		INPUT_RECORD buff[1];
 		DWORD read;
 		ReadConsoleInput(console->inputHandle, buff, 1, &read);

@@ -34,6 +34,25 @@ struct Console* start(void);
 void end(struct Console* console);
 
 /**
+ * Sets or unsets getchr() input blocking behaviour
+ * See also getinputblock()
+ *
+ * @param console pointer to struct Console
+ * @param blockinput should be TRUE or FALSE
+ * @return 1 if eveything went well otherwise returns 0
+ */
+int setinputblock(struct Console* console, int blockinput);
+
+/**
+ * Returns getchr() input blocking behaviour
+ * See also setinputblock()
+ *
+ * @param console pointer to struct Console
+ * @return current state of input block. TRUE or FALSE
+ */
+int getinputblock(const struct Console* console);
+
+/**
  * Gets a console title
  *
  * @returns char* a pointer to name of console
