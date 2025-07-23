@@ -53,6 +53,25 @@ int setinputblock(struct Console* console, int blockinput);
 int getinputblock(const struct Console* console);
 
 /**
+ * Sets timeout
+ * See also gettimeout()
+ *
+ * @param console pointer to struct Console
+ * @param timeout should be >= 0
+ * @return 1 if eveything went well otherwise returns 0
+ */
+int settimeout(struct Console* console, int timeout);
+
+/**
+ * Returns set timeout
+ * See also settimeout()
+ *
+ * @param console pointer to struct Console
+ * @return current value of timeout
+ */
+int gettimeout(const struct Console* console);
+
+/**
  * Gets a console title
  *
  * @returns char* a pointer to name of console
@@ -84,6 +103,7 @@ int getdimensions(const struct Console* console, int* width, int* height);
 
 /**
  * Gets first char from stdin
+ * Warning! input blocking is "strongerer" than timeout
  *
  * @return char
  */

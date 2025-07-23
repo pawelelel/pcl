@@ -4,6 +4,7 @@
 
 #include <pcl.h>
 #include <stdio.h>
+#include <time.h>
 
 struct Console* start(void) {
 	//TODO implement error handling
@@ -43,7 +44,8 @@ struct Console* start(void) {
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->windowHandle = GetCurrentProcess();
-	console->blockInput = FALSE;
+	console->blockInput = TRUE;
+	console->blockTimeout = 0;
 	return console;
 }
 
@@ -68,6 +70,23 @@ int setinputblock(struct Console *console, BOOL blockinput) {
 
 int getinputblock(const struct Console *console) {
 	return console->blockInput;
+}
+
+int settimeout(struct Console *console, int timeout) {
+	//TODO implement error handling in docs
+	if (console == NULL) {
+		return -1;
+	}
+	if (timeout < 0) {
+		return -2;
+	}
+	console->blockTimeout = timeout;
+	return 0;
+}
+
+int gettimeout(const struct Console *console) {
+	//TODO implement error handling
+	return console->blockTimeout;
 }
 
 char* gettitle(struct Console* console) {
@@ -184,18 +203,31 @@ char getchr(const struct Console* console) {
 		}
 	}
 
-	INPUT_RECORD buffer[1];
-	DWORD read;
-	ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+	DWORD elapsedtimemiliseconds = 0;
 
-	if (read == 0) {
-		return 0;
+	while (elapsedtimemiliseconds < console->blockTimeout) {
+		DWORD start = GetTickCount();
+
+		DWORD result = WaitForSingleObject(console->inputHandle, console->blockTimeout - elapsedtimemiliseconds);
+		if (result == WAIT_TIMEOUT) {
+			return 0;
+		}
+
+		INPUT_RECORD buffer[1];
+		DWORD read;
+		ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+
+		if (read == 0) {
+			return 0;
+		}
+
+		if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
+			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+		}
+
+		DWORD stop = GetTickCount();
+		elapsedtimemiliseconds += stop - start;
 	}
-
-	if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
-		return buffer[0].Event.KeyEvent.uChar.AsciiChar;
-	}
-
 	return 0;
 }
 
