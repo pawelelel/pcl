@@ -163,17 +163,18 @@ char puregetchar(const struct Console* console) {
 	DWORD read;
 	INPUT_RECORD keyboard[1];
 
-	const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+	while (1) {
+		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
 
-	if (result == 0 || read != 1) {
-		// error ReadConsoleInput failed
-		return -1;
+		if (result == 0 || read != 1) {
+			// error ReadConsoleInput failed
+			return -1;
+		}
+		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
+			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
+			return c;
+		}
 	}
-	if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-		const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-		return c;
-	}
-	return -2;
 }
 
 char getchr(const struct Console* console) {
@@ -944,32 +945,50 @@ void setstringformattedcursor(const struct Console* console, char* format, int r
 	setcursorposition(console, nowrow, nowcol);
 }
 
+typedef struct {
+	const struct Console* console;
+	char readChar;
+} GetPureCharThreadArgs;
+
+DWORD puregetcharthread(LPVOID lpParam) {
+	GetPureCharThreadArgs* args = lpParam;
+
+	args->readChar = puregetchar(args->console);
+	return 0;
+}
+
 void getstring(const struct Console* console, char *buffer, size_t size) {
 	//TODO implement error handling
-
 	if (buffer == NULL) {
 		return;
 	}
 
+	DWORD elapsedtimemiliseconds = 0;
 	int i = 0;
-	while (i != size - 1) {
-		//TODO: replace with puregetchar()
-		INPUT_RECORD buff[1];
-		DWORD read;
-		ReadConsoleInput(console->inputHandle, buff, 1, &read);
+	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
+		DWORD start = GetTickCount();
 
-		if (buff[0].EventType == KEY_EVENT) {
-			if (buff[0].Event.KeyEvent.bKeyDown) {
-				char c = buff[0].Event.KeyEvent.uChar.AsciiChar;
-				if (c == '\n' || c == '\r') {
-					break;
-				}
-				if (c != 0 && isprint(c)) {
-					buffer[i] = c;
-					i++;
-				}
-			}
+		GetPureCharThreadArgs args;
+		args.console = console;
+		args.readChar = 0;
+		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
+
+		DWORD result = WaitForSingleObject(thread, console->blockTimeout - elapsedtimemiliseconds);
+		if (result == WAIT_TIMEOUT) {
+			break;
 		}
+
+		char c = args.readChar;
+
+		if (c == '\n' || c == '\r') {
+			break;
+		}
+		if (c != 0 && isprint(c)) {
+			buffer[i] = c;
+			i++;
+		}
+		DWORD stop = GetTickCount();
+		elapsedtimemiliseconds += stop - start;
 	}
 	buffer[i] = '\0';
 }
@@ -981,22 +1000,29 @@ void getstringbuffer(const struct Console* console, char *buffer, const size_t s
 		return;
 	}
 
+	DWORD elapsedtimemiliseconds = 0;
 	int i = 0;
-	while (i != size - 1) {
-		//TODO: replace with puregetchar()
-		INPUT_RECORD buff[1];
-		DWORD read;
-		ReadConsoleInput(console->inputHandle, buff, 1, &read);
+	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
+		DWORD start = GetTickCount();
 
-		if (buff[0].EventType == KEY_EVENT) {
-			if (buff[0].Event.KeyEvent.bKeyDown) {
-				char c = buff[0].Event.KeyEvent.uChar.AsciiChar;
-				if (c != 0 && isprint(c)) {
-					buffer[i] = c;
-					i++;
-				}
-			}
+		GetPureCharThreadArgs args;
+		args.console = console;
+		args.readChar = 0;
+		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
+
+		DWORD result = WaitForSingleObject(thread, console->blockTimeout - elapsedtimemiliseconds);
+		if (result == WAIT_TIMEOUT) {
+			break;
 		}
+
+		char c = args.readChar;
+
+		if (c != 0 && isprint(c)) {
+			buffer[i] = c;
+			i++;
+		}
+		DWORD stop = GetTickCount();
+		elapsedtimemiliseconds += stop - start;
 	}
 	buffer[i] = '\0';
 }

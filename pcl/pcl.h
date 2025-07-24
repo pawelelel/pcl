@@ -154,14 +154,16 @@ void setstringformatted(const struct Console* console, char* format, ...);
 void setstringformattedcursor(const struct Console* console, char* format, int row, int col, ...);
 
 /**
- * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size
+ * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size or execution time reaches timeout time
+ * Always adds '\0' at last place
  *
  * @param buffer input buffer
  */
 void getstring(const struct Console* console, char* buffer, size_t size);
 
 /**
- * Gets chars from stdin till reaches buffer size
+ * Gets chars from stdin till reaches buffer size or execution time reaches timeout time
+ * Always adds '\0' at last place
  *
  * @param console pointer to struct Console
  * @param buffer input buffer
