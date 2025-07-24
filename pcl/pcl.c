@@ -165,7 +165,6 @@ char puregetchar(const struct Console* console) {
 
 	while (1) {
 		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-
 		if (result == 0 || read != 1) {
 			// error ReadConsoleInput failed
 			return -1;
@@ -276,27 +275,12 @@ void setcharcursor(const struct Console* console, char c, int row, int col) {
 
 //TODO implement better error handling
 int getcharvariable(const struct Console* console, char* c) {
-	DWORD read;
-
-	while (1) {
-		//TODO: replace with puregetchar()
-		INPUT_RECORD keyboard[1];
-		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-		if (result == 0 || read != 1) {
-			// error ReadConsoleInput failed
-			return -1;
-		}
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			*c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			return 0;
-		}
-	}
+	*c = puregetchar(console);
+	return 0;
 }
 
 char getsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
-	INPUT_RECORD keyboard[1];
-	DWORD read;
 
 	if (*buffer == NULL) {
 		*buffer = malloc(10 * sizeof(char));
@@ -307,80 +291,22 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 	}
 	*buffercount = 0;
 
-
 	while (1) {
-		//TODO: replace with puregetchar()
-		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-		if (result == 0 || read != 1) {
-			return -1;
-		}
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			if (isdigit(c) || c == '-') {
-				(*buffer)[(*buffercount)++] = c;
-				ret = c;
-				break;
-			}
+		char c = puregetchar(console);
+
+		if (isdigit(c) || c == '-') {
+			(*buffer)[(*buffercount)++] = c;
 			ret = c;
 			break;
 		}
+		ret = c;
+		break;
 	}
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
-		//TODO: replace with puregetchar()
-			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
-				(*buffer)[*buffercount] = '\0';
-				return ret;
-			}
-			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-				if (isdigit(c)) {
-					(*buffer)[(*buffercount)++] = c;
-					if (*buffercount % 10 == 0) {
-						char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
-						if (temp == NULL) {
-							free(*buffer);
-							*buffer = NULL;
-							*buffercount = 0;
-							return 0;
-						}
-						*buffer = temp;
-					}
-				} else {
-					ret = c;
-					break;
-				}
-			}
-		}
-	}
+			char c = puregetchar(console);
 
-	(*buffer)[*buffercount] = '\0';
-	return ret;
-}
-
-char getunsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
-	char ret = 0;
-	DWORD read;
-
-	if (*buffer == NULL) {
-		*buffer = malloc(10 * sizeof(char));
-		if (*buffer == NULL) {
-			*buffercount = 0;
-			return 0;
-		}
-	}
-	*buffercount = 0;
-
-	while (1) {
-		//TODO: replace with puregetchar()
-		INPUT_RECORD keyboard[1];
-		if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
-			(*buffer)[*buffercount] = '\0';
-			return ret;
-		}
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
 			if (isdigit(c)) {
 				(*buffer)[(*buffercount)++] = c;
 				if (*buffercount % 10 == 0) {
@@ -397,6 +323,42 @@ char getunsignedintkeyboardin(const struct Console* console, char** buffer, int*
 				ret = c;
 				break;
 			}
+		}
+	}
+
+	(*buffer)[*buffercount] = '\0';
+	return ret;
+}
+
+char getunsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+	char ret = 0;
+
+	if (*buffer == NULL) {
+		*buffer = malloc(10 * sizeof(char));
+		if (*buffer == NULL) {
+			*buffercount = 0;
+			return 0;
+		}
+	}
+	*buffercount = 0;
+
+	while (1) {
+		char c = puregetchar(console);
+		if (isdigit(c)) {
+			(*buffer)[(*buffercount)++] = c;
+			if (*buffercount % 10 == 0) {
+				char* temp = realloc(*buffer, (*buffercount + 10) * sizeof(char));
+				if (temp == NULL) {
+					free(*buffer);
+					*buffer = NULL;
+					*buffercount = 0;
+					return 0;
+				}
+				*buffer = temp;
+			}
+		} else {
+			ret = c;
+			break;
 		}
 	}
 
@@ -596,8 +558,6 @@ char getunsignedlonglongvariable(const struct Console* console, unsigned long lo
 
 char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
-	INPUT_RECORD keyboard[1];
-	DWORD read;
 
 	if (*buffer == NULL) {
 		*buffer = malloc(10 * sizeof(char));
@@ -608,50 +568,35 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 	}
 	*buffercount = 0;
 
-
 	while (1) {
-		//TODO: replace with puregetchar()
-		int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
-		if (result == 0 || read != 1) {
-			return -1;
-		}
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			if (isdigit(c) || c == '-') {
-				(*buffer)[(*buffercount)++] = c;
-				ret = c;
-				break;
-			}
+		char c = puregetchar(console);
+		if (isdigit(c) || c == '-') {
+			(*buffer)[(*buffercount)++] = c;
 			ret = c;
 			break;
 		}
+		ret = c;
+		break;
 	}
 
 	if (isdigit(ret) || ret == '-') {
 		while (1) {
-		//TODO: replace with puregetchar()
-			if (!ReadConsoleInput(console->inputHandle, keyboard, 1, &read) || read != 1) {
-				(*buffer)[*buffercount] = '\0';
-				return ret;
-			}
-			if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-				const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-				if (isdigit(c) || c == '.') {
-					(*buffer)[(*buffercount)++] = c;
-					if (*buffercount % 10 == 0) {
-						char* temp = realloc(*buffer, *buffercount * 2 * sizeof(char));
-						if (temp == NULL) {
-							free(*buffer);
-							*buffer = NULL;
-							*buffercount = 0;
-							return 0;
-						}
-						*buffer = temp;
+			char c = puregetchar(console);
+			if (isdigit(c) || c == '.') {
+				(*buffer)[(*buffercount)++] = c;
+				if (*buffercount % 10 == 0) {
+					char* temp = realloc(*buffer, *buffercount * 2 * sizeof(char));
+					if (temp == NULL) {
+						free(*buffer);
+						*buffer = NULL;
+						*buffercount = 0;
+						return 0;
 					}
-				} else {
-					ret = c;
-					break;
+					*buffer = temp;
 				}
+			} else {
+				ret = c;
+				break;
 			}
 		}
 	}
