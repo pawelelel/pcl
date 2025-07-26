@@ -7,18 +7,6 @@
 
 #include <windows.h>
 
-struct Console {
-	HANDLE inputHandle;
-	int currentOutput;
-	HANDLE outputHandle1;
-	HANDLE outputHandle2;
-	HANDLE errorHandle;
-	HANDLE windowHandle;
-	//TODO implement
-	int blockInput;
-	int blockTimeout;
-};
-
 /**
  * Starts library
  *
