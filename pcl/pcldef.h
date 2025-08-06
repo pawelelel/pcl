@@ -20,30 +20,44 @@ struct Console {
 	int blockTimeout;
 
 	/**
-	 *
+	 * That event is raised when console window is focused or unfocused
 	 *
 	 * @param int current window state defined by FOCUSED and UNFOCUSED macros
 	 */
 	void(*FocusEvent)(int);
+
 	/**
+	 * That event is raised when console window is focused and keyboard key is clicked
 	 *
+	 * @param char key
 	 */
 	void(*KeyEvent)(char);
+
 	/**
+	 * That event is raised when console window is docused or unfocused
 	 *
+	 * @param int height cursor position
+	 * @param int width cursor position
+	 * @param int button if mouse button was clicked than this variable is set
+	 * @param int keystate if additional keys are clicked
+	 * @param int action specifies mouse behaviour
 	 */
 	void(*MouseEvent)(int, int, int, int, int);
+
 	/**
+	 * That event is raised when console window is docused or unfocused
 	 *
+	 * @param int height
+	 * @param int width
 	 */
 	void(*ResizeEvent)(int, int);
 };
 
 #define LEFT_MOUSE_BUTTON_PRESSED 1
 #define RIGHT_MOUSE_BUTTON_PRESSED 2
-#define WHEEL_MOUSE_BUTTON_PRESSED 3
+#define WHEEL_MOUSE_BUTTON_PRESSED 4
 
-
+#define MOUSE_PRESSED_OR_RELEASED 0
 
 #define FOCUSED 1
 #define UNFOCUSED 1

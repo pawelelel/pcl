@@ -305,9 +305,9 @@ char getchr(const struct Console* console) {
 						console->MouseEvent(
 								lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
 								lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
-								(int)lpBuffer[0].Event.MouseEvent.dwButtonState, // TODO test which key is which number
+								(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
 								(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
-								(int)lpBuffer[0].Event.MouseEvent.dwEventFlags // TODO add mouse presses / releassed
+								(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
 							);
 					}
 					break;
