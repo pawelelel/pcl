@@ -266,8 +266,6 @@ char getchr(const struct Console* console) {
 	//TODO implement error handling
 	//TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
-	// TODO "events" in struct console pointer to function when resize or click event occurs
-
 
 	if (!console->blockInput) { // non-blocking input behaviour
 		INPUT_RECORD lpBuffer[1];
