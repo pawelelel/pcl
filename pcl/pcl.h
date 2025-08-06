@@ -41,6 +41,68 @@ int setinputblock(struct Console* console, int blockinput);
 int getinputblock(const struct Console* console);
 
 /**
+ * Sets focus event function
+ *
+ * @param console pointer to struct Console
+ * @param FocusEvent pointer to event handling function receives FOCUSED or UNFOCUSED argument
+ * @return error code
+ */
+int setfocusevent(struct Console* console, void(*FocusEvent)(int));
+
+/**
+ * Unsets focus event function
+ * 
+ * @param console pointer to struct Console
+ * @return error code
+ */
+int unsetfocusevent(struct Console* console);
+
+/**
+ *
+ * @param console pointer to struct Console
+ * @param KeyEvent pointer to event handling function
+ * @return error code
+ */
+int setKeyEvent(struct Console* console, void(*KeyEvent)(char));
+
+/**
+ * 
+ * @param console pointer to struct Console
+ * @return error code
+ */
+int unsetKeyEvent(struct Console* console);
+
+/**
+ * 
+ * @param console pointer to struct Console
+ * @param MouseEvent pointer to event handling function
+ * @return error code
+ */
+int setMouseEvent(struct Console* console, void(*MouseEvent)(int, int, int, int, int));
+
+/**
+ * 
+ * @param console pointer to struct Console
+ * @return error code
+ */
+int unsetMouseEvent(struct Console* console);
+
+/**
+ * 
+ * @param console pointer to struct Console
+ * @param ResizeEvent pointer to event handling function
+ * @return error code
+ */
+int setResizeEvent(struct Console* console, void(*ResizeEvent)(int, int));
+
+/**
+ * 
+ * @param console pointer to struct Console
+ * @return error code
+ */
+int unsetResizeEvent(struct Console* console);
+
+/**
  * Sets timeout
  * See also gettimeout()
  *

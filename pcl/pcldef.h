@@ -1,5 +1,5 @@
 //
-// Created by pawci on 24.07.2025.
+// Created by pawel	on 24.07.2025.
 //
 // This file contains constants ad struct definitions for pcl library
 //
@@ -19,12 +19,31 @@ struct Console {
 	int blockInput;
 	int blockTimeout;
 
+	/**
+	 *
+	 *
+	 * @param int current window state defined by FOCUSED and UNFOCUSED macros
+	 */
 	void(*FocusEvent)(int);
+	/**
+	 *
+	 */
 	void(*KeyEvent)(char);
-	void(*MenuEvent)(void*);
-	void(*MouseEvent)(void*);
-	void(*ResizeEvent)(void*);
+	/**
+	 *
+	 */
+	void(*MouseEvent)(int, int, int, int, int);
+	/**
+	 *
+	 */
+	void(*ResizeEvent)(int, int);
 };
+
+#define LEFT_MOUSE_BUTTON_PRESSED 1
+#define RIGHT_MOUSE_BUTTON_PRESSED 2
+#define WHEEL_MOUSE_BUTTON_PRESSED 3
+
+
 
 #define FOCUSED 1
 #define UNFOCUSED 1

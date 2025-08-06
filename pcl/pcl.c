@@ -3,8 +3,8 @@
 //
 
 #include <pcl.h>
+#include <pcldef.h>
 #include <stdio.h>
-#include <time.h>
 
 struct Console* start(void) {
 	//TODO implement error handling
@@ -13,6 +13,11 @@ struct Console* start(void) {
 
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
+
+	DWORD fdwMode = ENABLE_EXTENDED_FLAGS;
+	WINBOOL res = SetConsoleMode(console->inputHandle, fdwMode);
+	fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
 
 	console->currentOutput = 1;
 	console->outputHandle1 = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -43,9 +48,14 @@ struct Console* start(void) {
 	free(buffer);
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
-	console->windowHandle = GetCurrentProcess();
 	console->blockInput = TRUE;
 	console->blockTimeout = 0;
+
+	console->FocusEvent = NULL;
+	console->KeyEvent = NULL;
+	console->MouseEvent = NULL;
+	console->ResizeEvent = NULL;
+
 	return console;
 }
 
@@ -70,6 +80,82 @@ int setinputblock(struct Console *console, BOOL blockinput) {
 
 int getinputblock(const struct Console *console) {
 	return console->blockInput;
+}
+
+int setfocusevent(struct Console *console, void(*FocusEvent)(int)) {
+	if (console == NULL) {
+		return -1;
+	}
+	if (FocusEvent == NULL) {
+		return -2;
+	}
+	console->FocusEvent = FocusEvent;
+	return 0;
+}
+
+int unsetfocusevent(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->FocusEvent = NULL;
+	return 0;
+}
+
+int setKeyEvent(struct Console *console, void(*KeyEvent)(char)) {
+	if (console == NULL) {
+		return -1;
+	}
+	if (KeyEvent == NULL) {
+		return -2;
+	}
+	console->KeyEvent = KeyEvent;
+	return 0;
+}
+
+int unsetKeyEvent(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->KeyEvent = NULL;
+	return 0;
+}
+
+int setMouseEvent(struct Console *console, void(*MouseEvent)(int, int, int, int, int)) {
+	if (console == NULL) {
+		return -1;
+	}
+	if (MouseEvent == NULL) {
+		return -2;
+	}
+	console->MouseEvent = MouseEvent;
+	return 0;
+}
+
+int unsetMouseEvent(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->MouseEvent = NULL;
+	return 0;
+}
+
+int setResizeEvent(struct Console *console, void(*ResizeEvent)(int, int)) {
+	if (console == NULL) {
+		return -1;
+	}
+	if (ResizeEvent == NULL) {
+		return -2;
+	}
+	console->ResizeEvent = ResizeEvent;
+	return 0;
+}
+
+int unsetResizeEvent(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->ResizeEvent = NULL;
+	return 0;
 }
 
 int settimeout(struct Console *console, int timeout) {
@@ -190,14 +276,56 @@ char getchr(const struct Console* console) {
 		if (b == 0) {
 			return -1;
 		}
-		if (read == 1 && (lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown)) {
-			// peeked something but not a keybaord input we want
-			// lets kick it out of buffer
+		if (read == 1) {
+			// peeked something
+			// lets kick it out of buffer and handle anything
 			INPUT_RECORD buffer[1];
 			ReadConsoleInput(console->inputHandle, buffer, 1, &read);
+
+			switch (lpBuffer[0].EventType) {
+				case FOCUS_EVENT: {
+					if (console->FocusEvent != NULL) {
+						console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+					}
+					break;
+				}
+				case KEY_EVENT: {
+					if (console->KeyEvent != NULL) {
+						console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+					}
+					return buffer[0].Event.KeyEvent.uChar.AsciiChar;
+				}
+				case MENU_EVENT: {
+					// ignored
+					break;
+				}
+				case MOUSE_EVENT: {
+					if (console->MouseEvent != NULL) {
+
+						console->MouseEvent(
+								lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
+								lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
+								(int)lpBuffer[0].Event.MouseEvent.dwButtonState, // TODO test which key is which number
+								(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
+								(int)lpBuffer[0].Event.MouseEvent.dwEventFlags // TODO add mouse presses / releassed
+							);
+					}
+					break;
+				}
+				case WINDOW_BUFFER_SIZE_EVENT: {
+					if (console->ResizeEvent != NULL) {
+						console->ResizeEvent(
+								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
+								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
+							);
+					}
+				}
+				default: break;
+			}
+
 			return 0;
 		}
-		if (read == 0 || lpBuffer[0].EventType != KEY_EVENT || !lpBuffer[0].Event.KeyEvent.bKeyDown) {
+		if (read == 0) {
 			// found nothing
 			return 0;
 		}
