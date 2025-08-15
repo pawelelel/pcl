@@ -63,7 +63,7 @@ int unsetfocusevent(struct Console* console);
  * @param KeyEvent pointer to event handling function
  * @return error code
  */
-int setKeyEvent(struct Console* console, void(*KeyEvent)(char));
+int setKeyEvent(struct Console* console, void(*KeyEvent)(char, int));
 
 /**
  * 

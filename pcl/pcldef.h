@@ -22,7 +22,7 @@ struct Console {
 	/**
 	 * That event is raised when console window is focused or unfocused
 	 *
-	 * @param int current window state defined by FOCUSED and UNFOCUSED macros
+	 * @param int current window state can be FOCUSED and UNFOCUSED
 	 */
 	void(*FocusEvent)(int);
 
@@ -30,8 +30,9 @@ struct Console {
 	 * That event is raised when console window is focused and keyboard key is clicked
 	 *
 	 * @param char key
+	 * @param int keystate can be PRESSED or RELEASED
 	 */
-	void(*KeyEvent)(char);
+	void(*KeyEvent)(char, int);
 
 	/**
 	 * That event is raised when console window is docused or unfocused
@@ -61,5 +62,8 @@ struct Console {
 
 #define FOCUSED 1
 #define UNFOCUSED 1
+
+#define PRESSED 1
+#define RELEASED 0
 
 #endif //PCLDEF_H

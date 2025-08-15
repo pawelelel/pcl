@@ -101,7 +101,7 @@ int unsetfocusevent(struct Console *console) {
 	return 0;
 }
 
-int setKeyEvent(struct Console *console, void(*KeyEvent)(char)) {
+int setKeyEvent(struct Console *console, void(*KeyEvent)(char, int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -240,24 +240,63 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 
 /**
  * pure ReadConsoleInput() wrapper without any non-blocking or timeout features
- * but TODO: checks console input buffer for other than keyboard events and fires them
+ * but checks console input buffer for other than keyboard events and fires them
  *
  * @param console pointer to struct Console
  * @return char from console input buffer
  */
 char puregetchar(const struct Console* console) {
 	DWORD read;
-	INPUT_RECORD keyboard[1];
 
 	while (1) {
-		const int result = ReadConsoleInput(console->inputHandle, keyboard, 1, &read);
+		INPUT_RECORD lpBuffer[1];
+		const int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
 		if (result == 0 || read != 1) {
 			// error ReadConsoleInput failed
 			return -1;
 		}
-		if (keyboard[0].EventType == KEY_EVENT && keyboard[0].Event.KeyEvent.bKeyDown) {
-			const char c = keyboard[0].Event.KeyEvent.uChar.AsciiChar;
-			return c;
+
+		switch (lpBuffer[0].EventType) {
+			case FOCUS_EVENT: {
+				if (console->FocusEvent != NULL) {
+					console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+				}
+				break;
+			}
+			case KEY_EVENT: {
+				if (console->KeyEvent != NULL) {
+					console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+				}
+				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
+					return lpBuffer[0].Event.KeyEvent.uChar.AsciiChar;
+				}
+			}
+			case MENU_EVENT: {
+				// ignored
+				break;
+			}
+			case MOUSE_EVENT: {
+				if (console->MouseEvent != NULL) {
+
+					console->MouseEvent(
+							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
+							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
+							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
+							(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
+							(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
+						);
+				}
+				break;
+			}
+			case WINDOW_BUFFER_SIZE_EVENT: {
+				if (console->ResizeEvent != NULL) {
+					console->ResizeEvent(
+							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
+							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
+						);
+				}
+			}
+			default: break;
 		}
 	}
 }
@@ -289,7 +328,7 @@ char getchr(const struct Console* console) {
 				}
 				case KEY_EVENT: {
 					if (console->KeyEvent != NULL) {
-						console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+						console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 					}
 					return buffer[0].Event.KeyEvent.uChar.AsciiChar;
 				}
