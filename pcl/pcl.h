@@ -131,6 +131,7 @@ char* gettitle(struct Console* console);
 /**
  * Sets a new title to console window
  *
+ * @param console pointer to struct Console
  * @param title new console title
  * @return 1 if eveything went well otherwise returns 0
  */
@@ -153,7 +154,9 @@ int getdimensions(const struct Console* console, int* width, int* height);
 
 /**
  * Gets first char from stdin
- * Warning! input blocking is "strongerer" than timeout
+ * Warning! input blocking is "stronger" than timeout
+ *
+ * @param console pointer to struct Console
  *
  * @return char
  */
@@ -170,6 +173,7 @@ void setchar(const struct Console* console, char c);
 /**
  * Sets char on specified position. Do not changes cursor position
  *
+ * @param console pointer to struct Console
  * @param c char to set
  * @param row row number
  * @param col column number
@@ -188,6 +192,7 @@ int getvariables(const struct Console* console, char* format, ...);
 /**
  * Prints formatted string on cursor position. Changes cursor position
  *
+ * @param console pointer to struct Console
  * @param format format string
  * @param ... variables to format
  */
@@ -196,18 +201,21 @@ void setstringformatted(const struct Console* console, char* format, ...);
 /**
  * Prints formatted string on cursor position. Do not changes cursor position
  *
+ * @param console pointer to struct Console
  * @param format format string
  * @param row row number
  * @param col column number
  * @param ... variables to format
  */
-void setstringformattedcursor(const struct Console* console, char* format, int row, int col, ...);
+void setstringformattedcursor(const struct Console* console, int row, int col, char* format, ...);
 
 /**
  * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size or execution time reaches timeout time
  * Always adds '\0' at last place
  *
+ * @param console pointer to struct Console
  * @param buffer input buffer
+ * @param size
  */
 void getstring(const struct Console* console, char* buffer, size_t size);
 
@@ -232,6 +240,7 @@ void setstring(const struct Console* console, const char* string);
 /**
  * Prints string on cursor position. Do not changes cursor position
  *
+ * @param console pointer to struct Console
  * @param string input
  * @param row row number
  * @param col column number

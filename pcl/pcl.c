@@ -1029,9 +1029,8 @@ void setstringformatted(const struct Console* console, char *format, ...) {
 	free(memory);
 }
 
-void setstringformattedcursor(const struct Console* console, char* format, int row, int col, ...) {
+void setstringformattedcursor(const struct Console* console, int row, int col, char* format, ...) {
 	//TODO implement error handling
-
 
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
