@@ -129,13 +129,17 @@ int gettimeout(const struct Console* console);
 char* gettitle(struct Console* console);
 
 /**
- * Sets a new title to console window
+ * Sets a title of console window
  *
  * @param console pointer to struct Console
  * @param title new console title
- * @return 1 if eveything went well otherwise returns 0
+ * @return Error code:\n
+	- 0 if eveything went well
+	- -1 if console is NULL\n
+	- -2 if title is NULL\n
+	- -3 if internal error occured
  */
-int settitle(struct Console* console, const char* title);
+int settitle(const struct Console* console, const char* title);
 
 /**
  * Returns console dimensions

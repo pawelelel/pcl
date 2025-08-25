@@ -184,13 +184,18 @@ char* gettitle(struct Console* console) {
 	return title;
 }
 
-int settitle(struct Console* console, const char* title) {
-	//TODO implement error handling
+int settitle(const struct Console* console, const char* title) {
+	if (console == NULL) {
+		return -1;
+	}
 
+	if (title == NULL) {
+		return -2;
+	}
 
 	if(!SetConsoleTitleA(title))
 	{
-		return 0;
+		return -3;
 	}
 	return 1;
 }
