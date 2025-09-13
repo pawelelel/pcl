@@ -20,8 +20,9 @@ struct Console* start(void) {
 	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
 
 	console->currentOutput = 1;
-	console->outputHandle1 = GetStdHandle(STD_OUTPUT_HANDLE);
+	console->outputHandle1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	console->outputHandle2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	SetConsoleActiveScreenBuffer(console->outputHandle1);
 
 	int width, height;
 	getdimensions(console, &width, &height);
@@ -67,6 +68,7 @@ void end(struct Console* console) {
 	CloseHandle(console->outputHandle1);
 	CloseHandle(console->outputHandle2);
 	CloseHandle(console->errorHandle);
+
 	free(console);
 }
 
