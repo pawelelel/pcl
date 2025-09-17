@@ -2,8 +2,7 @@
 // Created by pawel on 14.05.2025.
 //
 
-#include <pcl.h>
-#include <pcldef.h>
+#include "pcl.h"
 #include <stdio.h>
 
 struct Console* start(void) {
@@ -24,6 +23,7 @@ struct Console* start(void) {
 	console->outputHandle2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
 	SetConsoleActiveScreenBuffer(console->outputHandle1);
 
+	// init new empty output buffers
 	int width, height;
 	getdimensions(console, &width, &height);
 	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
@@ -70,6 +70,23 @@ void end(struct Console* console) {
 	CloseHandle(console->errorHandle);
 
 	free(console);
+}
+
+int setforegroundcolor(struct Console *console, int r, int g, int b) {
+	setstringformatted(console, "\x1b[38;2;%d;%d;%dm", r, g, b);
+	return 0;
+}
+
+int setbackgroundcolor(int r, int g, int b) {
+	return 0;
+}
+
+int clearforegroundcolor() {
+	return 0;
+}
+
+int clearbackgroundcolor() {
+	return 0;
 }
 
 int setinputblock(struct Console *console, BOOL blockinput) {

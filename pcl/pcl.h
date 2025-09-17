@@ -6,6 +6,7 @@
 #define PCL_H
 
 #include <windows.h>
+#include "pcldef.h"
 
 /**
  * Starts library
@@ -20,6 +21,40 @@ struct Console* start(void);
  * @param console pointer to struct Console
  */
 void end(struct Console* console);
+
+/**
+ * Sets foreground color to specified value
+ *
+ * @param r red
+ * @param g green
+ * @param b blue
+ * @return error code
+ */
+int setforegroundcolor(struct Console *console, int r, int g, int b);
+
+/**
+ * Sets background color to specified value
+ *
+ * @param r red
+ * @param g green
+ * @param b blue
+ * @return error code
+ */
+int setbackgroundcolor(int r, int g, int b);
+
+/**
+ * Sets foreground color to default value
+ *
+ * @return error code
+ */
+int clearforegroundcolor();
+
+/**
+ * Sets background color to default value
+ *
+ * @return error code
+ */
+int clearbackgroundcolor();
 
 /**
  * Sets or unsets getchr() input blocking behaviour
