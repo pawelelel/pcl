@@ -9,13 +9,33 @@
 
 #include <windows.h>
 
+
+
+
+
+// Queue
+// TODO make separate library for this
+struct Queue {
+	struct Node* head;
+	struct Node* tail;
+};
+
 struct Console {
+	// input
 	HANDLE inputHandle;
+	//HANDLE mutexHandle;
+	HANDLE threadHandle;
+	struct Queue* inputQueue;
+
+	// output
 	int currentOutput;
 	HANDLE outputHandle1;
 	HANDLE outputHandle2;
+
+	// error
 	HANDLE errorHandle;
-	HANDLE windowHandle;
+
+	// settings
 	int blockInput;
 	int blockTimeout;
 

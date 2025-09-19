@@ -5,6 +5,166 @@
 #include "pcl.h"
 #include <stdio.h>
 
+
+
+
+HANDLE mutexHandle;
+
+
+// Queue
+// TODO make separate library for this
+struct Node {
+	char value;
+	struct Node* previous;
+	struct Node* next;
+};
+
+struct Queue* init() {
+	struct Queue *queue = malloc(sizeof(struct Queue));
+	if (queue == NULL) {
+		// TODO error
+		return NULL;
+	}
+	queue->head = NULL;
+	queue->tail = NULL;
+	return queue;
+}
+
+int isEmpty(struct Queue *queue) {
+	if (queue == NULL) {
+		return -1;
+	}
+	if (queue->head == NULL) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void enqueue(struct Queue *queue, char input) {
+	if (queue == NULL) {
+		// TODO error
+		return;
+	}
+
+	struct Node* newNode = malloc(sizeof(struct Node));
+	if (newNode == NULL) {
+		// TODO error
+		return;
+	}
+
+	newNode->value = input;
+	newNode->next = NULL;
+
+	if (queue->head == NULL) {
+		newNode->previous = NULL;
+		queue->head = newNode;
+		queue->tail = newNode;
+		return;
+	}
+
+	newNode->previous = queue->tail;
+	queue->tail->next = newNode;
+	queue->tail = newNode;
+}
+
+char dequeue(struct Queue *queue) {
+	if (isEmpty(queue)) {
+		return -1;
+	}
+	struct Node* temp = queue->head;
+	queue->head = queue->head->next;
+	if (queue->head == NULL) {
+		queue->tail = NULL;
+	}
+	char value = temp->value;
+	free(temp);
+	return value;
+}
+
+char peek(struct Queue *queue) {
+	if (isEmpty(queue)) {
+		return -1;
+	}
+	return queue->head->value;
+}
+
+DWORD WINAPI inputthread(LPVOID lpParam) {
+	struct Console* console = (struct Console*)lpParam;
+
+	while (1) {
+		DWORD read;
+		INPUT_RECORD lpBuffer[1];
+		const int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
+		if (result == 0) {
+			// error ReadConsoleInput failed
+			return -1;
+		}
+
+		switch (lpBuffer[0].EventType) {
+			case FOCUS_EVENT: {
+				if (console->FocusEvent != NULL) {
+					console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+				}
+				break;
+			}
+			case KEY_EVENT: {
+				if (console->KeyEvent != NULL) {
+					console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+				}
+				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
+					WaitForSingleObject(mutexHandle, INFINITE);
+					enqueue(console->inputQueue, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+					ReleaseMutex(mutexHandle);
+				}
+				break;
+			}
+			case MENU_EVENT: {
+				// ignored
+				break;
+			}
+			case MOUSE_EVENT: {
+				if (console->MouseEvent != NULL) {
+
+					console->MouseEvent(
+							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
+							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
+							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
+							(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
+							(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
+						);
+				}
+				break;
+			}
+			case WINDOW_BUFFER_SIZE_EVENT: {
+				if (console->ResizeEvent != NULL) {
+					console->ResizeEvent(
+							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
+							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
+						);
+				}
+				break;
+			}
+			default: break;
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct Console* start(void) {
 	//TODO implement error handling
 	//TODO implement saving console state to restore it back at end() function
@@ -17,6 +177,11 @@ struct Console* start(void) {
 	WINBOOL res = SetConsoleMode(console->inputHandle, fdwMode);
 	fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
 	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
+
+	mutexHandle = CreateMutex(NULL, FALSE, NULL);
+	console->inputQueue = init();
+	DWORD threadid;
+	console->threadHandle = CreateThread(NULL, 0, inputthread, console, CREATE_SUSPENDED, &threadid);
 
 	console->currentOutput = 1;
 	console->outputHandle1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
@@ -57,13 +222,16 @@ struct Console* start(void) {
 	console->MouseEvent = NULL;
 	console->ResizeEvent = NULL;
 
+	ResumeThread(console->threadHandle);
+
 	return console;
 }
 
 void end(struct Console* console) {
 	//TODO implement error handling
 
-
+	CloseHandle(mutexHandle);
+	CloseHandle(console->threadHandle);
 	CloseHandle(console->inputHandle);
 	CloseHandle(console->outputHandle1);
 	CloseHandle(console->outputHandle2);
@@ -329,6 +497,17 @@ char getchr(const struct Console* console) {
 	//TODO implement error handling
 	//TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
+
+	WaitForSingleObject(mutexHandle, INFINITE);
+	if (!isEmpty(console->inputQueue)) {
+		char c = dequeue(console->inputQueue);
+		ReleaseMutex(mutexHandle);
+		return c;
+	}
+
+	ReleaseMutex(mutexHandle);
+
+	return -1;
 
 	if (!console->blockInput) { // non-blocking input behaviour
 		INPUT_RECORD lpBuffer[1];
