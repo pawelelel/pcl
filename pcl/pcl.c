@@ -8,9 +8,6 @@
 
 
 
-//HANDLE mutexHandle;
-
-
 // Queue
 // TODO make separate library for this
 struct Node {
