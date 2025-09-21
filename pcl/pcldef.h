@@ -23,7 +23,7 @@ struct Queue {
 struct Console {
 	// input
 	HANDLE inputHandle;
-	//HANDLE mutexHandle;
+	HANDLE mutexHandle;
 	HANDLE threadHandle;
 	struct Queue* inputQueue;
 

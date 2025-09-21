@@ -8,7 +8,7 @@
 
 
 
-HANDLE mutexHandle;
+//HANDLE mutexHandle;
 
 
 // Queue
@@ -112,9 +112,9 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
-					WaitForSingleObject(mutexHandle, INFINITE);
+					WaitForSingleObject(console->mutexHandle, INFINITE);
 					enqueue(console->inputQueue, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
-					ReleaseMutex(mutexHandle);
+					ReleaseMutex(console->mutexHandle);
 				}
 				break;
 			}
@@ -178,7 +178,7 @@ struct Console* start(void) {
 	fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
 	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
 
-	mutexHandle = CreateMutex(NULL, FALSE, NULL);
+	console->mutexHandle = CreateMutex(NULL, FALSE, NULL);
 	console->inputQueue = init();
 	DWORD threadid;
 	console->threadHandle = CreateThread(NULL, 0, inputthread, console, CREATE_SUSPENDED, &threadid);
@@ -230,7 +230,7 @@ struct Console* start(void) {
 void end(struct Console* console) {
 	//TODO implement error handling
 
-	CloseHandle(mutexHandle);
+	CloseHandle(console->mutexHandle);
 	CloseHandle(console->threadHandle);
 	CloseHandle(console->inputHandle);
 	CloseHandle(console->outputHandle1);
@@ -498,14 +498,14 @@ char getchr(const struct Console* console) {
 	//TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 
-	WaitForSingleObject(mutexHandle, INFINITE);
+	WaitForSingleObject(console->mutexHandle, INFINITE);
 	if (!isEmpty(console->inputQueue)) {
 		char c = dequeue(console->inputQueue);
-		ReleaseMutex(mutexHandle);
+		ReleaseMutex(console->mutexHandle);
 		return c;
 	}
 
-	ReleaseMutex(mutexHandle);
+	ReleaseMutex(console->mutexHandle);
 
 	return -1;
 
