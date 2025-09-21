@@ -82,7 +82,7 @@ int getinputblock(const struct Console* console);
  * @param FocusEvent pointer to event handling function receives FOCUSED or UNFOCUSED argument
  * @return error code
  */
-int setfocusevent(struct Console* console, void(*FocusEvent)(int));
+int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , int));
 
 /**
  * Unsets focus event function
@@ -98,14 +98,14 @@ int unsetfocusevent(struct Console* console);
  * @param KeyEvent pointer to event handling function
  * @return error code
  */
-int setKeyEvent(struct Console* console, void(*KeyEvent)(char, int));
+int setkeyevent(struct Console* console, void(*KeyEvent)(struct Console*, char, int));
 
 /**
  * 
  * @param console pointer to struct Console
  * @return error code
  */
-int unsetKeyEvent(struct Console* console);
+int unsetkeyevent(struct Console* console);
 
 /**
  * 
@@ -113,14 +113,14 @@ int unsetKeyEvent(struct Console* console);
  * @param MouseEvent pointer to event handling function
  * @return error code
  */
-int setMouseEvent(struct Console* console, void(*MouseEvent)(int, int, int, int, int));
+int setmouseevent(struct Console* console, void(*MouseEvent)(struct Console*, int, int, int, int, int));
 
 /**
  * 
  * @param console pointer to struct Console
  * @return error code
  */
-int unsetMouseEvent(struct Console* console);
+int unsetmouseevent(struct Console* console);
 
 /**
  * 
@@ -128,14 +128,14 @@ int unsetMouseEvent(struct Console* console);
  * @param ResizeEvent pointer to event handling function
  * @return error code
  */
-int setResizeEvent(struct Console* console, void(*ResizeEvent)(int, int));
+int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, int, int));
 
 /**
  * 
  * @param console pointer to struct Console
  * @return error code
  */
-int unsetResizeEvent(struct Console* console);
+int unsetresizeevent(struct Console* console);
 
 /**
  * Sets timeout

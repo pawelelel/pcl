@@ -44,44 +44,56 @@ struct Console {
 	 *
 	 * @param int current window state can be FOCUSED and UNFOCUSED
 	 */
-	void(*FocusEvent)(int);
+	void(*FocusEvent)(struct Console*, int);
 
 	/**
 	 * That event is raised when console window is focused and keyboard key is clicked
+	 * TODO Event is run in main thread ???
 	 *
 	 * @param char key
 	 * @param int keystate can be PRESSED or RELEASED
 	 */
-	void(*KeyEvent)(char, int);
+	void(*KeyEvent)(struct Console*, char, int);
 
 	/**
 	 * That event is raised when console window is docused or unfocused
 	 *
-	 * @param int height cursor position
-	 * @param int width cursor position
-	 * @param int button if mouse button was clicked than this variable is set
-	 * @param int keystate if additional keys are clicked
-	 * @param int action specifies mouse behaviour
+	 * @param int height - cursor position
+	 * @param int width - cursor position
+	 * @param int button - state of mouse buttons. Can be NONE_BUTTON_PRESSED, LEFT_MOUSE_BUTTON_PRESSED, RIGHT_MOUSE_BUTTON_PRESSED, WHEEL_MOUSE_UP, WHEEL_MOUSE_DOWN or WHEEL_MOUSE_BUTTON_PRESSED
+	 * @param int keystate - state of control keys. Can be CONTROL_KEYS_ALT_LEFT, CONTROL_KEYS_ALT_RIGHT or CONTROL_KEYS_CONTROL
+	 * @param int action - specifies what happend. Can be CLICK, MOVE, DOUBLE_CLICK, WHEEL or HORIZONTAL_WHEEL
 	 */
-	void(*MouseEvent)(int, int, int, int, int);
+	void(*MouseEvent)(struct Console*, int, int, int, int, int);
 
 	/**
-	 * That event is raised when console window is docused or unfocused
+	 * That event is raised when console window is resized
 	 *
-	 * @param int height
-	 * @param int width
+	 * @param int new height
+	 * @param int new width
 	 */
-	void(*ResizeEvent)(int, int);
+	void(*ResizeEvent)(struct Console*, int, int);
 };
 
 
 // events
 
+#define NONE_BUTTON_PRESSED 0
 #define LEFT_MOUSE_BUTTON_PRESSED 1
 #define RIGHT_MOUSE_BUTTON_PRESSED 2
 #define WHEEL_MOUSE_BUTTON_PRESSED 4
+#define WHEEL_MOUSE_UP 8388608
+#define WHEEL_MOUSE_DOWN -8388608
 
-#define MOUSE_PRESSED_OR_RELEASED 0
+#define CONTROL_KEYS_ALT_LEFT 2
+#define CONTROL_KEYS_ALT_RIGHT 10
+#define CONTROL_KEYS_CONTROL 8
+
+#define CLICK 0
+#define MOVE 1
+#define DOUBLE_CLICK 2
+#define WHEEL 4
+#define HORIZONTAL_WHEEL 8
 
 #define FOCUSED 1
 #define UNFOCUSED 1

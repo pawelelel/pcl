@@ -103,13 +103,14 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 		switch (lpBuffer[0].EventType) {
 			case FOCUS_EVENT: {
 				if (console->FocusEvent != NULL) {
-					console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
 				}
 				break;
 			}
 			case KEY_EVENT: {
 				if (console->KeyEvent != NULL) {
-					console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+					console->KeyEvent(
+						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
 					WaitForSingleObject(console->mutexHandle, INFINITE);
@@ -126,6 +127,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				if (console->MouseEvent != NULL) {
 
 					console->MouseEvent(
+							console,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
 							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
@@ -138,6 +140,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 			case WINDOW_BUFFER_SIZE_EVENT: {
 				if (console->ResizeEvent != NULL) {
 					console->ResizeEvent(
+							console,
 							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
 							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
 						);
@@ -269,7 +272,7 @@ int getinputblock(const struct Console *console) {
 	return console->blockInput;
 }
 
-int setfocusevent(struct Console *console, void(*FocusEvent)(int)) {
+int setfocusevent(struct Console *console, void(*FocusEvent)(struct Console*, int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -288,7 +291,7 @@ int unsetfocusevent(struct Console *console) {
 	return 0;
 }
 
-int setKeyEvent(struct Console *console, void(*KeyEvent)(char, int)) {
+int setkeyevent(struct Console *console, void(*KeyEvent)(struct Console*, char, int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -299,7 +302,7 @@ int setKeyEvent(struct Console *console, void(*KeyEvent)(char, int)) {
 	return 0;
 }
 
-int unsetKeyEvent(struct Console *console) {
+int unsetkeyevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -307,7 +310,7 @@ int unsetKeyEvent(struct Console *console) {
 	return 0;
 }
 
-int setMouseEvent(struct Console *console, void(*MouseEvent)(int, int, int, int, int)) {
+int setmouseevent(struct Console *console, void(*MouseEvent)(struct Console*, int, int, int, int, int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -318,7 +321,7 @@ int setMouseEvent(struct Console *console, void(*MouseEvent)(int, int, int, int,
 	return 0;
 }
 
-int unsetMouseEvent(struct Console *console) {
+int unsetmouseevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -326,7 +329,7 @@ int unsetMouseEvent(struct Console *console) {
 	return 0;
 }
 
-int setResizeEvent(struct Console *console, void(*ResizeEvent)(int, int)) {
+int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, int, int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -337,7 +340,7 @@ int setResizeEvent(struct Console *console, void(*ResizeEvent)(int, int)) {
 	return 0;
 }
 
-int unsetResizeEvent(struct Console *console) {
+int unsetresizeevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -451,13 +454,14 @@ char puregetchar(const struct Console* console) {
 		switch (lpBuffer[0].EventType) {
 			case FOCUS_EVENT: {
 				if (console->FocusEvent != NULL) {
-					console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
 				}
 				break;
 			}
 			case KEY_EVENT: {
 				if (console->KeyEvent != NULL) {
-					console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+					console->KeyEvent(
+						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
 					return lpBuffer[0].Event.KeyEvent.uChar.AsciiChar;
@@ -471,6 +475,7 @@ char puregetchar(const struct Console* console) {
 				if (console->MouseEvent != NULL) {
 
 					console->MouseEvent(
+							console,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
 							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
@@ -483,6 +488,7 @@ char puregetchar(const struct Console* console) {
 			case WINDOW_BUFFER_SIZE_EVENT: {
 				if (console->ResizeEvent != NULL) {
 					console->ResizeEvent(
+							console,
 							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
 							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
 						);
@@ -525,13 +531,14 @@ char getchr(const struct Console* console) {
 			switch (lpBuffer[0].EventType) {
 				case FOCUS_EVENT: {
 					if (console->FocusEvent != NULL) {
-						console->FocusEvent(lpBuffer[0].Event.FocusEvent.bSetFocus);
+						console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
 					}
 					break;
 				}
 				case KEY_EVENT: {
 					if (console->KeyEvent != NULL) {
-						console->KeyEvent(lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+						console->KeyEvent(
+						console, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 					}
 					return buffer[0].Event.KeyEvent.uChar.AsciiChar;
 				}
@@ -543,6 +550,7 @@ char getchr(const struct Console* console) {
 					if (console->MouseEvent != NULL) {
 
 						console->MouseEvent(
+						console,
 								lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
 								lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
 								(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
@@ -555,6 +563,7 @@ char getchr(const struct Console* console) {
 				case WINDOW_BUFFER_SIZE_EVENT: {
 					if (console->ResizeEvent != NULL) {
 						console->ResizeEvent(
+						console,
 								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
 								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
 							);
