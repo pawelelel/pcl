@@ -40,7 +40,7 @@ int setforegroundcolor(struct Console *console, int r, int g, int b);
  * @param b blue
  * @return error code
  */
-int setbackgroundcolor(int r, int g, int b);
+int setbackgroundcolor(struct Console *console, int r, int g, int b);
 
 /**
  * Sets foreground color to default value
@@ -207,7 +207,7 @@ char getchr(const struct Console* console);
  * @param console pointer to structure console
  * @param c char to set
  */
-void setchar(const struct Console* console, char c);
+void setchar(struct Console* console, char c);
 
 /**
  * Sets char on specified position. Do not changes cursor position
@@ -291,7 +291,7 @@ void setstringcursor(const struct Console* console, const char* string, int row,
  *
  * @param console pointer to struct Console
  */
-void clear(const struct Console* console);
+void clear(struct Console* console);
 
 /**
  * Fills console with specified char

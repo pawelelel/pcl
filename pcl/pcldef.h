@@ -20,6 +20,12 @@ struct Queue {
 	struct Node* tail;
 };
 
+struct Cell {
+	char data;
+	int fr, fg, fb;
+	int br, bg, bb;
+};
+
 struct Console {
 	// input
 	HANDLE inputHandle;
@@ -29,8 +35,12 @@ struct Console {
 
 	// output
 	int currentOutput;
-	HANDLE outputHandle1;
-	HANDLE outputHandle2;
+	HANDLE outputHandle;
+	struct Cell* buffer;
+	int cursor;
+	int width, height;
+	int fr, fg, fb;
+	int br, bg, bb;
 
 	// error
 	HANDLE errorHandle;
@@ -57,6 +67,7 @@ struct Console {
 
 	/**
 	 * That event is raised when console window is docused or unfocused
+	 *
 	 *
 	 * @param int height - cursor position
 	 * @param int width - cursor position

@@ -173,9 +173,7 @@ struct Console* start(void) {
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
-	DWORD fdwMode = ENABLE_EXTENDED_FLAGS;
-	WINBOOL res = SetConsoleMode(console->inputHandle, fdwMode);
-	fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+	DWORD fdwMode = ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_WINDOW_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
 	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
 
 	console->mutexHandle = CreateMutex(NULL, FALSE, NULL);
@@ -184,34 +182,30 @@ struct Console* start(void) {
 	console->threadHandle = CreateThread(NULL, 0, inputthread, console, CREATE_SUSPENDED, &threadid);
 
 	console->currentOutput = 1;
-	console->outputHandle1 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-	console->outputHandle2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-	SetConsoleActiveScreenBuffer(console->outputHandle1);
 
-	// init new empty output buffers
-	int width, height;
-	getdimensions(console, &width, &height);
-	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
-	COORD coordsize;
-	coordsize.X = (short)width;
-	coordsize.Y = (short)height;
-	COORD coordtop;
-	coordtop.X = 0;
-	coordtop.Y = 0;
-	SMALL_RECT rect;
-	rect.Left = 0;
-	rect.Top = 0;
-	rect.Right = (short)(width - 1);
-	rect.Bottom = (short)(height - 1);
-	BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
-	if (!result) {
-		return NULL;
+	console->outputHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	SetConsoleMode(console->outputHandle, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_LVB_GRID_WORLDWIDE);
+	SetConsoleActiveScreenBuffer(console->outputHandle);
+
+	CONSOLE_SCREEN_BUFFER_INFO info;
+	GetConsoleScreenBufferInfo(console->outputHandle, &info);
+
+	console->cursor = 0;
+	console->height = info.dwSize.Y;
+	console->width = info.dwSize.X;
+	console->fr = 255;console->fg = 255;console->fb = 255;
+	console->br = 0;console->bg= 0;console->bb = 0;
+
+	console->buffer = malloc(sizeof(struct Cell) * console->width * console->height);
+	for (int i = 0; i < console->height * console->width; ++i) {
+		console->buffer[i].data = ' ';
+		console->buffer[i].fr = 255;
+		console->buffer[i].fg = 255;
+		console->buffer[i].fb = 255;
+		console->buffer[i].br = 0;
+		console->buffer[i].bg = 0;
+		console->buffer[i].bb = 0;
 	}
-	BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
-	if (!result2) {
-		return NULL;
-	}
-	free(buffer);
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->blockInput = TRUE;
@@ -233,19 +227,23 @@ void end(struct Console* console) {
 	CloseHandle(console->mutexHandle);
 	CloseHandle(console->threadHandle);
 	CloseHandle(console->inputHandle);
-	CloseHandle(console->outputHandle1);
-	CloseHandle(console->outputHandle2);
+	CloseHandle(console->outputHandle);
 	CloseHandle(console->errorHandle);
 
 	free(console);
 }
 
 int setforegroundcolor(struct Console *console, int r, int g, int b) {
-	setstringformatted(console, "\x1b[38;2;%d;%d;%dm", r, g, b);
+	console->fr = r;
+	console->fg = g;
+	console->fb = b;
 	return 0;
 }
 
-int setbackgroundcolor(int r, int g, int b) {
+int setbackgroundcolor(struct Console *console, int r, int g, int b) {
+	console->br = r;
+	console->bg = g;
+	console->bb = b;
 	return 0;
 }
 
@@ -399,24 +397,13 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 		*height = 0;
 		return -3;
 	}
-	if (console->outputHandle1 == INVALID_HANDLE_VALUE || console->outputHandle2 == INVALID_HANDLE_VALUE) {
+	if (console->outputHandle == INVALID_HANDLE_VALUE) {
 		*width = 0;
 		*height = 0;
 		return -4;
 	}
 
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
+	HANDLE h = console->outputHandle;
 
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	if (GetConsoleScreenBufferInfo(h, &info) == 0) {
@@ -511,7 +498,7 @@ char getchr(const struct Console* console) {
 	ReleaseMutex(console->mutexHandle);
 
 	return -1;
-
+/*
 	if (!console->blockInput) { // non-blocking input behaviour
 		INPUT_RECORD lpBuffer[1];
 		DWORD read;
@@ -603,46 +590,32 @@ char getchr(const struct Console* console) {
 		elapsedtimemiliseconds += stop - start;
 	}
 	return 0;
+	*/
 }
 
-void setchar(const struct Console* console, char c) {
+void setchar(struct Console* console, char c) {
 	//TODO implement error handling
 
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
+	console->buffer[console->cursor].data = c;
+	console->buffer[console->cursor].fr = console->fr;
+	console->buffer[console->cursor].fg = console->fg;
+	console->buffer[console->cursor].fb = console->fb;
+	console->buffer[console->cursor].br = console->br;
+	console->buffer[console->cursor].bg = console->bg;
+	console->buffer[console->cursor].bb = console->bb;
+	if (console->cursor != console->width * console->height) {
+		console->cursor++;
 	}
-	WriteConsole(h, &c, 1, NULL, NULL);
 }
 
 void setcharcursor(const struct Console* console, char c, int row, int col) {
 	//TODO implement error handling
+	//TODO refactor
 
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
 	setcursorposition(console, row, col);
-
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
-	WriteConsole(h, &c, 1, NULL, NULL);
+	WriteConsole(console->outputHandle, &c, 1, NULL, NULL);
 
 	setcursorposition(console, nowrow, nowcol);
 }
@@ -1355,7 +1328,7 @@ void setstring(const struct Console* console, const char *string) {
 		return;
 	}
 	size_t size = strlen(string);
-	for (size_t i = 0; i < size; i++) {
+	for (int i = 0; i < size; ++i) {
 		setchar(console, string[i]);
 	}
 }
@@ -1373,14 +1346,22 @@ void setstringcursor(const struct Console* console, const char *string, const in
 	setcursorposition(console, nowrow, nowcol);
 }
 
-void clear(const struct Console* console) {
-	//TODO implement error handling
-
-	fill(console, ' ');
+void clear(struct Console* console) {
+	for (int i = 0; i < console->height * console->width; ++i) {
+		console->buffer[i].data = ' ';
+		console->buffer[i].fr = 255;
+		console->buffer[i].fg = 255;
+		console->buffer[i].fb = 255;
+		console->buffer[i].br = 0;
+		console->buffer[i].bg = 0;
+		console->buffer[i].bb = 0;
+	}
+	console->cursor = 0;
 }
 
 void fill(const struct Console* console, const char c) {
 	//TODO implement error handling
+	//TODO refactor
 
 	int width = 0, height = 0;
 	if (getdimensions(console, &width, &height) != 1) {
@@ -1390,51 +1371,28 @@ void fill(const struct Console* console, const char c) {
 
 	DWORD written;
 	COORD topleft = {0, 0};
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
-	FillConsoleOutputCharacter(h, c, width * height, topleft, &written);
-	FillConsoleOutputAttribute(h, 7, width * height, topleft, &written);
+	FillConsoleOutputCharacter(console->outputHandle, c, width * height, topleft, &written);
+	FillConsoleOutputAttribute(console->outputHandle, 7, width * height, topleft, &written);
 
 	setcursorposition(console, 0, 0);
 }
 
 void set2darray(const struct Console* console, const char* array, const int row, const int col, const int width, const int height) {
 	//TODO implement error handling
-
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
+	//TODO refactor
 
 	DWORD written;
 
 	for (int i = 0; i < width; ++i) {
 		const COORD topleft = {(short)col, (short)(row + i)};
-		WriteConsoleOutputCharacter(h, array, height, topleft, &written);
+		WriteConsoleOutputCharacter(console->outputHandle, array, height, topleft, &written);
 		array += height;
 	}
 }
 
 void setcursorposition(const struct Console* console, int row, int col) {
 	//TODO implement error handling
+	//TODO refactor
 
 
 	int width = 0, height = 0;
@@ -1454,25 +1412,14 @@ void setcursorposition(const struct Console* console, int row, int col) {
 	COORD coord;
 	coord.X = (short)col;
 	coord.Y = (short)row;
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
-	if (SetConsoleCursorPosition(h, coord) == 0) {
+	if (SetConsoleCursorPosition(console->outputHandle, coord) == 0) {
 		//TODO error code
 		return;
 	}
 }
 
 int getcursorposition(const struct Console* console, int *row, int *col) {
+	//TODO refactor
 	if (console == NULL) {
 		return -1;
 	}
@@ -1483,21 +1430,8 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 		return -3;
 	}
 
-
-	HANDLE h = NULL;
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			break;
-		}
-		default: break;
-	}
 	CONSOLE_SCREEN_BUFFER_INFO info;
-	GetConsoleScreenBufferInfo(h, &info);
+	GetConsoleScreenBufferInfo(console->outputHandle, &info);
 
 	*row = info.dwCursorPosition.Y;
 	*col = info.dwCursorPosition.X;
@@ -1505,63 +1439,57 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 }
 
 void refresh(struct Console* console) {
-	//TODO remember about updating
+	//TODO remember about updating (specially buffer size)
 	//TODO implement error handling
 
-	int row, col;
-	getcursorposition(console, &row, &col);
-
-	HANDLE h = NULL;
-	int width, height;
-	getdimensions(console, &width, &height);
-	CHAR_INFO* buffer = malloc(width * height * sizeof(CHAR_INFO));
-	COORD coordsize;
-	coordsize.X = (short)width;
-	coordsize.Y = (short)height;
-	COORD coordtop;
-	coordtop.X = 0;
-	coordtop.Y = 0;
-	SMALL_RECT rect;
-	rect.Left = 0;
-	rect.Top = 0;
-	rect.Right = (short)(width - 1);
-	rect.Bottom = (short)(height - 1);
-
-	switch (console->currentOutput) {
-		case 1: {
-			h = console->outputHandle2;
-			console->currentOutput = 2;
-
-			BOOL result = ReadConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
-			if (!result) {
-				return;
-			}
-			BOOL result2 = WriteConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
-			if (!result2) {
-				return;
-			}
-			break;
-		}
-		case 2: {
-			h = console->outputHandle1;
-			console->currentOutput = 1;
-
-			BOOL result = ReadConsoleOutput(console->outputHandle1, buffer, coordsize, coordtop, &rect);
-			if (!result) {
-				return;
-			}
-			BOOL result2 = WriteConsoleOutput(console->outputHandle2, buffer, coordsize, coordtop, &rect);
-			if (!result2) {
-				return;
-			}
-			break;
-		}
-		default: break;
+	int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
+	char *outputBuffer = malloc(bufferSize);
+	memset(outputBuffer, 0, bufferSize);
+	int place = 0;
+	if (outputBuffer == NULL) {
+		return;
 	}
+	char buff[6];
+	int add = sprintf(buff, "\x1B[1;1f");
+	memcpy(&outputBuffer[place], buff, add);
+	place += add;
 
-	free(buffer);
+	int fr = 255;
+	int fg = 255;
+	int fb = 255;
+	int br = 0;
+	int bg = 0;
+	int bb = 0;
+	for (int i = 0; i < console->height * console->width; ++i) {
+		if (i > 0 && i % console->width == 0) {
+			outputBuffer[place] = '\n';
+			place++;
+		}
 
-	SetConsoleActiveScreenBuffer(h);
+		struct Cell c = console->buffer[i];
 
-	setcursorposition(console, row, col);
+		if (fr != c.fr || fg != c.fg || fb != c.fb) {
+			fr = c.fr;
+			fg = c.fg;
+			fb = c.fb;
+			char colorbuff[19];
+			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", fr, fg, fb);
+			memcpy(&outputBuffer[place], colorbuff, add);
+			place += add;
+		}
+		if (br != c.br || bg != c.bg || bb != c.bb) {
+			br = c.br;
+			bg = c.bg;
+			bb = c.bb;
+			char colorbuff[19];
+			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", br, bg, bb);
+			memcpy(&outputBuffer[place], colorbuff, add);
+			place += add;
+		}
+		outputBuffer[place] = c.data;
+		place++;
+	}
+	outputBuffer[place] = '\0';
+	WriteConsoleA(console->outputHandle, outputBuffer, strlen(outputBuffer), NULL, NULL);
+	free(outputBuffer);
 }
