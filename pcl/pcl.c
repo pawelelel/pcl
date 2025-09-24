@@ -89,12 +89,20 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 	struct Console* console = (struct Console*)lpParam;
 
 	while (1) {
+		while (WaitForSingleObject(console->threadExitEvent, 1) == WAIT_TIMEOUT)
+		{
+			ExitThread(0);
+		}
 		DWORD read;
 		INPUT_RECORD lpBuffer[1];
+		PeekConsoleInput(console->inputHandle, lpBuffer, 1, &read);
+		if (read == 0) {
+			continue;
+		}
 		const int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
 		if (result == 0) {
 			// error ReadConsoleInput failed
-			return -1;
+			ExitThread(-1);
 		}
 
 		switch (lpBuffer[0].EventType) {
@@ -183,7 +191,7 @@ struct Console* start(void) {
 
 	console->currentOutput = 1;
 
-	console->outputHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
+	console->outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleMode(console->outputHandle, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_LVB_GRID_WORLDWIDE);
 	SetConsoleActiveScreenBuffer(console->outputHandle);
 
@@ -224,8 +232,13 @@ struct Console* start(void) {
 void end(struct Console* console) {
 	//TODO implement error handling
 
-	CloseHandle(console->mutexHandle);
+	console->threadExitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	SetEvent(console->threadExitEvent);
+	WaitForSingleObject(console->threadHandle, INFINITE);
 	CloseHandle(console->threadHandle);
+	CloseHandle(console->threadExitEvent);
+	CloseHandle(console->mutexHandle);
+
 	CloseHandle(console->inputHandle);
 	CloseHandle(console->outputHandle);
 	CloseHandle(console->errorHandle);
