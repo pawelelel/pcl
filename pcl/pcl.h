@@ -189,7 +189,7 @@ int settitle(struct Console* console, char* title);
  * (-4) library has not been initialized properly <br>
  * (-5) win api internal error <br>
  */
-int getdimensions(struct Console* console, int* width, int* height);
+int getdimensions(struct Console* console, unsigned int* width, unsigned int* height);
 
 /**
  * Gets first char from stdin

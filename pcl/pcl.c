@@ -158,15 +158,13 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 }
 
 struct Console* start(void) {
-	// TODO implement error handling
 	// TODO implement saving console state to restore it back at end() function
-
 
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD fdwMode = ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_WINDOW_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
-	WINBOOL res2 = SetConsoleMode(console->inputHandle, fdwMode);
+	SetConsoleMode(console->inputHandle, fdwMode);
 
 	console->mutexHandle = CreateMutex(NULL, FALSE, NULL);
 	console->inputQueue = init();
@@ -214,7 +212,11 @@ struct Console* start(void) {
 }
 
 int end(struct Console* console) {
-	// TODO implement error handling
+	// TODO docs
+
+	if (console == NULL) {
+		return -1;
+	}
 
 	console->threadExitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	SetEvent(console->threadExitEvent);
@@ -228,6 +230,7 @@ int end(struct Console* console) {
 	CloseHandle(console->errorHandle);
 
 	free(console);
+	return 0;
 }
 
 int setforegroundcolor(struct Console *console, int r, int g, int b) {
@@ -267,7 +270,6 @@ int clearbackgroundcolor(struct Console *console) {
 	console->br = 0;
 	console->bg = 0;
 	console->bb = 0;
-	return 0;
 	return 0;
 }
 
@@ -410,10 +412,10 @@ int settitle(struct Console* console, char* title) {
 	{
 		return -3;
 	}
-	return 1;
+	return 0;
 }
 
-int getdimensions(struct Console* console, int* width, int* height) {
+int getdimensions(struct Console* console, unsigned int* width, unsigned int* height) {
 	if (width == NULL) {
 		return -1;
 	}
@@ -428,7 +430,7 @@ int getdimensions(struct Console* console, int* width, int* height) {
 
 	*width = console->width;
 	*height = console->height;
-	return 1;
+	return 0;
 }
 
 /**
@@ -1283,8 +1285,8 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 		return -6;
 	}
 
-	int nowrow, nowcol;
-	getcursorposition(console, &nowrow, &nowcol);
+	unsigned int currentrow, currentcol;
+	getcursorposition(console, &currentrow, &currentcol);
 	setcursorposition(console, row, col);
 
 	va_list ap, apcopy;
@@ -1302,7 +1304,7 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 	setstring(console, memory);
 	free(memory);
 
-	setcursorposition(console, nowrow, nowcol);
+	setcursorposition(console, currentrow, currentcol);
 
 	return 0;
 }
@@ -1445,13 +1447,13 @@ int setstringcursor(struct Console* console, char *string, int row, int col) {
 		return -6;
 	}
 
-	int nowrow, nowcol;
-	getcursorposition(console, &nowrow, &nowcol);
+	unsigned int currentrow, currentcol;
+	getcursorposition(console, &currentrow, &currentcol);
 	setcursorposition(console, row, col);
 
 	setstring(console, string);
 
-	setcursorposition(console, nowrow, nowcol);
+	setcursorposition(console, currentrow, currentcol);
 
 	return 0;
 }
@@ -1531,12 +1533,20 @@ int set2darray(struct Console* console, char* array, unsigned int row, unsigned 
 		return -2;
 	}
 
-	if (height + row > console->height - 1) {
+	if (height == 0) {
 		return -3;
 	}
 
-	if (width + col > console->width - 1) {
+	if (width == 0) {
 		return -4;
+	}
+
+	if (height + row > console->height) {
+		return -5;
+	}
+
+	if (width + col > console->width) {
+		return -6;
 	}
 
 	for (int i = 0; i < height * width; ++i) {
