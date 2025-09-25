@@ -20,7 +20,7 @@ struct Console* start(void);
  *
  * @param console pointer to struct Console
  */
-void end(struct Console* console);
+int end(struct Console* console);
 
 /**
  * Sets foreground color to specified value
@@ -47,14 +47,14 @@ int setbackgroundcolor(struct Console *console, int r, int g, int b);
  *
  * @return error code
  */
-int clearforegroundcolor();
+int clearforegroundcolor(struct Console *console);
 
 /**
  * Sets background color to default value
  *
  * @return error code
  */
-int clearbackgroundcolor();
+int clearbackgroundcolor(struct Console *console);
 
 /**
  * Sets or unsets getchr() input blocking behaviour
@@ -73,7 +73,7 @@ int setinputblock(struct Console* console, int blockinput);
  * @param console pointer to struct Console
  * @return current state of input block. TRUE or FALSE
  */
-int getinputblock(const struct Console* console);
+int getinputblock(struct Console* console);
 
 /**
  * Sets focus event function
@@ -154,14 +154,14 @@ int settimeout(struct Console* console, int timeout);
  * @param console pointer to struct Console
  * @return current value of timeout
  */
-int gettimeout(const struct Console* console);
+int gettimeout(struct Console* console);
 
 /**
  * Gets a console title
  *
  * @returns char* a pointer to name of console
  */
-char* gettitle(struct Console* console);
+int gettitle(struct Console* console, char** title);
 
 /**
  * Sets a title of console window
@@ -174,7 +174,7 @@ char* gettitle(struct Console* console);
 	- -2 if title is NULL\n
 	- -3 if internal error occured
  */
-int settitle(const struct Console* console, const char* title);
+int settitle(struct Console* console, char* title);
 
 /**
  * Returns console dimensions
@@ -189,7 +189,7 @@ int settitle(const struct Console* console, const char* title);
  * (-4) library has not been initialized properly <br>
  * (-5) win api internal error <br>
  */
-int getdimensions(const struct Console* console, int* width, int* height);
+int getdimensions(struct Console* console, int* width, int* height);
 
 /**
  * Gets first char from stdin
@@ -199,15 +199,16 @@ int getdimensions(const struct Console* console, int* width, int* height);
  *
  * @return char
  */
-char getchr(const struct Console* console);
+char getchr(struct Console* console);
 
 /**
  * Sets char on cursor position. Changes cursor position
  *
  * @param console pointer to structure console
  * @param c char to set
+ * @return error code:\n
  */
-void setchar(struct Console* console, char c);
+int setchar(struct Console* console, char c);
 
 /**
  * Sets char on specified position. Do not changes cursor position
@@ -217,7 +218,7 @@ void setchar(struct Console* console, char c);
  * @param row row number
  * @param col column number
  */
-void setcharcursor(const struct Console* console, char c, int row, int col);
+int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col);
 
 /**
  * Works as standard scanf
@@ -226,7 +227,7 @@ void setcharcursor(const struct Console* console, char c, int row, int col);
  * @param format format string
  * @param ... scanned variables
  */
-int getvariables(const struct Console* console, char* format, ...);
+int getvariables(struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Changes cursor position
@@ -235,7 +236,7 @@ int getvariables(const struct Console* console, char* format, ...);
  * @param format format string
  * @param ... variables to format
  */
-void setstringformatted(const struct Console* console, char* format, ...);
+int setstringformatted(struct Console* console, char* format, ...);
 
 /**
  * Prints formatted string on cursor position. Do not changes cursor position
@@ -246,7 +247,7 @@ void setstringformatted(const struct Console* console, char* format, ...);
  * @param col column number
  * @param ... variables to format
  */
-void setstringformattedcursor(const struct Console* console, int row, int col, char* format, ...);
+int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...);
 
 /**
  * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size or execution time reaches timeout time
@@ -256,7 +257,7 @@ void setstringformattedcursor(const struct Console* console, int row, int col, c
  * @param buffer input buffer
  * @param size
  */
-void getstring(const struct Console* console, char* buffer, size_t size);
+int getstring(struct Console* console, char* buffer, size_t size);
 
 /**
  * Gets chars from stdin till reaches buffer size or execution time reaches timeout time
@@ -266,7 +267,7 @@ void getstring(const struct Console* console, char* buffer, size_t size);
  * @param buffer input buffer
  * @param size buffer size
  */
-void getstringbuffer(const struct Console* console, char* buffer, size_t size);
+int getstringbuffer(struct Console* console, char* buffer, size_t size);
 
 /**
  * Prints string on cursor position. Changes cursor position
@@ -274,7 +275,7 @@ void getstringbuffer(const struct Console* console, char* buffer, size_t size);
  * @param console pointer to struct Console
  * @param string input
  */
-void setstring(const struct Console* console, const char* string);
+int setstring(struct Console* console, char* string);
 
 /**
  * Prints string on cursor position. Do not changes cursor position
@@ -284,14 +285,14 @@ void setstring(const struct Console* console, const char* string);
  * @param row row number
  * @param col column number
  */
-void setstringcursor(const struct Console* console, const char* string, int row, int col);
+int setstringcursor(struct Console* console, char* string, int row, int col);
 
 /**
  * Clears console
  *
  * @param console pointer to struct Console
  */
-void clear(struct Console* console);
+int clear(struct Console* console);
 
 /**
  * Fills console with specified char
@@ -299,7 +300,7 @@ void clear(struct Console* console);
  * @param console pointer to struct Console
  * @param c char to be filled
  */
-void fill(const struct Console* console, const char c);
+int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb);
 
 /**
  * Sets 2d array on specified location. Do not changes cursor position
@@ -311,7 +312,7 @@ void fill(const struct Console* console, const char c);
  * @param width array height
  * @param height array wwidth
  */
-void set2darray(const struct Console* console, const char* array, const int row, const int col, const int width, const int height);
+int set2darray(struct Console* console, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height);
 
 /**
  * Sets cursor position
@@ -320,7 +321,7 @@ void set2darray(const struct Console* console, const char* array, const int row,
  * @param row row number
  * @param col column number
  */
-void setcursorposition(const struct Console* console, int row, int col);
+int setcursorposition(struct Console* console, unsigned int row, unsigned int col);
 
 /**
  * Returns cursor position
@@ -330,13 +331,13 @@ void setcursorposition(const struct Console* console, int row, int col);
  * @param col column number
  * @return 1 if eveything went well otherwise returns negative:<br>
  */
-int getcursorposition(const struct Console* console, int* row, int* col);
+int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col);
 
 /**
  * Prints console window
  *
  * @param console pointer to struct Console
  */
-void refresh(struct Console* console);
+int refresh(struct Console* console);
 
 #endif //PCL_H

@@ -22,8 +22,8 @@ struct Queue {
 
 struct Cell {
 	char data;
-	int fr, fg, fb;
-	int br, bg, bb;
+	unsigned int fr, fg, fb;
+	unsigned int br, bg, bb;
 };
 
 struct Console {
@@ -31,14 +31,15 @@ struct Console {
 	HANDLE inputHandle;
 	HANDLE mutexHandle;
 	HANDLE threadHandle;
+	HANDLE threadExitEvent;
 	struct Queue* inputQueue;
 
 	// output
 	int currentOutput;
 	HANDLE outputHandle;
 	struct Cell* buffer;
-	int cursor;
-	int width, height;
+	unsigned int cursor;
+	unsigned int width, height;
 	int fr, fg, fb;
 	int br, bg, bb;
 

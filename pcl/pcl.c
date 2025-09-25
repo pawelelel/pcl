@@ -99,7 +99,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 		if (read == 0) {
 			continue;
 		}
-		const int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
+		int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
 		if (result == 0) {
 			// error ReadConsoleInput failed
 			ExitThread(-1);
@@ -157,25 +157,9 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 struct Console* start(void) {
-	//TODO implement error handling
-	//TODO implement saving console state to restore it back at end() function
+	// TODO implement error handling
+	// TODO implement saving console state to restore it back at end() function
 
 
 	struct Console* console = malloc(sizeof(struct Console));
@@ -229,8 +213,8 @@ struct Console* start(void) {
 	return console;
 }
 
-void end(struct Console* console) {
-	//TODO implement error handling
+int end(struct Console* console) {
+	// TODO implement error handling
 
 	console->threadExitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	SetEvent(console->threadExitEvent);
@@ -247,6 +231,9 @@ void end(struct Console* console) {
 }
 
 int setforegroundcolor(struct Console *console, int r, int g, int b) {
+	if (console == NULL) {
+		return -1;
+	}
 	console->fr = r;
 	console->fg = g;
 	console->fb = b;
@@ -254,17 +241,33 @@ int setforegroundcolor(struct Console *console, int r, int g, int b) {
 }
 
 int setbackgroundcolor(struct Console *console, int r, int g, int b) {
+	if (console == NULL) {
+		return -1;
+	}
 	console->br = r;
 	console->bg = g;
 	console->bb = b;
 	return 0;
 }
 
-int clearforegroundcolor() {
+int clearforegroundcolor(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->fr = 255;
+	console->fg = 255;
+	console->fb = 255;
 	return 0;
 }
 
-int clearbackgroundcolor() {
+int clearbackgroundcolor(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->br = 0;
+	console->bg = 0;
+	console->bb = 0;
+	return 0;
 	return 0;
 }
 
@@ -276,7 +279,10 @@ int setinputblock(struct Console *console, BOOL blockinput) {
 	return 0;
 }
 
-int getinputblock(const struct Console *console) {
+int getinputblock(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
 	return console->blockInput;
 }
 
@@ -357,7 +363,7 @@ int unsetresizeevent(struct Console *console) {
 }
 
 int settimeout(struct Console *console, int timeout) {
-	//TODO implement error handling in docs
+	// TODO implement error handling in docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -368,21 +374,30 @@ int settimeout(struct Console *console, int timeout) {
 	return 0;
 }
 
-int gettimeout(const struct Console *console) {
-	//TODO implement error handling
+int gettimeout(struct Console *console) {
+	// TODO implement error handling
 	return console->blockTimeout;
 }
 
-char* gettitle(struct Console* console) {
-	//TODO implement error handling
+int gettitle(struct Console* console, char** title) {
+	if (console == NULL) {
+		return -1;
+	}
 
+	if (title == NULL) {
+		return -2;
+	}
 
-	char* title = malloc(MAX_PATH * sizeof(char));
-	GetConsoleTitleA(title, MAX_PATH);
-	return title;
+	*title = malloc(MAX_PATH * sizeof(char));
+	if (*title == NULL) {
+		return -3;
+	}
+
+	GetConsoleTitleA(*title, MAX_PATH);
+	return 0;
 }
 
-int settitle(const struct Console* console, const char* title) {
+int settitle(struct Console* console, char* title) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -398,7 +413,7 @@ int settitle(const struct Console* console, const char* title) {
 	return 1;
 }
 
-int getdimensions(const struct Console* console, int* width, int* height) {
+int getdimensions(struct Console* console, int* width, int* height) {
 	if (width == NULL) {
 		return -1;
 	}
@@ -410,23 +425,9 @@ int getdimensions(const struct Console* console, int* width, int* height) {
 		*height = 0;
 		return -3;
 	}
-	if (console->outputHandle == INVALID_HANDLE_VALUE) {
-		*width = 0;
-		*height = 0;
-		return -4;
-	}
 
-	HANDLE h = console->outputHandle;
-
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	if (GetConsoleScreenBufferInfo(h, &info) == 0) {
-		*width = 0;
-		*height = 0;
-		return -5;
-	}
-
-	*width = info.dwSize.X;
-	*height = info.dwSize.Y;
+	*width = console->width;
+	*height = console->height;
 	return 1;
 }
 
@@ -437,12 +438,12 @@ int getdimensions(const struct Console* console, int* width, int* height) {
  * @param console pointer to struct Console
  * @return char from console input buffer
  */
-char puregetchar(const struct Console* console) {
+char puregetchar(struct Console* console) {
 	DWORD read;
 
 	while (1) {
 		INPUT_RECORD lpBuffer[1];
-		const int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
+		int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
 		if (result == 0 || read != 1) {
 			// error ReadConsoleInput failed
 			return -1;
@@ -496,9 +497,10 @@ char puregetchar(const struct Console* console) {
 	}
 }
 
-char getchr(const struct Console* console) {
-	//TODO implement error handling
-	//TODO add virtual key codes for arrows, special keys etc.
+char getchr(struct Console* console) {
+	// TODO test all input
+	// TODO implement error handling
+	// TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 
 	WaitForSingleObject(console->mutexHandle, INFINITE);
@@ -606,8 +608,11 @@ char getchr(const struct Console* console) {
 	*/
 }
 
-void setchar(struct Console* console, char c) {
-	//TODO implement error handling
+int setchar(struct Console* console, char c) {
+	// TODO docs
+	if (console == NULL) {
+		return -1;
+	}
 
 	console->buffer[console->cursor].data = c;
 	console->buffer[console->cursor].fr = console->fr;
@@ -619,27 +624,36 @@ void setchar(struct Console* console, char c) {
 	if (console->cursor != console->width * console->height) {
 		console->cursor++;
 	}
+	return 0;
 }
 
-void setcharcursor(const struct Console* console, char c, int row, int col) {
-	//TODO implement error handling
-	//TODO refactor
+int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col) {
+	// TODO docs
+	if (console == NULL) {
+		return -1;
+	}
 
-	int nowrow, nowcol;
-	getcursorposition(console, &nowrow, &nowcol);
-	setcursorposition(console, row, col);
-	WriteConsole(console->outputHandle, &c, 1, NULL, NULL);
+	if (row >= console->height) {
+		return -2;
+	}
 
-	setcursorposition(console, nowrow, nowcol);
+	if (col >= console->width) {
+		return -3;
+	}
+
+	unsigned int cursorpos = console->cursor;
+	console->cursor = col + row * console->width;
+	setchar(console, c);
+	console->cursor = cursorpos;
+	return 0;
 }
 
-//TODO implement better error handling
-int getcharvariable(const struct Console* console, char* c) {
+int getcharvariable(struct Console* console, char* c) {
 	*c = puregetchar(console);
 	return 0;
 }
 
-char getsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+char getsignedintkeyboardin(struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
 
 	if (*buffer == NULL) {
@@ -690,7 +704,7 @@ char getsignedintkeyboardin(const struct Console* console, char** buffer, int* b
 	return ret;
 }
 
-char getunsignedintkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+char getunsignedintkeyboardin(struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
 
 	if (*buffer == NULL) {
@@ -726,14 +740,14 @@ char getunsignedintkeyboardin(const struct Console* console, char** buffer, int*
 	return ret;
 }
 
-char getshortvariable(const struct Console* console, short* h) {
+char getshortvariable(struct Console* console, short* h) {
 	if (h == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0 || ret <= 0) {
 		free(buffer);
@@ -756,14 +770,14 @@ char getshortvariable(const struct Console* console, short* h) {
 	return ret;
 }
 
-char getunsignedshortvariable(const struct Console* console, unsigned short* uh) {
+char getunsignedshortvariable(struct Console* console, unsigned short* uh) {
 	if (uh == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -781,14 +795,14 @@ char getunsignedshortvariable(const struct Console* console, unsigned short* uh)
 	return ret;
 }
 
-char getintvariable(const struct Console* console, int* d) {
+char getintvariable(struct Console* console, int* d) {
 	if (d == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -811,14 +825,14 @@ char getintvariable(const struct Console* console, int* d) {
 	return ret;
 }
 
-char getunsignedintvariable(const struct Console* console, unsigned int* ud) {
+char getunsignedintvariable(struct Console* console, unsigned int* ud) {
 	if (ud == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -836,14 +850,14 @@ char getunsignedintvariable(const struct Console* console, unsigned int* ud) {
 	return ret;
 }
 
-char getlongvariable(const struct Console* console, long* ld) {
+char getlongvariable(struct Console* console, long* ld) {
 	if (ld == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -856,14 +870,14 @@ char getlongvariable(const struct Console* console, long* ld) {
 	return ret;
 }
 
-char getunsignedlongvariable(const struct Console* console, unsigned long* uld) {
+char getunsignedlongvariable(struct Console* console, unsigned long* uld) {
 	if (uld == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -876,14 +890,14 @@ char getunsignedlongvariable(const struct Console* console, unsigned long* uld) 
 	return ret;
 }
 
-char getlonglongvariable(const struct Console* console, long long* lld) {
+char getlonglongvariable(struct Console* console, long long* lld) {
 	if (lld == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -896,14 +910,14 @@ char getlonglongvariable(const struct Console* console, long long* lld) {
 	return ret;
 }
 
-char getunsignedlonglongvariable(const struct Console* console, unsigned long long* ulld) {
+char getunsignedlonglongvariable(struct Console* console, unsigned long long* ulld) {
 	if (ulld == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
 
-	const char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
+	char ret = getunsignedintkeyboardin(console, &buffer, &buffercount);
 
 	if (buffercount == 0) {
 		free(buffer);
@@ -916,7 +930,7 @@ char getunsignedlonglongvariable(const struct Console* console, unsigned long lo
 	return ret;
 }
 
-char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffercount) {
+char getfloatkeyboardin(struct Console* console, char** buffer, int* buffercount) {
 	char ret = 0;
 
 	if (*buffer == NULL) {
@@ -965,35 +979,35 @@ char getfloatkeyboardin(const struct Console* console, char** buffer, int* buffe
 	return ret;
 }
 
-char getfloatvariable(const struct Console* console, float* f) {
+char getfloatvariable(struct Console* console, float* f) {
 	if (f == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*f = strtof(buffer, NULL);
 	return ret;
 }
 
-char getdoublevariable(const struct Console* console, double* lf) {
+char getdoublevariable(struct Console* console, double* lf) {
 	if (lf == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*lf = strtod(buffer, NULL);
 	return ret;
 }
 
-char getlongdoublevariable(const struct Console* console, long double* llf) {
+char getlongdoublevariable(struct Console* console, long double* llf) {
 	if (llf == NULL) {
 		return -1;
 	}
 	char* buffer = NULL;
 	int buffercount = 0;
-	const char ret = getfloatkeyboardin(console, &buffer, &buffercount);
+	char ret = getfloatkeyboardin(console, &buffer, &buffercount);
 	*llf = strtold(buffer, NULL);
 	return ret;
 }
@@ -1006,14 +1020,14 @@ char getlongdoublevariable(const struct Console* console, long double* llf) {
  * @param tokens number of tokens
  * @return 0 if format is invalid 1 if valid
  */
-int validateformatstring(const char* format, const char** validtokens, const int tokens) {
+int validateformatstring(char* format, char** validtokens, int tokens) {
 	while (*format) {
 		if (*format == '%') {
 			format++;
 			int matched = 0;
 			for (int i = 0; i < tokens; i++) {
-				const char* token = validtokens[i] + 1;
-				const size_t size = strlen(token);
+				char* token = validtokens[i] + 1;
+				size_t size = strlen(token);
 				if (strncmp(format, token, size) == 0) {
 					format += size;
 					matched = 1;
@@ -1032,7 +1046,17 @@ int validateformatstring(const char* format, const char** validtokens, const int
 	return 1;
 }
 
-int getvariables(const struct Console *console, char *format, ...) {
+int getvariables(struct Console *console, char *format, ...) {
+	// TODO docs
+
+	if (console == NULL) {
+		return -1;
+	}
+
+	if (format == NULL) {
+		return -2;
+	}
+
 	/*
 	 * %c char
 	 * %h short
@@ -1051,17 +1075,17 @@ int getvariables(const struct Console *console, char *format, ...) {
 	 */
 
 	// valid tokens sorted by length
-	const char* validtokens[] = {
+	char* validtokens[] = {
 		"%llf", "%ull", "%ll", "%uh", "%ud",
 		"%lf", "%ul", "%c", "%h", "%d", "%l", "%f"
 	};
 
-	const int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
+	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
 
 	if (!validateformatstring(format, validtokens, tokenssize)) {
-		// error
+		// TODO error
 		// format string is not valid
-		return -1;
+		return -3;
 	}
 
 	int assignedvariables = 0;
@@ -1074,8 +1098,8 @@ int getvariables(const struct Console *console, char *format, ...) {
 			format++;
 			// TODO get rid of loop / optimalize
 			for (int j = 0; j < tokenssize; j++) {
-				const char* token = validtokens[j] + 1;
-				const size_t tokensize = strlen(token);
+				char* token = validtokens[j] + 1;
+				size_t tokensize = strlen(token);
 				if (strncmp(format, token, tokensize) == 0) {
 					// match
 					format += tokensize;
@@ -1204,9 +1228,16 @@ int getvariables(const struct Console *console, char *format, ...) {
 	return assignedvariables;
 }
 
-void setstringformatted(const struct Console* console, char *format, ...) {
-	//TODO implement error handling
+int setstringformatted(struct Console* console, char *format, ...) {
+	// TODO docs
 
+	if (console == NULL) {
+		return -1;
+	}
+
+	if (format == NULL) {
+		return -2;
+	}
 
 	va_list ap, apcopy;
 	va_start(ap, format);
@@ -1222,10 +1253,35 @@ void setstringformatted(const struct Console* console, char *format, ...) {
 
 	setstring(console, memory);
 	free(memory);
+
+	return 0;
 }
 
-void setstringformattedcursor(const struct Console* console, int row, int col, char* format, ...) {
-	//TODO implement error handling
+int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
+	// TODO docs
+	if (console == NULL) {
+		return -1;
+	}
+
+	if (row < 0) {
+		return -2;
+	}
+
+	if (row >= console->height) {
+		return -3;
+	}
+
+	if (col < 0) {
+		return -4;
+	}
+
+	if (col >= console->width) {
+		return -5;
+	}
+
+	if (format == NULL) {
+		return -6;
+	}
 
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
@@ -1247,24 +1303,32 @@ void setstringformattedcursor(const struct Console* console, int row, int col, c
 	free(memory);
 
 	setcursorposition(console, nowrow, nowcol);
+
+	return 0;
 }
 
-typedef struct {
-	const struct Console* console;
+// TODO is still necessary?
+struct GetPureCharThreadArgs {
+	struct Console* console;
 	char readChar;
-} GetPureCharThreadArgs;
+};
 
 DWORD puregetcharthread(LPVOID lpParam) {
-	GetPureCharThreadArgs* args = lpParam;
+	struct GetPureCharThreadArgs* args = lpParam;
 
 	args->readChar = puregetchar(args->console);
 	return 0;
 }
 
-void getstring(const struct Console* console, char *buffer, size_t size) {
-	//TODO implement error handling
+int getstring(struct Console* console, char *buffer, size_t size) {
+	// TODO docs
+
+	if (console == NULL) {
+		return -1;
+	}
+
 	if (buffer == NULL) {
-		return;
+		return -2;
 	}
 
 	DWORD elapsedtimemiliseconds = 0;
@@ -1272,7 +1336,7 @@ void getstring(const struct Console* console, char *buffer, size_t size) {
 	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
 		DWORD start = GetTickCount();
 
-		GetPureCharThreadArgs args;
+		struct GetPureCharThreadArgs args;
 		args.console = console;
 		args.readChar = 0;
 		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
@@ -1295,13 +1359,19 @@ void getstring(const struct Console* console, char *buffer, size_t size) {
 		elapsedtimemiliseconds += stop - start;
 	}
 	buffer[i] = '\0';
+	// TODO docs
+	return i;
 }
 
-void getstringbuffer(const struct Console* console, char *buffer, const size_t size) {
-	//TODO implement error handling
+int getstringbuffer(struct Console* console, char *buffer, size_t size) {
+	// TODO docs
+
+	if (console == NULL) {
+		return -1;
+	}
 
 	if (buffer == NULL) {
-		return;
+		return -2;
 	}
 
 	DWORD elapsedtimemiliseconds = 0;
@@ -1309,7 +1379,7 @@ void getstringbuffer(const struct Console* console, char *buffer, const size_t s
 	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
 		DWORD start = GetTickCount();
 
-		GetPureCharThreadArgs args;
+		struct GetPureCharThreadArgs args;
 		args.console = console;
 		args.readChar = 0;
 		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
@@ -1329,26 +1399,51 @@ void getstringbuffer(const struct Console* console, char *buffer, const size_t s
 		elapsedtimemiliseconds += stop - start;
 	}
 	buffer[i] = '\0';
+	return 0;
 }
 
-void setstring(const struct Console* console, const char *string) {
-	//TODO implement error handling
+int setstring(struct Console* console, char *string) {
+	// TODO docs
 
 	if (console == NULL) {
-		return;
+		return -1;
 	}
 	if (string == NULL) {
-		return;
+		return -2;
 	}
 	size_t size = strlen(string);
 	for (int i = 0; i < size; ++i) {
 		setchar(console, string[i]);
 	}
+	return 0;
 }
 
-void setstringcursor(const struct Console* console, const char *string, const int row, const int col) {
-	//TODO implement error handling
+int setstringcursor(struct Console* console, char *string, int row, int col) {
+	// TODO docs
 
+	if (console == NULL) {
+		return -1;
+	}
+
+	if (string == NULL) {
+		return -2;
+	}
+
+	if (row < 0) {
+		return -3;
+	}
+
+	if (row > console->height - 1) {
+		return -4;
+	}
+
+	if (col < 0) {
+		return -5;
+	}
+
+	if (col > console->width - 1) {
+		return -6;
+	}
 
 	int nowrow, nowcol;
 	getcursorposition(console, &nowrow, &nowcol);
@@ -1357,9 +1452,16 @@ void setstringcursor(const struct Console* console, const char *string, const in
 	setstring(console, string);
 
 	setcursorposition(console, nowrow, nowcol);
+
+	return 0;
 }
 
-void clear(struct Console* console) {
+int clear(struct Console* console) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	// TODO move default values to constants
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = ' ';
 		console->buffer[i].fr = 255;
@@ -1370,69 +1472,98 @@ void clear(struct Console* console) {
 		console->buffer[i].bb = 0;
 	}
 	console->cursor = 0;
+	return 0;
 }
 
-void fill(const struct Console* console, const char c) {
-	//TODO implement error handling
-	//TODO refactor
-
-	int width = 0, height = 0;
-	if (getdimensions(console, &width, &height) != 1) {
-		//TODO error code
-		return;
+int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb) {
+	// TODO docs
+	if (console == NULL) {
+		return -1;
 	}
 
-	DWORD written;
-	COORD topleft = {0, 0};
-	FillConsoleOutputCharacter(console->outputHandle, c, width * height, topleft, &written);
-	FillConsoleOutputAttribute(console->outputHandle, 7, width * height, topleft, &written);
+	if (fr > 255) {
+		return -2;
+	}
+
+	if (fg > 255) {
+		return -3;
+	}
+
+	if (fb > 255) {
+		return -4;
+	}
+
+	if (br > 255) {
+		return -5;
+	}
+
+	if (bg > 255) {
+		return -6;
+	}
+
+	if (bb > 255) {
+		return -7;
+	}
+
+	for (int i = 0; i < console->height * console->width; ++i) {
+		console->buffer[i].data = c;
+		console->buffer[i].fr = fr;
+		console->buffer[i].fg = fg;
+		console->buffer[i].fb = fb;
+		console->buffer[i].br = br;
+		console->buffer[i].bg = bg;
+		console->buffer[i].bb = bb;
+	}
 
 	setcursorposition(console, 0, 0);
+
+	return 0;
 }
 
-void set2darray(const struct Console* console, const char* array, const int row, const int col, const int width, const int height) {
-	//TODO implement error handling
-	//TODO refactor
+int set2darray(struct Console* console, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height) {
+	// TODO implement error handling
 
-	DWORD written;
-
-	for (int i = 0; i < width; ++i) {
-		const COORD topleft = {(short)col, (short)(row + i)};
-		WriteConsoleOutputCharacter(console->outputHandle, array, height, topleft, &written);
-		array += height;
+	if (console == NULL) {
+		return -1;
 	}
+
+	if (array == NULL) {
+		return -2;
+	}
+
+	if (height + row > console->height - 1) {
+		return -3;
+	}
+
+	if (width + col > console->width - 1) {
+		return -4;
+	}
+
+	for (int i = 0; i < height * width; ++i) {
+		unsigned int r = row + i / width;
+		unsigned int c = col + i % width;
+		setcharcursor(console, array[i], r, c);
+	}
+	return 0;
 }
 
-void setcursorposition(const struct Console* console, int row, int col) {
-	//TODO implement error handling
-	//TODO refactor
-
-
-	int width = 0, height = 0;
-	if (getdimensions(console, &width, &height) != 1) {
-		//TODO error code
-		return;
+int setcursorposition(struct Console* console, unsigned int row, unsigned int col) {
+	if (console == NULL) {
+		return -1;
 	}
-	if (row >= height) {
-		//TODO error code
-		return;
+	if (row >= console->height) {
+		return -2;
 	}
-	if (col >= width) {
-		//TODO error code
-		return;
+	if (col >= console->width) {
+		return -3;
 	}
 
-	COORD coord;
-	coord.X = (short)col;
-	coord.Y = (short)row;
-	if (SetConsoleCursorPosition(console->outputHandle, coord) == 0) {
-		//TODO error code
-		return;
-	}
+	console->cursor = col + row * console->width;
+	return 0;
 }
 
-int getcursorposition(const struct Console* console, int *row, int *col) {
-	//TODO refactor
+int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col) {
+	// TODO refactor
 	if (console == NULL) {
 		return -1;
 	}
@@ -1443,36 +1574,37 @@ int getcursorposition(const struct Console* console, int *row, int *col) {
 		return -3;
 	}
 
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	GetConsoleScreenBufferInfo(console->outputHandle, &info);
-
-	*row = info.dwCursorPosition.Y;
-	*col = info.dwCursorPosition.X;
-	return 1;
+	*row = console->cursor / console->width;
+	*col = console->cursor % console->width;
+	return 0;
 }
 
-void refresh(struct Console* console) {
-	//TODO remember about updating (specially buffer size)
-	//TODO implement error handling
+int refresh(struct Console* console) {
+	// TODO remember about updating (specially buffer size)
+	// TODO implement error handling
 
-	int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
+	if (console == NULL) {
+		return -1;
+	}
+
+	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
 	char *outputBuffer = malloc(bufferSize);
 	memset(outputBuffer, 0, bufferSize);
 	int place = 0;
 	if (outputBuffer == NULL) {
-		return;
+		return -2;
 	}
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
 	memcpy(&outputBuffer[place], buff, add);
 	place += add;
 
-	int fr = 255;
-	int fg = 255;
-	int fb = 255;
-	int br = 0;
-	int bg = 0;
-	int bb = 0;
+	unsigned int fr = 255;
+	unsigned int fg = 255;
+	unsigned int fb = 255;
+	unsigned int br = 0;
+	unsigned int bg = 0;
+	unsigned int bb = 0;
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
 			outputBuffer[place] = '\n';
@@ -1505,4 +1637,5 @@ void refresh(struct Console* console) {
 	outputBuffer[place] = '\0';
 	WriteConsoleA(console->outputHandle, outputBuffer, strlen(outputBuffer), NULL, NULL);
 	free(outputBuffer);
+	return 0;
 }
