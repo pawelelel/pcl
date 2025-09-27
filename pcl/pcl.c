@@ -1021,8 +1021,6 @@ int getvariables(struct Console *console, char *format, ...) {
 	 * %f float
 	 * %lf double
 	 * %llf long double
-	 *
-	 * TODO %[int]s string
 	 */
 
 	// valid tokens sorted by length
@@ -1046,8 +1044,8 @@ int getvariables(struct Console *console, char *format, ...) {
 		char gotchar = 0;
 		if (*format == '%') {
 			format++;
-			for (int j = 0; j < tokenssize; j++) {
-				char* token = validtokens[j] + 1;
+			for (int i = 0; i < tokenssize; i++) {
+				char* token = validtokens[i] + 1;
 				size_t tokensize = strlen(token);
 				if (strncmp(format, token, tokensize) == 0) {
 					// match
@@ -1058,7 +1056,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getfloatvariable(console, f);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -2;
+							return -4;
 						}
 						assignedvariables++;
 						break;
@@ -1068,7 +1066,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getlongvariable(console, l);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -3;
+							return -5;
 						}
 						assignedvariables++;
 						break;
@@ -1078,7 +1076,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getintvariable(console, d);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -4;
+							return -6;
 						}
 						assignedvariables++;
 						break;
@@ -1088,7 +1086,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getshortvariable(console, h);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -5;
+							return -7;
 						}
 						assignedvariables++;
 						break;
@@ -1098,7 +1096,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						getcharvariable(console, c);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -6;
+							return -8;
 						}
 						assignedvariables++;
 						break;
@@ -1108,7 +1106,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getunsignedlongvariable(console, ul);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -7;
+							return -9;
 						}
 						assignedvariables++;
 						break;
@@ -1118,7 +1116,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getdoublevariable(console, lf);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -8;
+							return -10;
 						}
 						assignedvariables++;
 						break;
@@ -1128,7 +1126,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getunsignedintvariable(console, ud);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -9;
+							return -11;
 						}
 						assignedvariables++;
 						break;
@@ -1138,7 +1136,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getunsignedshortvariable(console, uh);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -10;
+							return -12;
 						}
 						assignedvariables++;
 						break;
@@ -1148,7 +1146,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getlonglongvariable(console, ll);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -11;
+							return -13;
 						}
 						assignedvariables++;
 						break;
@@ -1158,7 +1156,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getunsignedlonglongvariable(console, ull);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -12;
+							return -14;
 						}
 						assignedvariables++;
 						break;
@@ -1168,7 +1166,7 @@ int getvariables(struct Console *console, char *format, ...) {
 						gotchar = getlongdoublevariable(console, llf);
 						if (gotchar <= 0) {
 							va_end(args);
-							return -13;
+							return -15;
 						}
 						assignedvariables++;
 					}
@@ -1181,7 +1179,7 @@ int getvariables(struct Console *console, char *format, ...) {
 			getcharvariable(console, &gotchar);
 			if (gotchar <= 0) {
 				va_end(args);
-				return -14;
+				return -17;
 			}
 		}
 
@@ -1190,7 +1188,7 @@ int getvariables(struct Console *console, char *format, ...) {
 		}
 		else {
 			va_end(args);
-			return -15;
+			return -18;
 		}
 	}
 
