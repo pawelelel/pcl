@@ -63,7 +63,7 @@ void enqueue(struct Queue *queue, char input) {
 
 char dequeue(struct Queue *queue) {
 	if (isEmpty(queue)) {
-		return -1;
+		return 0;
 	}
 	struct Node* temp = queue->head;
 	queue->head = queue->head->next;
@@ -77,7 +77,7 @@ char dequeue(struct Queue *queue) {
 
 char peek(struct Queue *queue) {
 	if (isEmpty(queue)) {
-		return -1;
+		return 0;
 	}
 	return queue->head->value;
 }
@@ -441,179 +441,67 @@ int getdimensions(struct Console* console, unsigned int* width, unsigned int* he
 
 /**
  * pure ReadConsoleInput() wrapper without any non-blocking or timeout features
- * but checks console input buffer for other than keyboard events and fires them
  *
  * @param console pointer to struct Console
  * @return char from console input buffer
  */
 char puregetchar(struct Console* console) {
-	DWORD read;
-
 	while (1) {
-		INPUT_RECORD lpBuffer[1];
-		int result = ReadConsoleInput(console->inputHandle, lpBuffer, 1, &read);
-		if (result == 0 || read != 1) {
-			// error ReadConsoleInput failed
-			return -1;
+		WaitForSingleObject(console->mutexHandle, INFINITE);
+
+		const char c = dequeue(console->inputQueue);
+		if (c != 0) {
+			ReleaseMutex(console->mutexHandle);
+			return c;
 		}
 
-		switch (lpBuffer[0].EventType) {
-			case FOCUS_EVENT: {
-				if (console->FocusEvent != NULL) {
-					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
-				}
-				break;
-			}
-			case KEY_EVENT: {
-				if (console->KeyEvent != NULL) {
-					console->KeyEvent(
-						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
-				}
-				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
-					return lpBuffer[0].Event.KeyEvent.uChar.AsciiChar;
-				}
-			}
-			case MENU_EVENT: {
-				// ignored
-				break;
-			}
-			case MOUSE_EVENT: {
-				if (console->MouseEvent != NULL) {
-
-					console->MouseEvent(
-							console,
-							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
-							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
-							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
-							(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
-							(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
-						);
-				}
-				break;
-			}
-			case WINDOW_BUFFER_SIZE_EVENT: {
-				if (console->ResizeEvent != NULL) {
-					console->ResizeEvent(
-							console,
-							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
-							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
-						);
-				}
-			}
-			default: break;
-		}
+		ReleaseMutex(console->mutexHandle);
 	}
 }
 
+struct GetPureCharThreadArgs {
+	struct Console* console;
+	char readChar;
+};
+
+DWORD puregetcharthread(LPVOID lpParam) {
+	struct GetPureCharThreadArgs* args = lpParam;
+
+	args->readChar = puregetchar(args->console);
+	return 0;
+}
+
 char getchr(struct Console* console) {
-	// TODO test all input
 	// TODO implement error handling
 	// TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 
-	WaitForSingleObject(console->mutexHandle, INFINITE);
-	if (!isEmpty(console->inputQueue)) {
-		char c = dequeue(console->inputQueue);
+	if (!console->blockInput) {
+		// non-blocking input behaviour
+		WaitForSingleObject(console->mutexHandle, INFINITE);
+		const char c = dequeue(console->inputQueue);
 		ReleaseMutex(console->mutexHandle);
 		return c;
 	}
 
-	ReleaseMutex(console->mutexHandle);
-
-	return -1;
-/*
-	if (!console->blockInput) { // non-blocking input behaviour
-		INPUT_RECORD lpBuffer[1];
-		DWORD read;
-		BOOL b = PeekConsoleInput(console->inputHandle, lpBuffer, 1, &read);
-		if (b == 0) {
-			return -1;
-		}
-		if (read == 1) {
-			// peeked something
-			// lets kick it out of buffer and handle anything
-			INPUT_RECORD buffer[1];
-			ReadConsoleInput(console->inputHandle, buffer, 1, &read);
-
-			switch (lpBuffer[0].EventType) {
-				case FOCUS_EVENT: {
-					if (console->FocusEvent != NULL) {
-						console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
-					}
-					break;
-				}
-				case KEY_EVENT: {
-					if (console->KeyEvent != NULL) {
-						console->KeyEvent(
-						console, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
-					}
-					return buffer[0].Event.KeyEvent.uChar.AsciiChar;
-				}
-				case MENU_EVENT: {
-					// ignored
-					break;
-				}
-				case MOUSE_EVENT: {
-					if (console->MouseEvent != NULL) {
-
-						console->MouseEvent(
-						console,
-								lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
-								lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
-								(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
-								(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
-								(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
-							);
-					}
-					break;
-				}
-				case WINDOW_BUFFER_SIZE_EVENT: {
-					if (console->ResizeEvent != NULL) {
-						console->ResizeEvent(
-						console,
-								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
-								(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
-							);
-					}
-				}
-				default: break;
-			}
-
-			return 0;
-		}
-		if (read == 0) {
-			// found nothing
-			return 0;
-		}
+	if (console->blockTimeout <= 0) {
+		const char c = puregetchar(console);
+		return c;
 	}
 
-	DWORD elapsedtimemiliseconds = 0;
+	struct GetPureCharThreadArgs args;
+	args.console = console;
+	args.readChar = 0;
+	HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
 
-	while (elapsedtimemiliseconds < console->blockTimeout) {
-		DWORD start = GetTickCount();
-
-		DWORD result = WaitForSingleObject(console->inputHandle, console->blockTimeout - elapsedtimemiliseconds);
-		if (result == WAIT_TIMEOUT) {
-			return 0;
-		}
-
-		INPUT_RECORD buffer[1];
-		DWORD read;
-		ReadConsoleInput(console->inputHandle, buffer, 1, &read);
-
-		if (read == 0) {
-			return 0;
-		}
-
-		if (buffer[0].EventType == KEY_EVENT && buffer[0].Event.KeyEvent.bKeyDown) {
-			return buffer[0].Event.KeyEvent.uChar.AsciiChar;
-		}
-
-		DWORD stop = GetTickCount();
-		elapsedtimemiliseconds += stop - start;
+	const DWORD result = WaitForSingleObject(thread, console->blockTimeout);
+	if (result == WAIT_TIMEOUT) {
+		return 0;
 	}
-	return 0;
-	*/
+
+	const char c = args.readChar;
+
+	return c;
 }
 
 int setchar(struct Console* console, char c) {
@@ -1390,19 +1278,6 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 	return 0;
 }
 
-// TODO is still necessary?
-struct GetPureCharThreadArgs {
-	struct Console* console;
-	char readChar;
-};
-
-DWORD puregetcharthread(LPVOID lpParam) {
-	struct GetPureCharThreadArgs* args = lpParam;
-
-	args->readChar = puregetchar(args->console);
-	return 0;
-}
-
 int getstring(struct Console* console, char *buffer, size_t size) {
 	// TODO docs
 
@@ -1412,6 +1287,25 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 
 	if (buffer == NULL) {
 		return -2;
+	}
+
+	if (console->blockTimeout <= 0) {
+		int i = 0;
+		while (i != size - 1) {
+			WaitForSingleObject(console->mutexHandle, INFINITE);
+			char c = dequeue(console->inputQueue);
+			ReleaseMutex(console->mutexHandle);
+
+			if (c == '\n' || c == '\r') {
+				break;
+			}
+			if (c != 0 && isprint(c)) {
+				buffer[i] = c;
+				i++;
+			}
+		}
+		buffer[i] = '\0';
+		return i;
 	}
 
 	DWORD elapsedtimemiliseconds = 0;
@@ -1442,7 +1336,6 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 		elapsedtimemiliseconds += stop - start;
 	}
 	buffer[i] = '\0';
-	// TODO docs
 	return i;
 }
 
@@ -1455,6 +1348,22 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 
 	if (buffer == NULL) {
 		return -2;
+	}
+
+	if (console->blockTimeout <= 0) {
+		int i = 0;
+		while (i != size - 1) {
+			WaitForSingleObject(console->mutexHandle, INFINITE);
+			char c = dequeue(console->inputQueue);
+			ReleaseMutex(console->mutexHandle);
+
+			if (c != 0 && isprint(c)) {
+				buffer[i] = c;
+				i++;
+			}
+		}
+		buffer[i] = '\0';
+		return i;
 	}
 
 	DWORD elapsedtimemiliseconds = 0;

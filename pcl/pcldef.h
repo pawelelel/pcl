@@ -43,16 +43,16 @@ struct Console {
 	unsigned int fr, fg, fb;
 	unsigned int br, bg, bb;
 
-	char defaultchar;
-	unsigned int defaultfr, defaultfg, defaultfb;
-	unsigned int defaultbr, defaultbg, defaultbb;
-
 	// error
 	HANDLE errorHandle;
 
 	// settings
 	int blockInput;
+	// works only with getchr function
 	int blockTimeout;
+	char defaultchar;
+	unsigned int defaultfr, defaultfg, defaultfb;
+	unsigned int defaultbr, defaultbg, defaultbb;
 
 	/**
 	 * That event is raised when console window is focused or unfocused
