@@ -40,8 +40,12 @@ struct Console {
 	struct Cell* buffer;
 	unsigned int cursor;
 	unsigned int width, height;
-	int fr, fg, fb;
-	int br, bg, bb;
+	unsigned int fr, fg, fb;
+	unsigned int br, bg, bb;
+
+	char defaultchar;
+	unsigned int defaultfr, defaultfg, defaultfb;
+	unsigned int defaultbr, defaultbg, defaultbb;
 
 	// error
 	HANDLE errorHandle;

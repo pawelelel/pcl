@@ -19,7 +19,6 @@ struct Node {
 struct Queue* init() {
 	struct Queue *queue = malloc(sizeof(struct Queue));
 	if (queue == NULL) {
-		// TODO error
 		return NULL;
 	}
 	queue->head = NULL;
@@ -39,13 +38,11 @@ int isEmpty(struct Queue *queue) {
 
 void enqueue(struct Queue *queue, char input) {
 	if (queue == NULL) {
-		// TODO error
 		return;
 	}
 
 	struct Node* newNode = malloc(sizeof(struct Node));
 	if (newNode == NULL) {
-		// TODO error
 		return;
 	}
 
@@ -158,8 +155,6 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 }
 
 struct Console* start(void) {
-	// TODO implement saving console state to restore it back at end() function
-
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
@@ -186,15 +181,23 @@ struct Console* start(void) {
 	console->fr = 255;console->fg = 255;console->fb = 255;
 	console->br = 0;console->bg= 0;console->bb = 0;
 
+	console->defaultchar = ' ';
+	console->defaultfr = 255;
+	console->defaultfg = 255;
+	console->defaultfb = 255;
+	console->defaultbr = 0;
+	console->defaultbg = 0;
+	console->defaultbb = 0;
+
 	console->buffer = malloc(sizeof(struct Cell) * console->width * console->height);
 	for (int i = 0; i < console->height * console->width; ++i) {
-		console->buffer[i].data = ' ';
-		console->buffer[i].fr = 255;
-		console->buffer[i].fg = 255;
-		console->buffer[i].fb = 255;
-		console->buffer[i].br = 0;
-		console->buffer[i].bg = 0;
-		console->buffer[i].bb = 0;
+		console->buffer[i].data = console->defaultchar;
+		console->buffer[i].fr = console->defaultfr;
+		console->buffer[i].fg = console->defaultfg;
+		console->buffer[i].fb = console->defaultfb;
+		console->buffer[i].br = console->defaultbr;
+		console->buffer[i].bg = console->defaultbg;
+		console->buffer[i].bb = console->defaultbb;
 	}
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
@@ -225,11 +228,9 @@ int end(struct Console* console) {
 	CloseHandle(console->threadExitEvent);
 	CloseHandle(console->mutexHandle);
 
-	CloseHandle(console->inputHandle);
-	CloseHandle(console->outputHandle);
-	CloseHandle(console->errorHandle);
-
 	free(console);
+
+	printf("\x1B[1;1f");
 	return 0;
 }
 
@@ -257,9 +258,9 @@ int clearforegroundcolor(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	console->fr = 255;
-	console->fg = 255;
-	console->fb = 255;
+	console->fr = console->defaultfr;
+	console->fg = console->defaultfg;
+	console->fb = console->defaultfb;
 	return 0;
 }
 
@@ -267,9 +268,9 @@ int clearbackgroundcolor(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	console->br = 0;
-	console->bg = 0;
-	console->bb = 0;
+	console->br = console->defaultbr;
+	console->bg = console->defaultbg;
+	console->bb = console->defaultbb;
 	return 0;
 }
 
@@ -365,7 +366,7 @@ int unsetresizeevent(struct Console *console) {
 }
 
 int settimeout(struct Console *console, int timeout) {
-	// TODO implement error handling in docs
+	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -377,7 +378,12 @@ int settimeout(struct Console *console, int timeout) {
 }
 
 int gettimeout(struct Console *console) {
-	// TODO implement error handling
+	// TODO docs
+
+	if (console == NULL) {
+		return -1;
+	}
+
 	return console->blockTimeout;
 }
 
@@ -615,6 +621,60 @@ int setchar(struct Console* console, char c) {
 	if (console == NULL) {
 		return -1;
 	}
+
+	switch (c) {
+		case '\n': {
+			console->cursor += console->width;
+			console->cursor -= console->cursor % console->width;
+			if (console->cursor >= console->width * console->height) {
+				console->cursor = 0;
+			}
+			return 0;
+		}
+		case '\a': {
+			// not supported
+			c = console->defaultchar;
+			break;
+		}
+		case '\b': {
+			if (console->cursor == 0) {
+				return 0;
+			}
+			console->cursor--;
+			console->buffer[console->cursor].data = console->defaultchar;
+			console->buffer[console->cursor].fr = console->fr;
+			console->buffer[console->cursor].fg = console->fg;
+			console->buffer[console->cursor].fb = console->fb;
+			console->buffer[console->cursor].br = console->br;
+			console->buffer[console->cursor].bg = console->bg;
+			console->buffer[console->cursor].bb = console->bb;
+			return 0;
+		}
+		case '\v': {
+			console->cursor += console->width;
+			if (console->cursor >= console->width * console->height) {
+				console->cursor = 0;
+			}
+			return 0;
+		}
+		case '\r': {
+			console->cursor -= console->cursor % console->width;
+			return 0;
+		}
+		case '\f': {
+			console->cursor = 0;
+			return 0;
+		}
+		default: break;
+	}
+
+	// v \n - new line
+	// v \a - not supported
+	// v \b - backspace
+	// v \v - vertical enter
+	// v \r - carrige return
+	// v \f - set cursor 0 0
+	// v \t - tab
 
 	console->buffer[console->cursor].data = c;
 	console->buffer[console->cursor].fr = console->fr;
@@ -1060,6 +1120,7 @@ int getvariables(struct Console *console, char *format, ...) {
 	}
 
 	/*
+	 * %s string
 	 * %c char
 	 * %h short
 	 * %uh unsigned short
@@ -1085,7 +1146,6 @@ int getvariables(struct Console *console, char *format, ...) {
 	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
 
 	if (!validateformatstring(format, validtokens, tokenssize)) {
-		// TODO error
 		// format string is not valid
 		return -3;
 	}
@@ -1098,7 +1158,6 @@ int getvariables(struct Console *console, char *format, ...) {
 		char gotchar = 0;
 		if (*format == '%') {
 			format++;
-			// TODO get rid of loop / optimalize
 			for (int j = 0; j < tokenssize; j++) {
 				char* token = validtokens[j] + 1;
 				size_t tokensize = strlen(token);
@@ -1114,7 +1173,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -2;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "l") == 0) {
+						break;
+					}
+					if (strcmp(token, "l") == 0) {
 						long* l = va_arg(args, long*);
 						gotchar = getlongvariable(console, l);
 						if (gotchar <= 0) {
@@ -1122,7 +1183,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -3;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "d") == 0) {
+						break;
+					}
+					if (strcmp(token, "d") == 0) {
 						int* d = va_arg(args, int*);
 						gotchar = getintvariable(console, d);
 						if (gotchar <= 0) {
@@ -1130,7 +1193,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -4;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "h") == 0) {
+						break;
+					}
+					if (strcmp(token, "h") == 0) {
 						short* h = va_arg(args, short*);
 						gotchar = getshortvariable(console, h);
 						if (gotchar <= 0) {
@@ -1138,7 +1203,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -5;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "c") == 0) {
+						break;
+					}
+					if (strcmp(token, "c") == 0) {
 						char* c = va_arg(args, char*);
 						getcharvariable(console, c);
 						if (gotchar <= 0) {
@@ -1146,7 +1213,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -6;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "ul") == 0) {
+						break;
+					}
+					if (strcmp(token, "ul") == 0) {
 						unsigned long* ul = va_arg(args, unsigned long*);
 						gotchar = getunsignedlongvariable(console, ul);
 						if (gotchar <= 0) {
@@ -1154,7 +1223,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -7;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "lf") == 0) {
+						break;
+					}
+					if (strcmp(token, "lf") == 0) {
 						double* lf = va_arg(args, double*);
 						gotchar = getdoublevariable(console, lf);
 						if (gotchar <= 0) {
@@ -1162,7 +1233,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -8;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "ud") == 0) {
+						break;
+					}
+					if (strcmp(token, "ud") == 0) {
 						unsigned int* ud = va_arg(args, unsigned int*);
 						gotchar = getunsignedintvariable(console, ud);
 						if (gotchar <= 0) {
@@ -1170,7 +1243,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -9;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "uh") == 0) {
+						break;
+					}
+					if (strcmp(token, "uh") == 0) {
 						unsigned short* uh = va_arg(args, unsigned short*);
 						gotchar = getunsignedshortvariable(console, uh);
 						if (gotchar <= 0) {
@@ -1178,7 +1253,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -10;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "ll") == 0) {
+						break;
+					}
+					if (strcmp(token, "ll") == 0) {
 						long long* ll = va_arg(args, long long*);
 						gotchar = getlonglongvariable(console, ll);
 						if (gotchar <= 0) {
@@ -1186,7 +1263,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -11;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "ull") == 0) {
+						break;
+					}
+					if (strcmp(token, "ull") == 0) {
 						unsigned long long* ull = va_arg(args, unsigned long long*);
 						gotchar = getunsignedlonglongvariable(console, ull);
 						if (gotchar <= 0) {
@@ -1194,7 +1273,9 @@ int getvariables(struct Console *console, char *format, ...) {
 							return -12;
 						}
 						assignedvariables++;
-					} else if (strcmp(token, "llf") == 0) {
+						break;
+					}
+					if (strcmp(token, "llf") == 0) {
 						long double* llf = va_arg(args, long double*);
 						gotchar = getlongdoublevariable(console, llf);
 						if (gotchar <= 0) {
@@ -1463,15 +1544,14 @@ int clear(struct Console* console) {
 		return -1;
 	}
 
-	// TODO move default values to constants
 	for (int i = 0; i < console->height * console->width; ++i) {
-		console->buffer[i].data = ' ';
-		console->buffer[i].fr = 255;
-		console->buffer[i].fg = 255;
-		console->buffer[i].fb = 255;
-		console->buffer[i].br = 0;
-		console->buffer[i].bg = 0;
-		console->buffer[i].bb = 0;
+		console->buffer[i].data = console->defaultchar;
+		console->buffer[i].fr = console->defaultfr;
+		console->buffer[i].fg = console->defaultfg;
+		console->buffer[i].fb = console->defaultfb;
+		console->buffer[i].br = console->defaultbr;
+		console->buffer[i].bg = console->defaultbg;
+		console->buffer[i].bb = console->defaultbb;
 	}
 	console->cursor = 0;
 	return 0;
@@ -1523,7 +1603,7 @@ int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsi
 }
 
 int set2darray(struct Console* console, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height) {
-	// TODO implement error handling
+	// TODO docs
 
 	if (console == NULL) {
 		return -1;
@@ -1573,7 +1653,7 @@ int setcursorposition(struct Console* console, unsigned int row, unsigned int co
 }
 
 int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col) {
-	// TODO refactor
+	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -1591,7 +1671,7 @@ int getcursorposition(struct Console* console, unsigned int *row, unsigned int *
 
 int refresh(struct Console* console) {
 	// TODO remember about updating (specially buffer size)
-	// TODO implement error handling
+	// TODO docs
 
 	if (console == NULL) {
 		return -1;
