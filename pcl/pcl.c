@@ -346,7 +346,7 @@ int unsetmouseevent(struct Console *console) {
 	return 0;
 }
 
-int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, int, int)) {
+int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -1502,6 +1502,27 @@ int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsi
 		console->buffer[i].br = br;
 		console->buffer[i].bg = bg;
 		console->buffer[i].bb = bb;
+	}
+
+	setcursorposition(console, 0, 0);
+
+	return 0;
+}
+
+int fillchar(struct Console* console, char c) {
+	// TODO docs
+	if (console == NULL) {
+		return -1;
+	}
+
+	for (int i = 0; i < console->height * console->width; ++i) {
+		console->buffer[i].data = c;
+		console->buffer[i].fr = console->defaultfr;
+		console->buffer[i].fg = console->defaultfg;
+		console->buffer[i].fb = console->defaultfb;
+		console->buffer[i].br = console->defaultbr;
+		console->buffer[i].bg = console->defaultbg;
+		console->buffer[i].bb = console->defaultbb;
 	}
 
 	setcursorposition(console, 0, 0);

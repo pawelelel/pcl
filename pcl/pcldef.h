@@ -88,7 +88,7 @@ struct Console {
 	 * @param int new height
 	 * @param int new width
 	 */
-	void(*ResizeEvent)(struct Console*, int, int);
+	void(*ResizeEvent)(struct Console*, unsigned int, unsigned int);
 };
 
 

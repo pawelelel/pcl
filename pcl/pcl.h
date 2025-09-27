@@ -128,7 +128,7 @@ int unsetmouseevent(struct Console* console);
  * @param ResizeEvent pointer to event handling function
  * @return error code
  */
-int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, int, int));
+int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int));
 
 /**
  * 
@@ -301,6 +301,14 @@ int clear(struct Console* console);
  * @param c char to be filled
  */
 int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb);
+
+/**
+ * Fills console with specified char
+ *
+ * @param console pointer to struct Console
+ * @param c char to be filled
+ */
+int fillchar(struct Console* console, char c);
 
 /**
  * Sets 2d array on specified location. Do not changes cursor position
