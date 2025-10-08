@@ -168,11 +168,10 @@ int gettitle(struct Console* console, char** title);
  *
  * @param console pointer to struct Console
  * @param title new console title
- * @return Error code:\n
-	- 0 if eveything went well
-	- -1 if console is NULL\n
-	- -2 if title is NULL\n
-	- -3 if internal error occured
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) title parameter is NULL<br>
+ * (-3) internal error occured
  */
 int settitle(struct Console* console, char* title);
 
@@ -182,12 +181,10 @@ int settitle(struct Console* console, char* title);
  * @param console pointer to structure console
  * @param width console width
  * @param height console height
- * @return 1 if eveything went well otherwise returns negative:<br>
- * (-1) width parameter is NULL <br>
- * (-2) height parameter is NULL <br>
- * (-3) console parameter is NULL <br>
- * (-4) library has not been initialized properly <br>
- * (-5) win api internal error <br>
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) width parameter is NULL<br>
+ * (-2) height parameter is NULL<br>
+ * (-3) console parameter is NULL
  */
 int getdimensions(struct Console* console, unsigned int* width, unsigned int* height);
 
