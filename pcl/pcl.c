@@ -537,11 +537,13 @@ DWORD puregetcharthread(LPVOID lpParam) {
 }
 
 char getchr(struct Console* console) {
-	// TODO implement error handling
+	// TODO docs
 	// TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 
-	if (!console->blockInput) {
+	if (console == NULL) {
+		return -1;
+	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
 	const int bi = console->blockInput;
