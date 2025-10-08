@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 
+HANDLE mutexHandle;
 
 
 // Queue
@@ -83,7 +84,7 @@ char peek(struct Queue *queue) {
 }
 
 DWORD WINAPI inputthread(LPVOID lpParam) {
-	struct Console* console = (struct Console*)lpParam;
+	struct Console* console = lpParam;
 
 	while (1) {
 		while (WaitForSingleObject(console->threadExitEvent, 1) == WAIT_TIMEOUT)
@@ -115,9 +116,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
-					WaitForSingleObject(console->mutexHandle, INFINITE);
 					enqueue(console->inputQueue, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
-					ReleaseMutex(console->mutexHandle);
 				}
 				break;
 			}
@@ -140,12 +139,42 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				break;
 			}
 			case WINDOW_BUFFER_SIZE_EVENT: {
+				int height = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y;
+				int width = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X;
+				struct Cell* newbuffer = malloc(sizeof(struct Cell) * width * height);
+				WaitForSingleObject(mutexHandle, INFINITE);
+				struct Cell* prebuffer = console->buffer;
+
+				for (int i = 0; i < height * width; ++i) {
+					newbuffer[i].data = console->defaultchar;
+					newbuffer[i].fr = console->defaultfr;
+					newbuffer[i].fg = console->defaultfg;
+					newbuffer[i].fb = console->defaultfb;
+					newbuffer[i].br = console->defaultbr;
+					newbuffer[i].bg = console->defaultbg;
+					newbuffer[i].bb = console->defaultbb;
+				}
+
+				// copy prebuffer to newbuffer
+				for (unsigned int i = 0; i < console->width * console->height; i++) {
+					unsigned int row = i / console->width;
+					unsigned int col = i % console->width;
+
+					unsigned int newcursor = col + row * width;
+					if (newcursor >= width * height) {
+						continue;
+					}
+					newbuffer[newcursor] = prebuffer[i];
+				}
+
+				free(prebuffer);
+				console->buffer = newbuffer;
+				console->width = width;
+				console->height = height;
+				console->cursor = 0;
+				ReleaseMutex(mutexHandle);
 				if (console->ResizeEvent != NULL) {
-					console->ResizeEvent(
-							console,
-							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y,
-							(int)lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X
-						);
+					console->ResizeEvent(console, height, width);
 				}
 				break;
 			}
@@ -161,12 +190,11 @@ struct Console* start(void) {
 	DWORD fdwMode = ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_WINDOW_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
 	SetConsoleMode(console->inputHandle, fdwMode);
 
-	console->mutexHandle = CreateMutex(NULL, FALSE, NULL);
+	mutexHandle = CreateMutex(NULL, FALSE, NULL);
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->inputQueue = init();
 	DWORD threadid;
 	console->threadHandle = CreateThread(NULL, 0, inputthread, console, CREATE_SUSPENDED, &threadid);
-
-	console->currentOutput = 1;
 
 	console->outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleMode(console->outputHandle, ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_LVB_GRID_WORLDWIDE);
@@ -209,6 +237,7 @@ struct Console* start(void) {
 	console->MouseEvent = NULL;
 	console->ResizeEvent = NULL;
 
+	ReleaseMutex(mutexHandle);
 	ResumeThread(console->threadHandle);
 
 	return console;
@@ -226,7 +255,7 @@ int end(struct Console* console) {
 	WaitForSingleObject(console->threadHandle, INFINITE);
 	CloseHandle(console->threadHandle);
 	CloseHandle(console->threadExitEvent);
-	CloseHandle(console->mutexHandle);
+	CloseHandle(mutexHandle);
 
 	free(console);
 
@@ -238,9 +267,11 @@ int setforegroundcolor(struct Console *console, int r, int g, int b) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->fr = r;
 	console->fg = g;
 	console->fb = b;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -248,9 +279,11 @@ int setbackgroundcolor(struct Console *console, int r, int g, int b) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->br = r;
 	console->bg = g;
 	console->bb = b;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -258,9 +291,11 @@ int clearforegroundcolor(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->fr = console->defaultfr;
 	console->fg = console->defaultfg;
 	console->fb = console->defaultfb;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -268,9 +303,11 @@ int clearbackgroundcolor(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->br = console->defaultbr;
 	console->bg = console->defaultbg;
 	console->bb = console->defaultbb;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -278,7 +315,9 @@ int setinputblock(struct Console *console, BOOL blockinput) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->blockInput = blockinput;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -286,7 +325,10 @@ int getinputblock(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->blockInput;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	const int b =  console->blockInput;
+	ReleaseMutex(mutexHandle);
+	return b;
 }
 
 int setfocusevent(struct Console *console, void(*FocusEvent)(struct Console*, int)) {
@@ -296,7 +338,9 @@ int setfocusevent(struct Console *console, void(*FocusEvent)(struct Console*, in
 	if (FocusEvent == NULL) {
 		return -2;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->FocusEvent = FocusEvent;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -304,7 +348,9 @@ int unsetfocusevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->FocusEvent = NULL;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -315,7 +361,9 @@ int setkeyevent(struct Console *console, void(*KeyEvent)(struct Console*, char, 
 	if (KeyEvent == NULL) {
 		return -2;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->KeyEvent = KeyEvent;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -323,7 +371,9 @@ int unsetkeyevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->KeyEvent = NULL;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -334,7 +384,9 @@ int setmouseevent(struct Console *console, void(*MouseEvent)(struct Console*, in
 	if (MouseEvent == NULL) {
 		return -2;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->MouseEvent = MouseEvent;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -342,7 +394,9 @@ int unsetmouseevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->MouseEvent = NULL;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -353,7 +407,9 @@ int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, 
 	if (ResizeEvent == NULL) {
 		return -2;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->ResizeEvent = ResizeEvent;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -361,7 +417,9 @@ int unsetresizeevent(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->ResizeEvent = NULL;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -373,7 +431,9 @@ int settimeout(struct Console *console, int timeout) {
 	if (timeout < 0) {
 		return -2;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->blockTimeout = timeout;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -384,7 +444,10 @@ int gettimeout(struct Console *console) {
 		return -1;
 	}
 
-	return console->blockTimeout;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	const int b = console->blockTimeout;
+	ReleaseMutex(mutexHandle);
+	return b;
 }
 
 int gettitle(struct Console* console, char** title) {
@@ -434,8 +497,10 @@ int getdimensions(struct Console* console, unsigned int* width, unsigned int* he
 		return -3;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	*width = console->width;
 	*height = console->height;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -447,15 +512,15 @@ int getdimensions(struct Console* console, unsigned int* width, unsigned int* he
  */
 char puregetchar(struct Console* console) {
 	while (1) {
-		WaitForSingleObject(console->mutexHandle, INFINITE);
+		WaitForSingleObject(mutexHandle, INFINITE);
 
 		const char c = dequeue(console->inputQueue);
 		if (c != 0) {
-			ReleaseMutex(console->mutexHandle);
+			ReleaseMutex(mutexHandle);
 			return c;
 		}
 
-		ReleaseMutex(console->mutexHandle);
+		ReleaseMutex(mutexHandle);
 	}
 }
 
@@ -477,14 +542,21 @@ char getchr(struct Console* console) {
 	// TODO add unicode
 
 	if (!console->blockInput) {
+
+	WaitForSingleObject(mutexHandle, INFINITE);
+	const int bi = console->blockInput;
+	const int bt = console->blockTimeout;
+	ReleaseMutex(mutexHandle);
+
+	if (!bi) {
 		// non-blocking input behaviour
-		WaitForSingleObject(console->mutexHandle, INFINITE);
+		WaitForSingleObject(mutexHandle, INFINITE);
 		const char c = dequeue(console->inputQueue);
-		ReleaseMutex(console->mutexHandle);
+		ReleaseMutex(mutexHandle);
 		return c;
 	}
 
-	if (console->blockTimeout <= 0) {
+	if (bt <= 0) {
 		const char c = puregetchar(console);
 		return c;
 	}
@@ -494,9 +566,9 @@ char getchr(struct Console* console) {
 	args.readChar = 0;
 	HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
 
-	const DWORD result = WaitForSingleObject(thread, console->blockTimeout);
+	const DWORD result = WaitForSingleObject(thread, bt);
 	if (result == WAIT_TIMEOUT) {
-		return 0;
+		return -2;
 	}
 
 	const char c = args.readChar;
@@ -512,20 +584,26 @@ int setchar(struct Console* console, char c) {
 
 	switch (c) {
 		case '\n': {
+			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor += console->width;
 			console->cursor -= console->cursor % console->width;
 			if (console->cursor >= console->width * console->height) {
 				console->cursor = 0;
 			}
+			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		case '\a': {
 			// not supported
+			WaitForSingleObject(mutexHandle, INFINITE);
 			c = console->defaultchar;
+			ReleaseMutex(mutexHandle);
 			break;
 		}
 		case '\b': {
+			WaitForSingleObject(mutexHandle, INFINITE);
 			if (console->cursor == 0) {
+				ReleaseMutex(mutexHandle);
 				return 0;
 			}
 			console->cursor--;
@@ -536,21 +614,28 @@ int setchar(struct Console* console, char c) {
 			console->buffer[console->cursor].br = console->br;
 			console->buffer[console->cursor].bg = console->bg;
 			console->buffer[console->cursor].bb = console->bb;
+			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		case '\v': {
+			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor += console->width;
 			if (console->cursor >= console->width * console->height) {
 				console->cursor = 0;
 			}
+			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		case '\r': {
+			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor -= console->cursor % console->width;
+			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		case '\f': {
+			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor = 0;
+			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		default: break;
@@ -564,6 +649,7 @@ int setchar(struct Console* console, char c) {
 	// v \f - set cursor 0 0
 	// v \t - tab
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->buffer[console->cursor].data = c;
 	console->buffer[console->cursor].fr = console->fr;
 	console->buffer[console->cursor].fg = console->fg;
@@ -574,6 +660,7 @@ int setchar(struct Console* console, char c) {
 	if (console->cursor != console->width * console->height) {
 		console->cursor++;
 	}
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -583,18 +670,27 @@ int setcharcursor(struct Console* console, char c, unsigned int row, unsigned in
 		return -1;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
+
 	if (row >= console->height) {
+		ReleaseMutex(mutexHandle);
 		return -2;
 	}
 
 	if (col >= console->width) {
+		ReleaseMutex(mutexHandle);
 		return -3;
 	}
 
 	unsigned int cursorpos = console->cursor;
 	console->cursor = col + row * console->width;
+	ReleaseMutex(mutexHandle);
+
 	setchar(console, c);
+
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->cursor = cursorpos;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -1236,25 +1332,23 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 		return -2;
 	}
 
-	if (row >= console->height) {
+	if (col < 0) {
 		return -3;
 	}
 
-	if (col < 0) {
+	if (format == NULL) {
 		return -4;
 	}
 
-	if (col >= console->width) {
+	WaitForSingleObject(mutexHandle, INFINITE);
+	if (row >= console->height) {
+		ReleaseMutex(mutexHandle);
 		return -5;
 	}
-
-	if (format == NULL) {
+	if (col >= console->width) {
+		ReleaseMutex(mutexHandle);
 		return -6;
 	}
-
-	unsigned int currentrow, currentcol;
-	getcursorposition(console, &currentrow, &currentcol);
-	setcursorposition(console, row, col);
 
 	va_list ap, apcopy;
 	va_start(ap, format);
@@ -1268,10 +1362,18 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 	vsnprintf(memory, size + 1, format, ap);
 	va_end(ap);
 
-	setstring(console, memory);
-	free(memory);
+	WaitForSingleObject(mutexHandle, INFINITE);
+	unsigned int cursor = console->cursor;
+	console->cursor = col + row * console->width;
+	ReleaseMutex(mutexHandle);
 
-	setcursorposition(console, currentrow, currentcol);
+	setstring(console, memory);
+
+	WaitForSingleObject(mutexHandle, INFINITE);
+	console->cursor = cursor;
+	ReleaseMutex(mutexHandle);
+
+	free(memory);
 
 	return 0;
 }
@@ -1287,12 +1389,16 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 		return -2;
 	}
 
-	if (console->blockTimeout <= 0) {
+	WaitForSingleObject(mutexHandle, INFINITE);
+	int timeout = console->blockTimeout;
+	ReleaseMutex(mutexHandle);
+
+	if (timeout <= 0) {
 		int i = 0;
 		while (i != size - 1) {
-			WaitForSingleObject(console->mutexHandle, INFINITE);
+			WaitForSingleObject(mutexHandle, INFINITE);
 			char c = dequeue(console->inputQueue);
-			ReleaseMutex(console->mutexHandle);
+			ReleaseMutex(mutexHandle);
 
 			if (c == '\n' || c == '\r') {
 				break;
@@ -1308,7 +1414,7 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 
 	DWORD elapsedtimemiliseconds = 0;
 	int i = 0;
-	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
+	while (i != size - 1 && elapsedtimemiliseconds < timeout) {
 		DWORD start = GetTickCount();
 
 		struct GetPureCharThreadArgs args;
@@ -1316,7 +1422,7 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 		args.readChar = 0;
 		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
 
-		DWORD result = WaitForSingleObject(thread, console->blockTimeout - elapsedtimemiliseconds);
+		DWORD result = WaitForSingleObject(thread, timeout - elapsedtimemiliseconds);
 		if (result == WAIT_TIMEOUT) {
 			break;
 		}
@@ -1348,12 +1454,16 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 		return -2;
 	}
 
-	if (console->blockTimeout <= 0) {
+	WaitForSingleObject(mutexHandle, INFINITE);
+	int timeout = console->blockTimeout;
+	ReleaseMutex(mutexHandle);
+
+	if (timeout <= 0) {
 		int i = 0;
 		while (i != size - 1) {
-			WaitForSingleObject(console->mutexHandle, INFINITE);
+			WaitForSingleObject(mutexHandle, INFINITE);
 			char c = dequeue(console->inputQueue);
-			ReleaseMutex(console->mutexHandle);
+			ReleaseMutex(mutexHandle);
 
 			if (c != 0 && isprint(c)) {
 				buffer[i] = c;
@@ -1366,7 +1476,7 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 
 	DWORD elapsedtimemiliseconds = 0;
 	int i = 0;
-	while (i != size - 1 && elapsedtimemiliseconds < console->blockTimeout) {
+	while (i != size - 1 && elapsedtimemiliseconds < timeout) {
 		DWORD start = GetTickCount();
 
 		struct GetPureCharThreadArgs args;
@@ -1374,7 +1484,7 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 		args.readChar = 0;
 		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
 
-		DWORD result = WaitForSingleObject(thread, console->blockTimeout - elapsedtimemiliseconds);
+		DWORD result = WaitForSingleObject(thread, timeout - elapsedtimemiliseconds);
 		if (result == WAIT_TIMEOUT) {
 			break;
 		}
@@ -1423,25 +1533,29 @@ int setstringcursor(struct Console* console, char *string, int row, int col) {
 		return -3;
 	}
 
-	if (row > console->height - 1) {
+	if (col < 0) {
 		return -4;
 	}
 
-	if (col < 0) {
+	WaitForSingleObject(mutexHandle, INFINITE);
+	if (row > console->height - 1) {
+		ReleaseMutex(mutexHandle);
 		return -5;
 	}
-
 	if (col > console->width - 1) {
+		ReleaseMutex(mutexHandle);
 		return -6;
 	}
 
-	unsigned int currentrow, currentcol;
-	getcursorposition(console, &currentrow, &currentcol);
-	setcursorposition(console, row, col);
+	unsigned int cursor = console->cursor;
+	console->cursor = col + row * console->width;
+	ReleaseMutex(mutexHandle);
 
 	setstring(console, string);
 
-	setcursorposition(console, currentrow, currentcol);
+	WaitForSingleObject(mutexHandle, INFINITE);
+	console->cursor = cursor;
+	ReleaseMutex(mutexHandle);
 
 	return 0;
 }
@@ -1450,6 +1564,8 @@ int clear(struct Console* console) {
 	if (console == NULL) {
 		return -1;
 	}
+
+	WaitForSingleObject(mutexHandle, INFINITE);
 
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = console->defaultchar;
@@ -1461,6 +1577,7 @@ int clear(struct Console* console) {
 		console->buffer[i].bb = console->defaultbb;
 	}
 	console->cursor = 0;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -1494,6 +1611,8 @@ int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsi
 		return -7;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
+
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = c;
 		console->buffer[i].fr = fr;
@@ -1504,7 +1623,9 @@ int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsi
 		console->buffer[i].bb = bb;
 	}
 
-	setcursorposition(console, 0, 0);
+	console->cursor = 0;
+
+	ReleaseMutex(mutexHandle);
 
 	return 0;
 }
@@ -1515,6 +1636,7 @@ int fillchar(struct Console* console, char c) {
 		return -1;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = c;
 		console->buffer[i].fr = console->defaultfr;
@@ -1524,8 +1646,8 @@ int fillchar(struct Console* console, char c) {
 		console->buffer[i].bg = console->defaultbg;
 		console->buffer[i].bb = console->defaultbb;
 	}
-
-	setcursorposition(console, 0, 0);
+	console->cursor = 0;
+	ReleaseMutex(mutexHandle);
 
 	return 0;
 }
@@ -1549,14 +1671,18 @@ int set2darray(struct Console* console, char* array, unsigned int row, unsigned 
 		return -4;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	if (height + row > console->height) {
+		ReleaseMutex(mutexHandle);
 		return -5;
 	}
 
 	if (width + col > console->width) {
+		ReleaseMutex(mutexHandle);
 		return -6;
 	}
 
+	ReleaseMutex(mutexHandle);
 	for (int i = 0; i < height * width; ++i) {
 		unsigned int r = row + i / width;
 		unsigned int c = col + i % width;
@@ -1569,14 +1695,18 @@ int setcursorposition(struct Console* console, unsigned int row, unsigned int co
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	if (row >= console->height) {
+		ReleaseMutex(mutexHandle);
 		return -2;
 	}
 	if (col >= console->width) {
+		ReleaseMutex(mutexHandle);
 		return -3;
 	}
 
 	console->cursor = col + row * console->width;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -1592,8 +1722,10 @@ int getcursorposition(struct Console* console, unsigned int *row, unsigned int *
 		return -3;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	*row = console->cursor / console->width;
 	*col = console->cursor % console->width;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -1605,13 +1737,16 @@ int refresh(struct Console* console) {
 		return -1;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
 	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
+	ReleaseMutex(mutexHandle);
 	char *outputBuffer = malloc(bufferSize);
 	memset(outputBuffer, 0, bufferSize);
 	int place = 0;
 	if (outputBuffer == NULL) {
 		return -2;
 	}
+	// clear
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
 	memcpy(&outputBuffer[place], buff, add);
@@ -1623,6 +1758,7 @@ int refresh(struct Console* console) {
 	unsigned int br = 0;
 	unsigned int bg = 0;
 	unsigned int bb = 0;
+	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
 			outputBuffer[place] = '\n';
@@ -1654,6 +1790,7 @@ int refresh(struct Console* console) {
 	}
 	outputBuffer[place] = '\0';
 	WriteConsoleA(console->outputHandle, outputBuffer, strlen(outputBuffer), NULL, NULL);
+	ReleaseMutex(mutexHandle);
 	free(outputBuffer);
 	return 0;
 }

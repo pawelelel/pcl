@@ -29,13 +29,12 @@ struct Cell {
 struct Console {
 	// input
 	HANDLE inputHandle;
-	HANDLE mutexHandle;
+
 	HANDLE threadHandle;
 	HANDLE threadExitEvent;
 	struct Queue* inputQueue;
 
 	// output
-	int currentOutput;
 	HANDLE outputHandle;
 	struct Cell* buffer;
 	unsigned int cursor;
