@@ -22,8 +22,8 @@ struct Queue {
 
 struct Cell {
 	char data;
-	unsigned int fr, fg, fb;
-	unsigned int br, bg, bb;
+	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
+	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 };
 
 struct Console {
@@ -39,8 +39,8 @@ struct Console {
 	struct Cell* buffer;
 	unsigned int cursor;
 	unsigned int width, height;
-	unsigned int fr, fg, fb;
-	unsigned int br, bg, bb;
+	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
+	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
 	// error
 	HANDLE errorHandle;
@@ -50,8 +50,8 @@ struct Console {
 	// works only with getchr function
 	unsigned int blockTimeout;
 	char defaultchar;
-	unsigned int defaultfr, defaultfg, defaultfb;
-	unsigned int defaultbr, defaultbg, defaultbb;
+	unsigned int defaultForegroundRed, defaultForegroundGreen, defaultForegroundBlue;
+	unsigned int defaultBackgroundRed, defaultBackgroundGreen, defaultBackgroundBlue;
 
 	/**
 	 * That event is raised when console window is focused or unfocused

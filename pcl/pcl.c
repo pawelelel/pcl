@@ -147,12 +147,12 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 				for (int i = 0; i < height * width; ++i) {
 					newbuffer[i].data = console->defaultchar;
-					newbuffer[i].fr = console->defaultfr;
-					newbuffer[i].fg = console->defaultfg;
-					newbuffer[i].fb = console->defaultfb;
-					newbuffer[i].br = console->defaultbr;
-					newbuffer[i].bg = console->defaultbg;
-					newbuffer[i].bb = console->defaultbb;
+					newbuffer[i].foregroundRed = console->defaultForegroundRed;
+					newbuffer[i].foregroundGreen = console->defaultForegroundGreen;
+					newbuffer[i].foregroundBlue = console->defaultForegroundBlue;
+					newbuffer[i].backgroundRed = console->defaultBackgroundRed;
+					newbuffer[i].backgroundGreen = console->defaultBackgroundGreen;
+					newbuffer[i].backgroundBlue = console->defaultBackgroundBlue;
 				}
 
 				// copy prebuffer to newbuffer
@@ -206,26 +206,26 @@ struct Console* start(void) {
 	console->cursor = 0;
 	console->height = info.dwSize.Y;
 	console->width = info.dwSize.X;
-	console->fr = 255;console->fg = 255;console->fb = 255;
-	console->br = 0;console->bg= 0;console->bb = 0;
+	console->foregroundRed = 255;console->foregroundGreen = 255;console->foregroundBlue = 255;
+	console->backgroundRed = 0;console->backgroundGreen= 0;console->backgroundBlue = 0;
 
 	console->defaultchar = ' ';
-	console->defaultfr = 255;
-	console->defaultfg = 255;
-	console->defaultfb = 255;
-	console->defaultbr = 0;
-	console->defaultbg = 0;
-	console->defaultbb = 0;
+	console->defaultForegroundRed = 255;
+	console->defaultForegroundGreen = 255;
+	console->defaultForegroundBlue = 255;
+	console->defaultBackgroundRed = 0;
+	console->defaultBackgroundGreen = 0;
+	console->defaultBackgroundBlue = 0;
 
 	console->buffer = malloc(sizeof(struct Cell) * console->width * console->height);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = console->defaultchar;
-		console->buffer[i].fr = console->defaultfr;
-		console->buffer[i].fg = console->defaultfg;
-		console->buffer[i].fb = console->defaultfb;
-		console->buffer[i].br = console->defaultbr;
-		console->buffer[i].bg = console->defaultbg;
-		console->buffer[i].bb = console->defaultbb;
+		console->buffer[i].foregroundRed = console->defaultForegroundRed;
+		console->buffer[i].foregroundGreen = console->defaultForegroundGreen;
+		console->buffer[i].foregroundBlue = console->defaultForegroundBlue;
+		console->buffer[i].backgroundRed = console->defaultBackgroundRed;
+		console->buffer[i].backgroundGreen = console->defaultBackgroundGreen;
+		console->buffer[i].backgroundBlue = console->defaultBackgroundBlue;
 	}
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
@@ -261,26 +261,26 @@ int end(struct Console* console) {
 	return 0;
 }
 
-int setforegroundcolor(struct Console *console, int r, int g, int b) {
+int setforegroundcolor(struct Console *console, int red, int green, int blue) {
 	if (console == NULL) {
 		return -1;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
-	console->fr = r;
-	console->fg = g;
-	console->fb = b;
+	console->foregroundRed = red;
+	console->foregroundGreen = green;
+	console->foregroundBlue = blue;
 	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
-int setbackgroundcolor(struct Console *console, int r, int g, int b) {
+int setbackgroundcolor(struct Console *console, int red, int green, int blue) {
 	if (console == NULL) {
 		return -1;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
-	console->br = r;
-	console->bg = g;
-	console->bb = b;
+	console->backgroundRed = red;
+	console->backgroundGreen = green;
+	console->backgroundBlue = blue;
 	ReleaseMutex(mutexHandle);
 	return 0;
 }
@@ -290,9 +290,9 @@ int clearforegroundcolor(struct Console *console) {
 		return -1;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
-	console->fr = console->defaultfr;
-	console->fg = console->defaultfg;
-	console->fb = console->defaultfb;
+	console->foregroundRed = console->defaultForegroundRed;
+	console->foregroundGreen = console->defaultForegroundGreen;
+	console->foregroundBlue = console->defaultForegroundBlue;
 	ReleaseMutex(mutexHandle);
 	return 0;
 }
@@ -302,9 +302,9 @@ int clearbackgroundcolor(struct Console *console) {
 		return -1;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
-	console->br = console->defaultbr;
-	console->bg = console->defaultbg;
-	console->bb = console->defaultbb;
+	console->backgroundRed = console->defaultBackgroundRed;
+	console->backgroundGreen = console->defaultBackgroundGreen;
+	console->backgroundBlue = console->defaultBackgroundBlue;
 	ReleaseMutex(mutexHandle);
 	return 0;
 }
@@ -602,12 +602,12 @@ int setchar(struct Console* console, char c) {
 			}
 			console->cursor--;
 			console->buffer[console->cursor].data = console->defaultchar;
-			console->buffer[console->cursor].fr = console->fr;
-			console->buffer[console->cursor].fg = console->fg;
-			console->buffer[console->cursor].fb = console->fb;
-			console->buffer[console->cursor].br = console->br;
-			console->buffer[console->cursor].bg = console->bg;
-			console->buffer[console->cursor].bb = console->bb;
+			console->buffer[console->cursor].foregroundRed = console->foregroundRed;
+			console->buffer[console->cursor].foregroundGreen = console->foregroundGreen;
+			console->buffer[console->cursor].foregroundBlue = console->foregroundBlue;
+			console->buffer[console->cursor].backgroundRed = console->backgroundRed;
+			console->buffer[console->cursor].backgroundGreen = console->backgroundGreen;
+			console->buffer[console->cursor].backgroundBlue = console->backgroundBlue;
 			ReleaseMutex(mutexHandle);
 			return 0;
 		}
@@ -645,12 +645,12 @@ int setchar(struct Console* console, char c) {
 
 	WaitForSingleObject(mutexHandle, INFINITE);
 	console->buffer[console->cursor].data = c;
-	console->buffer[console->cursor].fr = console->fr;
-	console->buffer[console->cursor].fg = console->fg;
-	console->buffer[console->cursor].fb = console->fb;
-	console->buffer[console->cursor].br = console->br;
-	console->buffer[console->cursor].bg = console->bg;
-	console->buffer[console->cursor].bb = console->bb;
+	console->buffer[console->cursor].foregroundRed = console->foregroundRed;
+	console->buffer[console->cursor].foregroundGreen = console->foregroundGreen;
+	console->buffer[console->cursor].foregroundBlue = console->foregroundBlue;
+	console->buffer[console->cursor].backgroundRed = console->backgroundRed;
+	console->buffer[console->cursor].backgroundGreen = console->backgroundGreen;
+	console->buffer[console->cursor].backgroundBlue = console->backgroundBlue;
 	if (console->cursor != console->width * console->height) {
 		console->cursor++;
 	}
@@ -1563,44 +1563,44 @@ int clear(struct Console* console) {
 
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = console->defaultchar;
-		console->buffer[i].fr = console->defaultfr;
-		console->buffer[i].fg = console->defaultfg;
-		console->buffer[i].fb = console->defaultfb;
-		console->buffer[i].br = console->defaultbr;
-		console->buffer[i].bg = console->defaultbg;
-		console->buffer[i].bb = console->defaultbb;
+		console->buffer[i].foregroundRed = console->defaultForegroundRed;
+		console->buffer[i].foregroundGreen = console->defaultForegroundGreen;
+		console->buffer[i].foregroundBlue = console->defaultForegroundBlue;
+		console->buffer[i].backgroundRed = console->defaultBackgroundRed;
+		console->buffer[i].backgroundGreen = console->defaultBackgroundGreen;
+		console->buffer[i].backgroundBlue = console->defaultBackgroundBlue;
 	}
 	console->cursor = 0;
 	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
-int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb) {
+int fill(struct Console* console, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue, unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue) {
 	if (console == NULL) {
 		return -1;
 	}
 
-	if (fr > 255) {
+	if (foregroundRed > 255) {
 		return -2;
 	}
 
-	if (fg > 255) {
+	if (foregroundGreen > 255) {
 		return -3;
 	}
 
-	if (fb > 255) {
+	if (foregroundBlue > 255) {
 		return -4;
 	}
 
-	if (br > 255) {
+	if (backgroundRed > 255) {
 		return -5;
 	}
 
-	if (bg > 255) {
+	if (backgroundGreen > 255) {
 		return -6;
 	}
 
-	if (bb > 255) {
+	if (backgroundBlue > 255) {
 		return -7;
 	}
 
@@ -1608,12 +1608,12 @@ int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsi
 
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = c;
-		console->buffer[i].fr = fr;
-		console->buffer[i].fg = fg;
-		console->buffer[i].fb = fb;
-		console->buffer[i].br = br;
-		console->buffer[i].bg = bg;
-		console->buffer[i].bb = bb;
+		console->buffer[i].foregroundRed = foregroundRed;
+		console->buffer[i].foregroundGreen = foregroundGreen;
+		console->buffer[i].foregroundBlue = foregroundBlue;
+		console->buffer[i].backgroundRed = backgroundRed;
+		console->buffer[i].backgroundGreen = backgroundGreen;
+		console->buffer[i].backgroundBlue = backgroundBlue;
 	}
 
 	console->cursor = 0;
@@ -1632,12 +1632,12 @@ int fillchar(struct Console* console, char c) {
 	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		console->buffer[i].data = c;
-		console->buffer[i].fr = console->defaultfr;
-		console->buffer[i].fg = console->defaultfg;
-		console->buffer[i].fb = console->defaultfb;
-		console->buffer[i].br = console->defaultbr;
-		console->buffer[i].bg = console->defaultbg;
-		console->buffer[i].bb = console->defaultbb;
+		console->buffer[i].foregroundRed = console->defaultForegroundRed;
+		console->buffer[i].foregroundGreen = console->defaultForegroundGreen;
+		console->buffer[i].foregroundBlue = console->defaultForegroundBlue;
+		console->buffer[i].backgroundRed = console->defaultBackgroundRed;
+		console->buffer[i].backgroundGreen = console->defaultBackgroundGreen;
+		console->buffer[i].backgroundBlue = console->defaultBackgroundBlue;
 	}
 	console->cursor = 0;
 	ReleaseMutex(mutexHandle);
@@ -1744,12 +1744,12 @@ int refresh(struct Console* console) {
 	memcpy(&outputBuffer[place], buff, add);
 	place += add;
 
-	unsigned int fr = 255;
-	unsigned int fg = 255;
-	unsigned int fb = 255;
-	unsigned int br = 0;
-	unsigned int bg = 0;
-	unsigned int bb = 0;
+	unsigned int foregrondRed = 255;
+	unsigned int foregrondGreen = 255;
+	unsigned int foregrondBlue = 255;
+	unsigned int backgrondRed = 0;
+	unsigned int backgrondGreen = 0;
+	unsigned int backgrondBlue = 0;
 	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
@@ -1757,27 +1757,27 @@ int refresh(struct Console* console) {
 			place++;
 		}
 
-		struct Cell c = console->buffer[i];
+		struct Cell cell = console->buffer[i];
 
-		if (fr != c.fr || fg != c.fg || fb != c.fb) {
-			fr = c.fr;
-			fg = c.fg;
-			fb = c.fb;
+		if (foregrondRed != cell.foregroundRed || foregrondGreen != cell.foregroundGreen || foregrondBlue != cell.foregroundBlue) {
+			foregrondRed = cell.foregroundRed;
+			foregrondGreen = cell.foregroundGreen;
+			foregrondBlue = cell.foregroundBlue;
 			char colorbuff[19];
-			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", fr, fg, fb);
+			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", foregrondRed, foregrondGreen, foregrondBlue);
 			memcpy(&outputBuffer[place], colorbuff, add);
 			place += add;
 		}
-		if (br != c.br || bg != c.bg || bb != c.bb) {
-			br = c.br;
-			bg = c.bg;
-			bb = c.bb;
+		if (backgrondRed != cell.backgroundRed || backgrondGreen != cell.backgroundGreen || backgrondBlue != cell.backgroundBlue) {
+			backgrondRed = cell.backgroundRed;
+			backgrondGreen = cell.backgroundGreen;
+			backgrondBlue = cell.backgroundBlue;
 			char colorbuff[19];
-			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", br, bg, bb);
+			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", backgrondRed, backgrondGreen, backgrondBlue);
 			memcpy(&outputBuffer[place], colorbuff, add);
 			place += add;
 		}
-		outputBuffer[place] = c.data;
+		outputBuffer[place] = cell.data;
 		place++;
 	}
 	outputBuffer[place] = '\0';

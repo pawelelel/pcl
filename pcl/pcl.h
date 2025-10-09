@@ -27,22 +27,22 @@ int end(struct Console* console);
 /**
  * Sets foreground color to specified value
  *
- * @param r red
- * @param g green
- * @param b blue
+ * @param red red
+ * @param green green
+ * @param blue blue
  * @return error code
  */
-int setforegroundcolor(struct Console *console, int r, int g, int b);
+int setforegroundcolor(struct Console *console, int red, int green, int blue);
 
 /**
  * Sets background color to specified value
  *
- * @param r red
- * @param g green
- * @param b blue
+ * @param red red
+ * @param green green
+ * @param blue blue
  * @return error code
  */
-int setbackgroundcolor(struct Console *console, int r, int g, int b);
+int setbackgroundcolor(struct Console *console, int red, int green, int blue);
 
 /**
  * Sets foreground color to default value
@@ -300,12 +300,12 @@ int clear(struct Console* console);
  *
  * @param console pointer to struct Console
  * @param c char to be filled
- * @param fr foreground color red value
- * @param fg foreground color green value
- * @param fb foreground color blue value
- * @param br backround color red value
- * @param bg backround color green value
- * @param bb backround color blue value
+ * @param foregroundRed foreground color red value
+ * @param foregroundGreen foreground color green value
+ * @param foregroundBlue foreground color blue value
+ * @param backgroundRed backround color red value
+ * @param backgroundGreen backround color green value
+ * @param backgroundBlue backround color blue value
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL<br>
  * (-2) foreground red parameter is greater than 255<br>
@@ -315,7 +315,7 @@ int clear(struct Console* console);
  * (-6) background green parameter is greater than 255<br>
  * (-7) background blue parameter is greater than 255
  */
-int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb);
+int fill(struct Console* console, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue, unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue);
 
 /**
  * Fills console with specified char
