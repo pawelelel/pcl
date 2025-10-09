@@ -48,7 +48,7 @@ struct Console {
 	// settings
 	int blockInput;
 	// works only with getchr function
-	int blockTimeout;
+	unsigned int blockTimeout;
 	char defaultchar;
 	unsigned int defaultfr, defaultfg, defaultfb;
 	unsigned int defaultbr, defaultbg, defaultbb;

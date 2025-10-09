@@ -19,6 +19,8 @@ struct Console* start(void);
  * Ends a console window
  *
  * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int end(struct Console* console);
 
@@ -143,7 +145,8 @@ int unsetresizeevent(struct Console* console);
  *
  * @param console pointer to struct Console
  * @param timeout should be >= 0
- * @return 1 if eveything went well otherwise returns 0
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int settimeout(struct Console* console, int timeout);
 
@@ -152,7 +155,8 @@ int settimeout(struct Console* console, int timeout);
  * See also settimeout()
  *
  * @param console pointer to struct Console
- * @return current value of timeout
+ * @return current value of timeout or negative if error occurs:
+ * (-1) console parameter is NULL
  */
 int gettimeout(struct Console* console);
 
@@ -296,6 +300,20 @@ int clear(struct Console* console);
  *
  * @param console pointer to struct Console
  * @param c char to be filled
+ * @param fr foreground color red value
+ * @param fg foreground color green value
+ * @param fb foreground color blue value
+ * @param br backround color red value
+ * @param bg backround color green value
+ * @param bb backround color blue value
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) foreground red parameter is greater than 255<br>
+ * (-3) foreground green parameter is greater than 255<br>
+ * (-4) foreground blue parameter is greater than 255<br>
+ * (-5) background red parameter is greater than 255<br>
+ * (-6) background green parameter is greater than 255<br>
+ * (-7) background blue parameter is greater than 255
  */
 int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb);
 
@@ -334,7 +352,11 @@ int setcursorposition(struct Console* console, unsigned int row, unsigned int co
  * @param console pointer to struct console
  * @param row row number
  * @param col column number
- * @return 1 if eveything went well otherwise returns negative:<br>
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row parameter is NULL<br>
+ * (-3) col parameter is NULL<br>
+ *
  */
 int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col);
 

@@ -244,8 +244,6 @@ struct Console* start(void) {
 }
 
 int end(struct Console* console) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -423,13 +421,9 @@ int unsetresizeevent(struct Console *console) {
 	return 0;
 }
 
-int settimeout(struct Console *console, int timeout) {
-	// TODO docs
+int settimeout(struct Console *console, unsigned int timeout) {
 	if (console == NULL) {
 		return -1;
-	}
-	if (timeout < 0) {
-		return -2;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
 	console->blockTimeout = timeout;
@@ -438,14 +432,12 @@ int settimeout(struct Console *console, int timeout) {
 }
 
 int gettimeout(struct Console *console) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
-	const int b = console->blockTimeout;
+	const unsigned int b = console->blockTimeout;
 	ReleaseMutex(mutexHandle);
 	return b;
 }
@@ -1584,7 +1576,6 @@ int clear(struct Console* console) {
 }
 
 int fill(struct Console* console, char c, unsigned int fr, unsigned int fg, unsigned int fb, unsigned int br, unsigned int bg, unsigned int bb) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -1713,7 +1704,6 @@ int setcursorposition(struct Console* console, unsigned int row, unsigned int co
 }
 
 int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
