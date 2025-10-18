@@ -529,7 +529,6 @@ DWORD puregetcharthread(LPVOID lpParam) {
 }
 
 char getchr(struct Console* console) {
-	// TODO docs
 	// TODO add virtual key codes for arrows, special keys etc.
 	// TODO add unicode
 
@@ -539,7 +538,7 @@ char getchr(struct Console* console) {
 
 	WaitForSingleObject(mutexHandle, INFINITE);
 	const int bi = console->blockInput;
-	const int bt = console->blockTimeout;
+	const unsigned int bt = console->blockTimeout;
 	ReleaseMutex(mutexHandle);
 
 	if (!bi) {
@@ -571,7 +570,6 @@ char getchr(struct Console* console) {
 }
 
 int setchar(struct Console* console, char c) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -659,7 +657,6 @@ int setchar(struct Console* console, char c) {
 }
 
 int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -1087,8 +1084,6 @@ int validateformatstring(char* format, char** validtokens, int tokens) {
 }
 
 int getvariables(struct Console *console, char *format, ...) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -1269,7 +1264,7 @@ int getvariables(struct Console *console, char *format, ...) {
 			getcharvariable(console, &gotchar);
 			if (gotchar <= 0) {
 				va_end(args);
-				return -17;
+				return -16;
 			}
 		}
 
@@ -1278,7 +1273,7 @@ int getvariables(struct Console *console, char *format, ...) {
 		}
 		else {
 			va_end(args);
-			return -18;
+			return -16;
 		}
 	}
 

@@ -193,12 +193,14 @@ int settitle(struct Console* console, char* title);
 int getdimensions(struct Console* console, unsigned int* width, unsigned int* height);
 
 /**
- * Gets first char from stdin
- * Warning! input blocking is "stronger" than timeout
+ * Gets first char from stdin<br>
+ * <b>Warning!</b> input blocking is "stronger" than timeout
  *
  * @param console pointer to struct Console
  *
- * @return char
+ * @return char if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) function waited too much for input
  */
 char getchr(struct Console* console);
 
@@ -207,7 +209,8 @@ char getchr(struct Console* console);
  *
  * @param console pointer to structure console
  * @param c char to set
- * @return error code:\n
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int setchar(struct Console* console, char c);
 
@@ -218,6 +221,11 @@ int setchar(struct Console* console, char c);
  * @param c char to set
  * @param row row number
  * @param col column number
+ *
+ * @return 0 if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row is greater than console height
+ * (-3) col is greater than console width
  */
 int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col);
 
@@ -225,8 +233,39 @@ int setcharcursor(struct Console* console, char c, unsigned int row, unsigned in
  * Works as standard scanf
  *
  * @param console pointer to struct Console
- * @param format format string
+ * @param format format string. Now available are given tokens:<br>
+ * %s string<br>
+ * %c char<br>
+ * %h short<br>
+ * %uh unsigned short<br>
+ * %d int<br>
+ * %ud unsigned int<br>
+ * %l long<br>
+ * %ul unsigned long<br>
+ * %ll long long<br>
+ * %ull unsigned long long<br>
+ * %f float<br>
+ * %lf double<br>
+ * %llf long double
  * @param ... scanned variables
+ *
+ * @return number of assigned variables if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) format parameter is NULL<br>
+ * (-3) format is not valid format string<br>
+ * (-4) float variable processing error<br>
+ * (-5) long variable processing error<br>
+ * (-6) int variable processing error<br>
+ * (-7) short variable processing error<br>
+ * (-8) char variable processing error<br>
+ * (-9) unsigned long variable processing error<br>
+ * (-10) double variable processing error<br>
+ * (-11) unsigned int variable processing error<br>
+ * (-12) unsigned short variable processing error<br>
+ * (-13) long long variable processing error<br>
+ * (-14) unsigned long long variable processing error<br>
+ * (-15) long double variable processing error<br>
+ * (-16) general format processing error
  */
 int getvariables(struct Console* console, char* format, ...);
 
