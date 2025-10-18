@@ -148,7 +148,7 @@ int unsetresizeevent(struct Console* console);
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL
  */
-int settimeout(struct Console* console, int timeout);
+int settimeout(struct Console* console, unsigned int timeout);
 
 /**
  * Returns set timeout
@@ -334,6 +334,13 @@ int fillchar(struct Console* console, char c);
  * @param col top-left array position of array in console
  * @param width array height
  * @param height array wwidth
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) array parameter is NULL<br>
+ * (-3) height parameter equals 0<br>
+ * (-4) width parameter equals 0<br>
+ * (-5) height parameter equals 0<br>
+ * (-6) width parameter equals 0<br>
  */
 int set2darray(struct Console* console, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height);
 
@@ -356,7 +363,6 @@ int setcursorposition(struct Console* console, unsigned int row, unsigned int co
  * (-1) console parameter is NULL<br>
  * (-2) row parameter is NULL<br>
  * (-3) col parameter is NULL<br>
- *
  */
 int getcursorposition(struct Console* console, unsigned int *row, unsigned int *col);
 
