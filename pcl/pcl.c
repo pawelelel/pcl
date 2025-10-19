@@ -1431,8 +1431,6 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 }
 
 int getstringbuffer(struct Console* console, char *buffer, size_t size) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -1442,7 +1440,7 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
-	int timeout = console->blockTimeout;
+	const unsigned int timeout = console->blockTimeout;
 	ReleaseMutex(mutexHandle);
 
 	if (timeout <= 0) {
@@ -1471,7 +1469,7 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 		args.readChar = 0;
 		HANDLE thread = CreateThread(NULL, 0, puregetcharthread, &args, 0, NULL);
 
-		DWORD result = WaitForSingleObject(thread, timeout - elapsedtimemiliseconds);
+		const DWORD result = WaitForSingleObject(thread, timeout - elapsedtimemiliseconds);
 		if (result == WAIT_TIMEOUT) {
 			break;
 		}

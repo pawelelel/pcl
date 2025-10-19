@@ -310,6 +310,10 @@ int getstring(struct Console* console, char* buffer, size_t size);
  * @param console pointer to struct Console
  * @param buffer input buffer
  * @param size buffer size
+ *
+ * @return number of chars gotten if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) buffer parameter is NULL
  */
 int getstringbuffer(struct Console* console, char* buffer, size_t size);
 
