@@ -1368,8 +1368,6 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 }
 
 int getstring(struct Console* console, char *buffer, size_t size) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}

@@ -296,6 +296,10 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
  * @param console pointer to struct Console
  * @param buffer input buffer
  * @param size
+ *
+ * @return number of chars gotten if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) buffer parameter is NULL
  */
 int getstring(struct Console* console, char* buffer, size_t size);
 
