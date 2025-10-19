@@ -30,7 +30,7 @@ int end(struct Console* console);
  * @param red red
  * @param green green
  * @param blue blue
- * @return error code
+ * @return TODO error code
  */
 int setforegroundcolor(struct Console *console, int red, int green, int blue);
 
@@ -40,21 +40,21 @@ int setforegroundcolor(struct Console *console, int red, int green, int blue);
  * @param red red
  * @param green green
  * @param blue blue
- * @return error code
+ * @return TODO error code
  */
 int setbackgroundcolor(struct Console *console, int red, int green, int blue);
 
 /**
  * Sets foreground color to default value
  *
- * @return error code
+ * @return TODO error code
  */
 int clearforegroundcolor(struct Console *console);
 
 /**
  * Sets background color to default value
  *
- * @return error code
+ * @return TODO error code
  */
 int clearbackgroundcolor(struct Console *console);
 
@@ -82,7 +82,7 @@ int getinputblock(struct Console* console);
  *
  * @param console pointer to struct Console
  * @param FocusEvent pointer to event handling function receives FOCUSED or UNFOCUSED argument
- * @return error code
+ * @return TODO error code
  */
 int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , int));
 
@@ -90,7 +90,7 @@ int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , i
  * Unsets focus event function
  * 
  * @param console pointer to struct Console
- * @return error code
+ * @return TODO error code
  */
 int unsetfocusevent(struct Console* console);
 
@@ -98,14 +98,14 @@ int unsetfocusevent(struct Console* console);
  *
  * @param console pointer to struct Console
  * @param KeyEvent pointer to event handling function
- * @return error code
+ * @return TODO error code
  */
 int setkeyevent(struct Console* console, void(*KeyEvent)(struct Console*, char, int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return error code
+ * @return TODO error code
  */
 int unsetkeyevent(struct Console* console);
 
@@ -113,14 +113,14 @@ int unsetkeyevent(struct Console* console);
  * 
  * @param console pointer to struct Console
  * @param MouseEvent pointer to event handling function
- * @return error code
+ * @return TODO error code
  */
 int setmouseevent(struct Console* console, void(*MouseEvent)(struct Console*, int, int, int, int, int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return error code
+ * @return TODO error code
  */
 int unsetmouseevent(struct Console* console);
 
@@ -128,14 +128,14 @@ int unsetmouseevent(struct Console* console);
  * 
  * @param console pointer to struct Console
  * @param ResizeEvent pointer to event handling function
- * @return error code
+ * @return TODO error code
  */
 int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return error code
+ * @return TODO error code
  */
 int unsetresizeevent(struct Console* console);
 
@@ -275,6 +275,10 @@ int getvariables(struct Console* console, char* format, ...);
  * @param console pointer to struct Console
  * @param format format string
  * @param ... variables to format
+ *
+ * @return size of written string if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) format parameter is NULL
  */
 int setstringformatted(struct Console* console, char* format, ...);
 
@@ -286,6 +290,14 @@ int setstringformatted(struct Console* console, char* format, ...);
  * @param row row number
  * @param col column number
  * @param ... variables to format
+ *
+ * @return size of written string if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row parameter is lower than zero <br>
+ * (-3) col parameter is lower than zero <br>
+ * (-4) format parameter is NULL<br>
+ * (-5) row parameter is greater than console height <br>
+ * (-6) col parameter is greater than console width
  */
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...);
 
@@ -322,6 +334,10 @@ int getstringbuffer(struct Console* console, char* buffer, size_t size);
  *
  * @param console pointer to struct Console
  * @param string input
+ *
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-1) string parameter is NULL
  */
 int setstring(struct Console* console, char* string);
 
@@ -332,6 +348,14 @@ int setstring(struct Console* console, char* string);
  * @param string input
  * @param row row number
  * @param col column number
+ *
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row parameter is lower than zero <br>
+ * (-3) col parameter is lower than zero <br>
+ * (-4) string parameter is NULL<br>
+ * (-5) row parameter is greater than console height <br>
+ * (-6) col parameter is greater than console width
  */
 int setstringcursor(struct Console* console, char* string, int row, int col);
 
@@ -369,6 +393,9 @@ int fill(struct Console* console, char c, unsigned int foregroundRed, unsigned i
  *
  * @param console pointer to struct Console
  * @param c char to be filled
+ *
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int fillchar(struct Console* console, char c);
 
@@ -381,6 +408,7 @@ int fillchar(struct Console* console, char c);
  * @param col top-left array position of array in console
  * @param width array height
  * @param height array wwidth
+ *
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL<br>
  * (-2) array parameter is NULL<br>
@@ -417,6 +445,10 @@ int getcursorposition(struct Console* console, unsigned int *row, unsigned int *
  * Prints console window
  *
  * @param console pointer to struct Console
+ *
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) internal function error
  */
 int refresh(struct Console* console);
 

@@ -1283,8 +1283,6 @@ int getvariables(struct Console *console, char *format, ...) {
 }
 
 int setstringformatted(struct Console* console, char *format, ...) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -1297,7 +1295,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	va_start(ap, format);
 	va_copy(apcopy, ap);
 
-	int size = vsnprintf(NULL, 0, format, apcopy);
+	const int size = vsnprintf(NULL, 0, format, apcopy);
 	va_end(apcopy);
 
 	char* memory = malloc((size + 1) * sizeof(char));
@@ -1308,11 +1306,10 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	setstring(console, memory);
 	free(memory);
 
-	return 0;
+	return size;
 }
 
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -1343,7 +1340,7 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 	va_start(ap, format);
 	va_copy(apcopy, ap);
 
-	int size = vsnprintf(NULL, 0, format, apcopy);
+	const int size = vsnprintf(NULL, 0, format, apcopy);
 	va_end(apcopy);
 
 	char* memory = malloc((size + 1) * sizeof(char));
@@ -1364,7 +1361,7 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 
 	free(memory);
 
-	return 0;
+	return size;
 }
 
 int getstring(struct Console* console, char *buffer, size_t size) {
@@ -1488,15 +1485,13 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 }
 
 int setstring(struct Console* console, char *string) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
 	if (string == NULL) {
 		return -2;
 	}
-	size_t size = strlen(string);
+	const size_t size = strlen(string);
 	for (int i = 0; i < size; ++i) {
 		setchar(console, string[i]);
 	}
@@ -1504,35 +1499,33 @@ int setstring(struct Console* console, char *string) {
 }
 
 int setstringcursor(struct Console* console, char *string, int row, int col) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
 
-	if (string == NULL) {
+	if (row < 0) {
 		return -2;
 	}
 
-	if (row < 0) {
+	if (col < 0) {
 		return -3;
 	}
 
-	if (col < 0) {
+	if (string == NULL) {
 		return -4;
 	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
-	if (row > console->height - 1) {
+	if (row >= console->height) {
 		ReleaseMutex(mutexHandle);
 		return -5;
 	}
-	if (col > console->width - 1) {
+	if (col > console->width) {
 		ReleaseMutex(mutexHandle);
 		return -6;
 	}
 
-	unsigned int cursor = console->cursor;
+	const unsigned int cursor = console->cursor;
 	console->cursor = col + row * console->width;
 	ReleaseMutex(mutexHandle);
 
@@ -1615,7 +1608,6 @@ int fill(struct Console* console, char c, unsigned int foregroundRed, unsigned i
 }
 
 int fillchar(struct Console* console, char c) {
-	// TODO docs
 	if (console == NULL) {
 		return -1;
 	}
@@ -1637,8 +1629,6 @@ int fillchar(struct Console* console, char c) {
 }
 
 int set2darray(struct Console* console, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height) {
-	// TODO docs
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -1714,7 +1704,6 @@ int getcursorposition(struct Console* console, unsigned int *row, unsigned int *
 
 int refresh(struct Console* console) {
 	// TODO remember about updating (specially buffer size)
-	// TODO docs
 
 	if (console == NULL) {
 		return -1;
@@ -1724,11 +1713,11 @@ int refresh(struct Console* console) {
 	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
 	ReleaseMutex(mutexHandle);
 	char *outputBuffer = malloc(bufferSize);
-	memset(outputBuffer, 0, bufferSize);
-	int place = 0;
 	if (outputBuffer == NULL) {
 		return -2;
 	}
+	memset(outputBuffer, 0, bufferSize);
+	int place = 0;
 	// clear
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
