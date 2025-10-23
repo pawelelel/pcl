@@ -27,34 +27,46 @@ int end(struct Console* console);
 /**
  * Sets foreground color to specified value
  *
+ * @param console pointer to struct Console
  * @param red red
  * @param green green
  * @param blue blue
- * @return TODO error code
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-2) red parameter is greater than 255
+ * (-3) green parameter is greater than 255
+ * (-4) blue parameter is greater than 255
  */
-int setforegroundcolor(struct Console *console, int red, int green, int blue);
+int setforegroundcolor(struct Console *console, unsigned int red, unsigned int green, unsigned int blue);
 
 /**
  * Sets background color to specified value
  *
+ * @param console pointer to struct Console
  * @param red red
  * @param green green
  * @param blue blue
- * @return TODO error code
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-2) red parameter is greater than 255
+ * (-3) green parameter is greater than 255
+ * (-4) blue parameter is greater than 255
  */
 int setbackgroundcolor(struct Console *console, int red, int green, int blue);
 
 /**
  * Sets foreground color to default value
  *
- * @return TODO error code
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int clearforegroundcolor(struct Console *console);
 
 /**
  * Sets background color to default value
  *
- * @return TODO error code
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int clearbackgroundcolor(struct Console *console);
 
@@ -81,8 +93,10 @@ int getinputblock(struct Console* console);
  * Sets focus event function
  *
  * @param console pointer to struct Console
- * @param FocusEvent pointer to event handling function receives FOCUSED or UNFOCUSED argument
- * @return TODO error code
+ * @param FocusEvent pointer to event handling function
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-1) FocusEvent parameter is NULL
  */
 int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , int));
 
@@ -90,22 +104,26 @@ int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , i
  * Unsets focus event function
  * 
  * @param console pointer to struct Console
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int unsetfocusevent(struct Console* console);
 
 /**
  *
  * @param console pointer to struct Console
- * @param KeyEvent pointer to event handling function
- * @return TODO error code
+ * @param KeyEvent pointer to event handling function which receives  FOCUSED or UNFOCUSED arguments
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-2) KeyEvent parameter is NULL
  */
 int setkeyevent(struct Console* console, void(*KeyEvent)(struct Console*, char, int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int unsetkeyevent(struct Console* console);
 
@@ -113,14 +131,17 @@ int unsetkeyevent(struct Console* console);
  * 
  * @param console pointer to struct Console
  * @param MouseEvent pointer to event handling function
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-2) MouseEvent parameter is NULL
  */
 int setmouseevent(struct Console* console, void(*MouseEvent)(struct Console*, int, int, int, int, int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int unsetmouseevent(struct Console* console);
 
@@ -128,14 +149,17 @@ int unsetmouseevent(struct Console* console);
  * 
  * @param console pointer to struct Console
  * @param ResizeEvent pointer to event handling function
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ * (-2) ResizeEvent parameter is NULL
  */
 int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int));
 
 /**
  * 
  * @param console pointer to struct Console
- * @return TODO error code
+ * @return  0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
  */
 int unsetresizeevent(struct Console* console);
 

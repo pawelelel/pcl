@@ -261,9 +261,18 @@ int end(struct Console* console) {
 	return 0;
 }
 
-int setforegroundcolor(struct Console *console, int red, int green, int blue) {
+int setforegroundcolor(struct Console *console, unsigned int red, unsigned int green, unsigned int blue) {
 	if (console == NULL) {
 		return -1;
+	}
+	if (red > 255) {
+		return -2;
+	}
+	if (green > 255) {
+		return -3;
+	}
+	if (blue > 255) {
+		return -4;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
 	console->foregroundRed = red;
@@ -276,6 +285,15 @@ int setforegroundcolor(struct Console *console, int red, int green, int blue) {
 int setbackgroundcolor(struct Console *console, int red, int green, int blue) {
 	if (console == NULL) {
 		return -1;
+	}
+	if (red > 255) {
+		return -2;
+	}
+	if (green > 255) {
+		return -3;
+	}
+	if (blue > 255) {
+		return -4;
 	}
 	WaitForSingleObject(mutexHandle, INFINITE);
 	console->backgroundRed = red;
