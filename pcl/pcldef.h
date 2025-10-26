@@ -24,6 +24,14 @@ struct Cell {
 	char data;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
+
+	BOOL bold;
+	BOOL dim;
+	BOOL italic;
+	BOOL underline;
+	BOOL blinking;
+	BOOL strikethrough;
+	BOOL doubleunderline;
 };
 
 struct Console {
@@ -41,6 +49,14 @@ struct Console {
 	unsigned int width, height;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
+
+	BOOL bold;
+	BOOL dim;
+	BOOL italic;
+	BOOL underline;
+	BOOL blinking;
+	BOOL strikethrough;
+	BOOL doubleunderline;
 
 	// error
 	HANDLE errorHandle;

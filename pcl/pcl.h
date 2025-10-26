@@ -25,6 +25,195 @@ struct Console* start(void);
 int end(struct Console* console);
 
 /**
+ * Sets font bold property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontbold(struct Console* console);
+
+/**
+ * Unsets font bold property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontbold(struct Console* console);
+
+/**
+ * Returns font bold property
+ *
+ * @param console pointer to struct Console
+ * @return bold property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontbold(struct Console* console);
+
+/**
+ * Sets font dim property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontdim(struct Console* console);
+
+/**
+ * Unsets font dim property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontdim(struct Console* console);
+
+/**
+ * Returns font dim property
+ *
+ * @param console pointer to struct Console
+ * @return dim property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontdim(struct Console* console);
+
+/**
+ * Sets font italic property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontitalic(struct Console* console);
+
+/**
+ * Unsets font italic property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontitalic(struct Console* console);
+
+/**
+ * Returns font italic property
+ *
+ * @param console pointer to struct Console
+ * @return italic property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontitalic(struct Console* console);
+
+/**
+ * Sets font underline property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontunderline(struct Console* console);
+
+/**
+ * Unsets font underline property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontunderline(struct Console* console);
+
+/**
+ * Returns font underline property
+ *
+ * @param console pointer to struct Console
+ * @return underline property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontunderline(struct Console* console);
+
+/**
+ * Sets font blinking property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontblinking(struct Console* console);
+
+/**
+ * Unsets font blinking property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontblinking(struct Console* console);
+
+/**
+ * Returns font blinking property
+ *
+ * @param console pointer to struct Console
+ * @return blinking property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontblinking(struct Console* console);
+
+/**
+ * Sets font strikethrough property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontstrikethrough(struct Console* console);
+
+/**
+ * Unsets font strikethrough property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontstrikethrough(struct Console* console);
+
+/**
+ * Returns font strikethrough property
+ *
+ * @param console pointer to struct Console
+ * @return strikethrough property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontstrikethrough(struct Console* console);
+
+/**
+ * Sets font doubleunderline property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setfontdoubleunderline(struct Console* console);
+
+/**
+ * Unsets font doubleunderline property
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetfontdoubleunderline(struct Console* console);
+
+/**
+ * Returns font doubleunderline property
+ *
+ * @param console pointer to struct Console
+ * @return doubleunderline property (TRUE or FALSE) if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int getfontdoubleunderline(struct Console* console);
+
+/**
  * Sets foreground color to specified value
  *
  * @param console pointer to struct Console
@@ -78,7 +267,7 @@ int clearbackgroundcolor(struct Console *console);
  * @param blockinput should be TRUE or FALSE
  * @return 1 if eveything went well otherwise returns 0
  */
-int setinputblock(struct Console* console, int blockinput);
+int setinputblock(struct Console* console, BOOL blockinput);
 
 /**
  * Returns getchr() input blocking behaviour

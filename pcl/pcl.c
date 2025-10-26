@@ -209,6 +209,14 @@ struct Console* start(void) {
 	console->foregroundRed = 255;console->foregroundGreen = 255;console->foregroundBlue = 255;
 	console->backgroundRed = 0;console->backgroundGreen= 0;console->backgroundBlue = 0;
 
+	console->bold = FALSE;
+	console->dim = FALSE;
+	console->italic = FALSE;
+	console->underline = FALSE;
+	console->blinking = FALSE;
+	console->strikethrough = FALSE;
+	console->doubleunderline = FALSE;
+
 	console->defaultchar = ' ';
 	console->defaultForegroundRed = 255;
 	console->defaultForegroundGreen = 255;
@@ -226,6 +234,14 @@ struct Console* start(void) {
 		console->buffer[i].backgroundRed = console->defaultBackgroundRed;
 		console->buffer[i].backgroundGreen = console->defaultBackgroundGreen;
 		console->buffer[i].backgroundBlue = console->defaultBackgroundBlue;
+
+		console->buffer[i].bold = console->bold;
+		console->buffer[i].dim = console->dim;
+		console->buffer[i].italic = console->italic;
+		console->buffer[i].underline = console->underline;
+		console->buffer[i].blinking = console->blinking;
+		console->buffer[i].strikethrough = console->strikethrough;
+		console->buffer[i].doubleunderline = console->doubleunderline;
 	}
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
@@ -259,6 +275,167 @@ int end(struct Console* console) {
 
 	printf("\x1B[1;1f");
 	return 0;
+}
+
+int setfontbold(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->bold = TRUE;
+	return 0;
+}
+
+int unsetfontbold(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->bold = FALSE;
+	return 0;
+}
+
+int getfontbold(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->bold;
+}
+
+int setfontdim(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->dim = TRUE;
+	return 0;
+}
+
+int unsetfontdim(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->dim = FALSE;
+	return 0;
+}
+
+int getfontdim(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->dim;
+}
+
+int setfontitalic(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->italic = TRUE;
+	return 0;
+}
+
+int unsetfontitalic(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->italic = FALSE;
+	return 0;
+}
+
+int getfontitalic(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->italic;
+}
+
+int setfontunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->underline = TRUE;
+	return 0;
+}
+
+int unsetfontunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->underline = FALSE;
+	return 0;
+}
+
+int getfontunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->underline;
+}
+
+int setfontblinking(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->blinking = TRUE;
+	return 0;
+}
+
+int unsetfontblinking(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->blinking = FALSE;
+	return 0;
+}
+
+int getfontblinking(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->blinking;
+}
+
+int setfontstrikethrough(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->strikethrough = TRUE;
+	return 0;
+}
+
+int unsetfontstrikethrough(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->strikethrough = FALSE;
+	return 0;
+}
+
+int getfontstrikethrough(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->strikethrough;
+}
+
+int setfontdoubleunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->doubleunderline = TRUE;
+	return 0;
+}
+
+int unsetfontdoubleunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	console->doubleunderline = FALSE;
+	return 0;
+}
+
+int getfontdoubleunderline(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	return console->doubleunderline;
 }
 
 int setforegroundcolor(struct Console *console, unsigned int red, unsigned int green, unsigned int blue) {
@@ -667,6 +844,14 @@ int setchar(struct Console* console, char c) {
 	console->buffer[console->cursor].backgroundRed = console->backgroundRed;
 	console->buffer[console->cursor].backgroundGreen = console->backgroundGreen;
 	console->buffer[console->cursor].backgroundBlue = console->backgroundBlue;
+
+	console->buffer[console->cursor].bold = console->bold;
+	console->buffer[console->cursor].dim = console->dim;
+	console->buffer[console->cursor].italic = console->italic;
+	console->buffer[console->cursor].underline = console->underline;
+	console->buffer[console->cursor].blinking = console->blinking;
+	console->buffer[console->cursor].strikethrough = console->strikethrough;
+	console->buffer[console->cursor].doubleunderline = console->doubleunderline;
 	if (console->cursor != console->width * console->height) {
 		console->cursor++;
 	}
@@ -1727,8 +1912,16 @@ int refresh(struct Console* console) {
 		return -1;
 	}
 
+	// init
 	WaitForSingleObject(mutexHandle, INFINITE);
-	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) + console->height + 6;
+	/*
+	 * console->width * console->height => characters
+	 * (19 + 19 + 1) => colors
+	 * (5 * 7) => font
+	 * console->height => last row
+	 * 6 => clear
+	*/
+	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) * (5 * 7) + console->height + 6;
 	ReleaseMutex(mutexHandle);
 	char *outputBuffer = malloc(bufferSize);
 	if (outputBuffer == NULL) {
@@ -1736,18 +1929,28 @@ int refresh(struct Console* console) {
 	}
 	memset(outputBuffer, 0, bufferSize);
 	int place = 0;
+
 	// clear
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
 	memcpy(&outputBuffer[place], buff, add);
 	place += add;
 
-	unsigned int foregrondRed = 255;
-	unsigned int foregrondGreen = 255;
-	unsigned int foregrondBlue = 255;
-	unsigned int backgrondRed = 0;
-	unsigned int backgrondGreen = 0;
-	unsigned int backgrondBlue = 0;
+	unsigned int foregroundRed = 255;
+	unsigned int foregroundGreen = 255;
+	unsigned int foregroundBlue = 255;
+	unsigned int backgroundRed = 0;
+	unsigned int backgroundGreen = 0;
+	unsigned int backgroundBlue = 0;
+
+	BOOL bold = FALSE;
+	BOOL italic = FALSE;
+	BOOL dim = FALSE;
+	BOOL underline = FALSE;
+	BOOL blinking = FALSE;
+	BOOL strikethrough = FALSE;
+	BOOL doubleunderline = FALSE;
+
 	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
@@ -1755,23 +1958,128 @@ int refresh(struct Console* console) {
 			place++;
 		}
 
-		struct Cell cell = console->buffer[i];
+		const struct Cell cell = console->buffer[i];
 
-		if (foregrondRed != cell.foregroundRed || foregrondGreen != cell.foregroundGreen || foregrondBlue != cell.foregroundBlue) {
-			foregrondRed = cell.foregroundRed;
-			foregrondGreen = cell.foregroundGreen;
-			foregrondBlue = cell.foregroundBlue;
+		if (bold != cell.bold) {
+			if (cell.bold == TRUE) {
+				bold = TRUE;
+				char boldstr[4] = "\x1B[1m";
+				memcpy(&outputBuffer[place], boldstr, 4);
+				place += 4;
+			}
+			else {
+				bold = FALSE;
+				char boldstr[5] = "\x1B[22m";
+				memcpy(&outputBuffer[place], boldstr, 5);
+				place += 5;
+			}
+		}
+
+		if (dim != cell.dim) {
+			if (cell.dim == TRUE) {
+				dim = TRUE;
+				char dimstr[4] = "\x1B[2m";
+				memcpy(&outputBuffer[place], dimstr, 4);
+				place += 4;
+			}
+			else {
+				dim = FALSE;
+				char dimstr[5] = "\x1B[22m";
+				memcpy(&outputBuffer[place], dimstr, 5);
+				place += 5;
+			}
+		}
+
+		if (underline != cell.underline) {
+			if (cell.underline == TRUE) {
+				underline = TRUE;
+				char underlinestr[4] = "\x1B[4m";
+				memcpy(&outputBuffer[place], underlinestr, 4);
+				place += 4;
+			}
+			else {
+				underline = FALSE;
+				char underlinestr[5] = "\x1B[24m";
+				memcpy(&outputBuffer[place], underlinestr, 5);
+				place += 5;
+			}
+		}
+
+		if (blinking != cell.blinking) {
+			if (cell.blinking == TRUE) {
+				blinking = TRUE;
+				char blinkingstr[4] = "\x1B[5m";
+				memcpy(&outputBuffer[place], blinkingstr, 4);
+				place += 4;
+			}
+			else {
+				blinking = FALSE;
+				char blinkingstr[5] = "\x1B[25m";
+				memcpy(&outputBuffer[place], blinkingstr, 5);
+				place += 5;
+			}
+		}
+
+		if (strikethrough != cell.strikethrough) {
+			if (cell.strikethrough == TRUE) {
+				strikethrough = TRUE;
+				char strikethroughstr[4] = "\x1B[9m";
+				memcpy(&outputBuffer[place], strikethroughstr, 4);
+				place += 4;
+			}
+			else {
+				strikethrough = FALSE;
+				char strikethroughstr[5] = "\x1B[29m";
+				memcpy(&outputBuffer[place], strikethroughstr, 5);
+				place += 5;
+			}
+		}
+
+		if (doubleunderline != cell.doubleunderline) {
+			if (cell.doubleunderline == TRUE) {
+				doubleunderline = TRUE;
+				char doubleunderlinestr[5] = "\x1B[21m";
+				memcpy(&outputBuffer[place], doubleunderlinestr, 5);
+				place += 5;
+			}
+			else {
+				doubleunderline = FALSE;
+				char doubleunderlinestr[5] = "\x1B[24m";
+				memcpy(&outputBuffer[place], doubleunderlinestr, 5);
+				place += 5;
+			}
+		}
+
+		if (italic != cell.italic) {
+			if (cell.italic == TRUE) {
+				italic = TRUE;
+				char italicstr[4] = "\x1B[3m";
+				memcpy(&outputBuffer[place], italicstr, 4);
+				place += 4;
+			}
+			else {
+				italic = FALSE;
+				char italicstr[5] = "\x1B[23m";
+				memcpy(&outputBuffer[place], italicstr, 5);
+				place += 5;
+			}
+		}
+
+		if (foregroundRed != cell.foregroundRed || foregroundGreen != cell.foregroundGreen || foregroundBlue != cell.foregroundBlue) {
+			foregroundRed = cell.foregroundRed;
+			foregroundGreen = cell.foregroundGreen;
+			foregroundBlue = cell.foregroundBlue;
 			char colorbuff[19];
-			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", foregrondRed, foregrondGreen, foregrondBlue);
+			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", foregroundRed, foregroundGreen, foregroundBlue);
 			memcpy(&outputBuffer[place], colorbuff, add);
 			place += add;
 		}
-		if (backgrondRed != cell.backgroundRed || backgrondGreen != cell.backgroundGreen || backgrondBlue != cell.backgroundBlue) {
-			backgrondRed = cell.backgroundRed;
-			backgrondGreen = cell.backgroundGreen;
-			backgrondBlue = cell.backgroundBlue;
+		if (backgroundRed != cell.backgroundRed || backgroundGreen != cell.backgroundGreen || backgroundBlue != cell.backgroundBlue) {
+			backgroundRed = cell.backgroundRed;
+			backgroundGreen = cell.backgroundGreen;
+			backgroundBlue = cell.backgroundBlue;
 			char colorbuff[19];
-			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", backgrondRed, backgrondGreen, backgrondBlue);
+			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", backgroundRed, backgroundGreen, backgroundBlue);
 			memcpy(&outputBuffer[place], colorbuff, add);
 			place += add;
 		}
