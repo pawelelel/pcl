@@ -1288,6 +1288,7 @@ int validateformatstring(char* format, char** validtokens, int tokens) {
 	return 1;
 }
 
+//TODO refactor
 int getvariables(struct Console *console, char *format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -1487,6 +1488,8 @@ int getvariables(struct Console *console, char *format, ...) {
 	return assignedvariables;
 }
 
+//TODO docs
+//TODO refactor
 int setstringformatted(struct Console* console, char *format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -1498,8 +1501,8 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 	// valid tokens sorted by length
 	char* validtokens[] = {
-		"%llf", "%ull", "%ll", "%uh", "%ud",
-		"%lf", "%ul", "%c", "%h", "%d", "%l", "%f", "%s"
+		"%ull", "%ll", "%uh", "%ud",
+		"%ul", "%c", "%h", "%d", "%l", "%s", "%%"
 	};
 
 	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
@@ -1515,24 +1518,24 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 
 	while (*format) {
+
+		// standardd printf behaviour
 		if (*format == '%') {
 			format++;
+
+			BOOL set = FALSE;
+
+			// standard tokens
 			for (int i = 0; i < tokenssize; i++) {
 				char* token = validtokens[i] + 1;
 				size_t tokensize = strlen(token);
 				if (strncmp(format, token, tokensize) == 0) {
 					// match
 					format += tokensize;
-
-					if (strcmp(token, "f") == 0) {
-						//TODO add precision
-						float f = va_arg(args, double);
-						const int size = snprintf(NULL, 0, "%f", f);
-						char* memory = malloc((size + 1) * sizeof(char));
-						snprintf(memory, size + 1, "%f", f);
-						strcat(str, memory);
-						free(memory);
-						length += size;
+					if (strcmp(token, "%") == 0) {
+						str[length] = '%';
+						length++;
+						set = TRUE;
 						break;
 					}
 					if (strcmp(token, "s") == 0) {
@@ -1545,6 +1548,8 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							str[length + j] = s[j];
 						}
 						length += (int)size;
+
+						set = TRUE;
 
 						break;
 					}
@@ -1565,6 +1570,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							l /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "d") == 0) {
@@ -1584,6 +1592,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							d /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "h") == 0) {
@@ -1603,12 +1614,18 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							h /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "c") == 0) {
 						const char c = va_arg(args, int);
 						str[length] = c;
 						length++;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "ul") == 0) {
@@ -1620,17 +1637,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							ul /= 10;
 						}
 						length += size;
-						break;
-					}
-					if (strcmp(token, "lf") == 0) {
-						//TODO add precision
-						double lf = va_arg(args, double);
-						const int size = snprintf(NULL, 0, "%lf", lf);
-						char* memory = malloc((size + 1) * sizeof(char));
-						snprintf(memory, size + 1, "%lf", lf);
-						strcat(str, memory);
-						free(memory);
-						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "ud") == 0) {
@@ -1642,6 +1651,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							ud /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "uh") == 0) {
@@ -1653,6 +1665,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							uh /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "ll") == 0) {
@@ -1672,6 +1687,9 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							d /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
 					if (strcmp(token, "ull") == 0) {
@@ -1683,22 +1701,108 @@ int setstringformatted(struct Console* console, char *format, ...) {
 							ull /= 10;
 						}
 						length += size;
+
+						set = TRUE;
+
 						break;
 					}
-					if (strcmp(token, "llf") == 0) {
-						//TODO add precision
-						long double llf = va_arg(args, long double);
-						const int size = snprintf(NULL, 0, "%Lf", llf);
-						char* memory = malloc((size + 1) * sizeof(char));
-						snprintf(memory, size + 1, "%Lf", llf);
-						strcat(str, memory);
-						free(memory);
-						length += size;
-
-					}
-					break;
 				}
 			}
+
+			if (set) {
+				continue;
+			}
+
+			// floating point numbers printing
+
+			char* precisionstr = malloc(20 * sizeof(char));
+			int precisionstrsize = 10;
+
+			// precision detected
+			// probably float match
+			if (*format == '.') {
+				format++;
+
+				int i = 0;
+				while (isdigit(*format)) {
+					precisionstr[i] = *format;
+					i++;
+					if (i == precisionstrsize) {
+						precisionstrsize *= 2;
+						realloc(precisionstr, precisionstrsize);
+					}
+					format++;
+				}
+				precisionstr[i] = '\0';
+			}
+			else {
+				precisionstr[0] = '5';
+				precisionstr[1] = '\0';
+			}
+
+			// lets handle that float
+			// float
+			if (strncmp(format, "f", 1) == 0) {
+				format++;
+				float f = va_arg(args, double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "f\0");
+
+				int size = snprintf(NULL, 0, formatstr, f);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, f);
+				strcat(str, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			// double
+			if (strncmp(format, "lf", 2) == 0) {
+				format += 2;
+				double lf = va_arg(args, double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "lf\0");
+
+				int size = snprintf(NULL, 0, formatstr, lf);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, lf);
+				strcat(str, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			// long double
+			if (strncmp(format, "llf", 3) == 0) {
+				format += 3;
+				long double llf = va_arg(args, long double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "Lf\0");
+
+				int size = snprintf(NULL, 0, formatstr, llf);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, llf);
+				strcat(str, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			free(precisionstr);
+
 			continue;
 		}
 
@@ -1706,17 +1810,6 @@ int setstringformatted(struct Console* console, char *format, ...) {
 		length++;
 		format++;
 	}
-
-
-
-
-
-
-
-
-
-
-
 
 	va_end(args);
 	str[length] = '\0';
@@ -1728,6 +1821,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	return length;
 }
 
+//TODO refactor same as setstringformatted()
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -1912,6 +2006,7 @@ int setstring(struct Console* console, char *string) {
 	}
 	const size_t size = strlen(string);
 	for (int i = 0; i < size; ++i) {
+		//TODO add in-string styles
 		setchar(console, string[i]);
 	}
 	return 0;
