@@ -1950,6 +1950,54 @@ int setstringformatted(struct Console* console, char *format, ...) {
 			continue;
 		}
 
+		// font styles
+		/*
+		 * Possible styles
+		 * TODO @<number>;<number>;<number>f foreground color
+		 * TODO @<number>;<number>;<number>b background color
+		 * TODO @b bold
+		 * TODO @rb remove bold
+		 *
+		 * TODO @d dim
+		 * TODO @rd remove dim
+		 *
+		 * TODO @i italic
+		 * TODO @ri remove italic
+		 *
+		 * TODO @u underline
+		 * TODO @ru remove underline
+		 *
+		 * TODO @l blinking
+		 * TODO @rl remove blinking
+		 *
+		 * TODO @s strikethrough
+		 * TODO @rs remove strikethrough
+		 *
+		 * TODO @uu doubleunderline
+		 * TODO @ruu remove doubleunderline
+		 *
+		 * TODO @c clear all
+		 *
+		 * @@ at character
+		*/
+		if (*format == '@') {
+			format++;
+
+			if (*format == '@') {
+				format++;
+				str[length] = '@';
+				length++;
+			}
+			else if (*format == 'b') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				ReleaseMutex(mutexHandle);
+			}
+
+			continue;
+		}
+
+		// standard non-controlling character
 		str[length] = *format;
 		length++;
 		format++;
