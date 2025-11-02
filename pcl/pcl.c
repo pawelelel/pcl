@@ -206,6 +206,7 @@ struct Console* start(void) {
 	GetConsoleScreenBufferInfo(console->outputHandle, &info);
 
 	console->cursor = 0;
+	console->cursorstyle = BLINKING_BAR;
 	console->height = info.dwSize.Y;
 	console->width = info.dwSize.X;
 	console->foregroundRed = 255;console->foregroundGreen = 255;console->foregroundBlue = 255;
@@ -276,6 +277,99 @@ int end(struct Console* console) {
 	free(console);
 
 	printf("\x1B[1;1f");
+	return 0;
+}
+
+int setcursorstyle(struct Console *console, int style) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	switch (style) {
+		case BLINKING_BLOCK: {
+			char* blinkBlock = "\x1B[1 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, blinkBlock, strlen(blinkBlock), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case STEADY_BLOCK: {
+			char* steadyBlock = "\x1B[2 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, steadyBlock, strlen(steadyBlock), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case BLINKING_UNDERLINE: {
+			char* blinkUnderline = "\x1B[3 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, blinkUnderline, strlen(blinkUnderline), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case STEADY_UNDERLINE: {
+			char* steadyUnderline = "\x1B[4 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, steadyUnderline, strlen(steadyUnderline), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case BLINKING_BAR: {
+			char* blinkBar = "\x1B[5 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, blinkBar, strlen(blinkBar), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case STEADY_BAR: {
+			char* steadyBar = "\x1B[6 q";
+			WaitForSingleObject(mutexHandle, INFINITE);
+			WriteConsoleA(console->outputHandle, steadyBar, strlen(steadyBar), NULL, NULL);
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		default: {
+			return -2;
+		}
+	}
+
+	//shouldn't happed
+	return -2;
+}
+
+int unsetcursorstyle(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+	WaitForSingleObject(mutexHandle, INFINITE);
+	console->cursorstyle = BLINKING_BAR;
+	ReleaseMutex(mutexHandle);
+	return 0;
+}
+
+int showcursor(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	char* show = "\x1B[?25h";
+	WaitForSingleObject(mutexHandle, INFINITE);
+	WriteConsoleA(console->outputHandle, show, strlen(show), NULL, NULL);
+	ReleaseMutex(mutexHandle);
+
+	return 0;
+}
+
+int hidecursor(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	char* hide = "\x1B[?25l";
+	WaitForSingleObject(mutexHandle, INFINITE);
+	WriteConsoleA(console->outputHandle, hide, strlen(hide), NULL, NULL);
+	ReleaseMutex(mutexHandle);
+
 	return 0;
 }
 
@@ -2262,6 +2356,11 @@ int refresh(struct Console* console) {
 	BOOL strikethrough = FALSE;
 	BOOL doubleunderline = FALSE;
 
+	//char* position = "\x1B[%d;%dH";
+	char position[100];
+
+
+
 	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
@@ -2399,6 +2498,12 @@ int refresh(struct Console* console) {
 	}
 	outputBuffer[place] = '\0';
 	WriteConsoleA(console->outputHandle, outputBuffer, strlen(outputBuffer), NULL, NULL);
+
+	unsigned int row = console->cursor / console->width + 1;
+	unsigned int col = console->cursor % console->width + 1;
+	sprintf(position, "\x1B[%d;%dH", row, col);
+	WriteConsoleA(console->outputHandle, position, strlen(position), NULL, NULL);
+
 	ReleaseMutex(mutexHandle);
 	free(outputBuffer);
 	return 0;

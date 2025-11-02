@@ -45,11 +45,15 @@ struct Console {
 	// output
 	HANDLE outputHandle;
 	struct Cell* buffer;
-	unsigned int cursor;
 	unsigned int width, height;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
+	// cursor
+	int cursorstyle;
+	unsigned int cursor;
+
+	// font
 	BOOL bold;
 	BOOL dim;
 	BOOL italic;
@@ -132,5 +136,14 @@ struct Console {
 #define PRESSED 1
 #define RELEASED 0
 
+
+// cursor types
+
+#define BLINKING_BLOCK 1
+#define STEADY_BLOCK 2
+#define BLINKING_UNDERLINE 3
+#define STEADY_UNDERLINE 4
+#define BLINKING_BAR 5
+#define STEADY_BAR 6
 
 #endif //PCLDEF_H

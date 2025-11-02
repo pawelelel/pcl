@@ -25,6 +25,44 @@ struct Console* start(void);
 int end(struct Console* console);
 
 /**
+ * Sets cursor style
+ *
+ * @param console pointer to struct Console
+ * @param style one of 6 predefined styles, can be BLINKING_BLOCK, STEADY_BLOCK, BLINKING_UNDERLINE, STEADY_UNDERLINE, BLINKING_BAR or STEADY_BAR
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) style parameter is unknown
+ */
+int setcursorstyle(struct Console* console, int style);
+
+/**
+ * Sets cursor style to default (BLINKING_BAR)
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int unsetcursorstyle(struct Console* console);
+
+/**
+ * Shows cursor in console window
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+*/
+int showcursor(struct Console* console);
+
+/**
+ * Hides cursor in console window
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+*/
+int hidecursor(struct Console* console);
+
+/**
  * Sets font bold property
  *
  * @param console pointer to struct Console
