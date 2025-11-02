@@ -377,7 +377,9 @@ int setfontbold(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->bold = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -385,7 +387,9 @@ int unsetfontbold(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->bold = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -393,14 +397,18 @@ int getfontbold(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	return console->bold;
+	ReleaseMutex(mutexHandle);
 }
 
 int setfontdim(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->dim = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -408,7 +416,9 @@ int unsetfontdim(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->dim = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -416,14 +426,21 @@ int getfontdim(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->dim;
+
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL dim = console->dim;
+	ReleaseMutex(mutexHandle);
+
+	return dim;
 }
 
 int setfontitalic(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->italic = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -431,7 +448,9 @@ int unsetfontitalic(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->italic = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -439,14 +458,19 @@ int getfontitalic(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->italic;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL italic = console->italic;
+	ReleaseMutex(mutexHandle);
+	return italic;
 }
 
 int setfontunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->underline = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -454,7 +478,9 @@ int unsetfontunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->underline = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -462,14 +488,19 @@ int getfontunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->underline;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL underline = console->underline;
+	ReleaseMutex(mutexHandle);
+	return underline;
 }
 
 int setfontblinking(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->blinking = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -477,7 +508,9 @@ int unsetfontblinking(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->blinking = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -485,14 +518,19 @@ int getfontblinking(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->blinking;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL blinking = console->blinking;
+	ReleaseMutex(mutexHandle);
+	return blinking;
 }
 
 int setfontstrikethrough(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->strikethrough = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -500,7 +538,9 @@ int unsetfontstrikethrough(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->strikethrough = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -508,14 +548,19 @@ int getfontstrikethrough(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->strikethrough;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL strikethrough = console->strikethrough;
+	ReleaseMutex(mutexHandle);
+	return strikethrough;
 }
 
 int setfontdoubleunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->doubleunderline = TRUE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -523,7 +568,9 @@ int unsetfontdoubleunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
+	WaitForSingleObject(mutexHandle, INFINITE);
 	console->doubleunderline = FALSE;
+	ReleaseMutex(mutexHandle);
 	return 0;
 }
 
@@ -531,7 +578,10 @@ int getfontdoubleunderline(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}
-	return console->doubleunderline;
+	WaitForSingleObject(mutexHandle, INFINITE);
+	BOOL doubleunderline = console->doubleunderline;
+	ReleaseMutex(mutexHandle);
+	return doubleunderline;
 }
 
 int setforegroundcolor(struct Console *console, unsigned int red, unsigned int green, unsigned int blue) {
@@ -1981,7 +2031,7 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
-	int timeout = console->blockTimeout;
+	unsigned int timeout = console->blockTimeout;
 	ReleaseMutex(mutexHandle);
 
 	if (timeout <= 0) {
