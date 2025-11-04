@@ -466,6 +466,16 @@ char getchr(struct Console* console);
 int setchar(struct Console* console, char c);
 
 /**
+ * Sets char on cursor position. Changes cursor position
+ *
+ * @param console pointer to structure console
+ * @param c char to set
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setcharsetcharformatted(struct Console* console, char c);
+
+/**
  * Sets char on specified position. Do not changes cursor position
  *
  * @param console pointer to struct Console

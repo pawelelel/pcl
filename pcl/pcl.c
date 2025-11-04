@@ -1005,6 +1005,157 @@ int setchar(struct Console* console, char c) {
 	return 0;
 }
 
+int setcharformatted(struct Console* console, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+						unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+						BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	if (foregroundRed > 255) {
+		return -2;
+	}
+
+	if (foregroundGreen > 255) {
+		return -3;
+	}
+
+	if (foregroundBlue > 255) {
+		return -4;
+	}
+
+	if (backgroundRed > 255) {
+		return -5;
+	}
+
+	if (backgroundGreen > 255) {
+		return -6;
+	}
+
+	if (backgroundBlue > 255) {
+		return -7;
+	}
+
+	if (bold != TRUE && bold != FALSE) {
+		return -8;
+	}
+
+	if (dim != TRUE && dim != FALSE) {
+		return -9;
+	}
+
+	if (italic != TRUE && italic != FALSE) {
+		return -10;
+	}
+
+	if (underline != TRUE && underline != FALSE) {
+		return -11;
+	}
+
+	if (blinking != TRUE && blinking != FALSE) {
+		return -12;
+	}
+
+	if (strikethrough != TRUE && strikethrough != FALSE) {
+		return -13;
+	}
+
+	if (doubleunderline != TRUE && doubleunderline != FALSE) {
+		return -14;
+	}
+
+
+
+	switch (c) {
+		case '\n': {
+			WaitForSingleObject(mutexHandle, INFINITE);
+			console->cursor += console->width;
+			console->cursor -= console->cursor % console->width;
+			if (console->cursor >= console->width * console->height) {
+				console->cursor = 0;
+			}
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case '\a': {
+			// not supported
+			WaitForSingleObject(mutexHandle, INFINITE);
+			c = console->defaultchar;
+			ReleaseMutex(mutexHandle);
+			break;
+		}
+		case '\b': {
+			WaitForSingleObject(mutexHandle, INFINITE);
+			if (console->cursor == 0) {
+				ReleaseMutex(mutexHandle);
+				return 0;
+			}
+			console->cursor--;
+			console->buffer[console->cursor].data = console->defaultchar;
+			console->buffer[console->cursor].foregroundRed = console->foregroundRed;
+			console->buffer[console->cursor].foregroundGreen = console->foregroundGreen;
+			console->buffer[console->cursor].foregroundBlue = console->foregroundBlue;
+			console->buffer[console->cursor].backgroundRed = console->backgroundRed;
+			console->buffer[console->cursor].backgroundGreen = console->backgroundGreen;
+			console->buffer[console->cursor].backgroundBlue = console->backgroundBlue;
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case '\v': {
+			WaitForSingleObject(mutexHandle, INFINITE);
+			console->cursor += console->width;
+			if (console->cursor >= console->width * console->height) {
+				console->cursor = 0;
+			}
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case '\r': {
+			WaitForSingleObject(mutexHandle, INFINITE);
+			console->cursor -= console->cursor % console->width;
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		case '\f': {
+			WaitForSingleObject(mutexHandle, INFINITE);
+			console->cursor = 0;
+			ReleaseMutex(mutexHandle);
+			return 0;
+		}
+		default: break;
+	}
+
+	// v \n - new line
+	// v \a - not supported
+	// v \b - backspace
+	// v \v - vertical enter
+	// v \r - carrige return
+	// v \f - set cursor 0 0
+	// v \t - tab
+
+	WaitForSingleObject(mutexHandle, INFINITE);
+	console->buffer[console->cursor].data = c;
+	console->buffer[console->cursor].foregroundRed = foregroundRed;
+	console->buffer[console->cursor].foregroundGreen = foregroundGreen;
+	console->buffer[console->cursor].foregroundBlue = foregroundBlue;
+	console->buffer[console->cursor].backgroundRed = backgroundRed;
+	console->buffer[console->cursor].backgroundGreen = backgroundGreen;
+	console->buffer[console->cursor].backgroundBlue = backgroundBlue;
+
+	console->buffer[console->cursor].bold = bold;
+	console->buffer[console->cursor].dim = dim;
+	console->buffer[console->cursor].italic = italic;
+	console->buffer[console->cursor].underline = underline;
+	console->buffer[console->cursor].blinking = blinking;
+	console->buffer[console->cursor].strikethrough = strikethrough;
+	console->buffer[console->cursor].doubleunderline = doubleunderline;
+	if (console->cursor != console->width * console->height) {
+		console->cursor++;
+	}
+	ReleaseMutex(mutexHandle);
+	return 0;
+}
+
 int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col) {
 	if (console == NULL) {
 		return -1;
