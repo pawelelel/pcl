@@ -1795,6 +1795,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	}
 
 	// valid tokens sorted by length
+	// TODO add format string validation
 	char* validtokens[] = {
 		"%ull", "%ll", "%uh", "%ud",
 		"%ul", "%c", "%h", "%d", "%l", "%s", "%%"
@@ -2100,30 +2101,30 @@ int setstringformatted(struct Console* console, char *format, ...) {
 		// font styles
 		/*
 		 * Possible styles
-		 * TODO @<number>;<number>;<number>f foreground color
-		 * TODO @<number>;<number>;<number>b background color
-		 * TODO @b bold
-		 * TODO @rb remove bold
+		 * @<number>;<number>;<number>f foreground color
+		 * @<number>;<number>;<number>b background color
+		 * @b bold
+		 * @rb remove bold
 		 *
-		 * TODO @d dim
-		 * TODO @rd remove dim
+		 * @d dim
+		 * @rd remove dim
 		 *
-		 * TODO @i italic
-		 * TODO @ri remove italic
+		 * @i italic
+		 * @ri remove italic
 		 *
-		 * TODO @u underline
-		 * TODO @ru remove underline
+		 * @u underline
+		 * @ru remove underline
 		 *
-		 * TODO @l blinking
-		 * TODO @rl remove blinking
+		 * @l blinking
+		 * @rl remove blinking
 		 *
-		 * TODO @s strikethrough
-		 * TODO @rs remove strikethrough
+		 * @s strikethrough
+		 * @rs remove strikethrough
 		 *
-		 * TODO @uu doubleunderline
-		 * TODO @ruu remove doubleunderline
+		 * @uu doubleunderline
+		 * @ruu remove doubleunderline
 		 *
-		 * TODO @c clear all
+		 * @c clear all
 		 *
 		 * @@ at character
 		*/
@@ -2135,10 +2136,130 @@ int setstringformatted(struct Console* console, char *format, ...) {
 				setchar(console, '@');
 				length++;
 			}
+			else if (*format == 'c') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = FALSE;
+				console->dim = FALSE;
+				console->italic = FALSE;
+				console->underline = FALSE;
+				console->blinking = FALSE;
+				console->strikethrough = FALSE;
+				console->doubleunderline = FALSE;
+
+				console->foregroundRed = console->defaultForegroundRed;
+				console->foregroundGreen = console->defaultForegroundGreen;
+				console->foregroundBlue = console->defaultForegroundBlue;
+
+				ReleaseMutex(mutexHandle);
+			}
 			else if (*format == 'b') {
 				format++;
 				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = TRUE;
 				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rb", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'd') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->dim = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rd", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->dim = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'i') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->italic = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ri", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->italic = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'u') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->underline = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ru", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->underline = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'l') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->blinking = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rl", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->blinking = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 's') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->strikethrough = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rs", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->strikethrough = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "uu", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->doubleunderline = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ruu", 3) == 0) {
+				format += 3;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->doubleunderline = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (isdigit(*format)) {
+				int r, g, b;
+				r = g = b = 0;
+				r = strtol(format, &format, 10);
+				format++;
+				g = strtol(format, &format, 10);
+				format++;
+				b = strtol(format, &format, 10);
+				if (*format == 'f') {
+					WaitForSingleObject(mutexHandle, INFINITE);
+					console->foregroundRed = r;
+					console->foregroundGreen = g;
+					console->foregroundBlue = b;
+					ReleaseMutex(mutexHandle);
+				}
+				else if (*format == 'b') {
+					WaitForSingleObject(mutexHandle, INFINITE);
+					console->backgroundRed = r;
+					console->backgroundGreen = g;
+					console->backgroundBlue = b;
+					ReleaseMutex(mutexHandle);
+				}
+				format++;
 			}
 
 			continue;
