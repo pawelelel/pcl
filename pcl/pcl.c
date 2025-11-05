@@ -1804,212 +1804,15 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 	va_list args;
 	va_start(args, format);
-
 	int length = 0;
-	const int strallocsize = 100;
-	// TODO what if i ran out of space
-	char* str = malloc(strallocsize);
-	memset(str, 0, strallocsize);
-
 
 	while (*format) {
 
-		// standardd printf behaviour
+		// standard printf behaviour
 		if (*format == '%') {
 			format++;
 
-			BOOL set = FALSE;
-
-			// standard tokens
-			for (int i = 0; i < tokenssize; i++) {
-				char* token = validtokens[i] + 1;
-				size_t tokensize = strlen(token);
-				if (strncmp(format, token, tokensize) == 0) {
-					// match
-					format += tokensize;
-					if (strcmp(token, "%") == 0) {
-						str[length] = '%';
-						length++;
-						set = TRUE;
-						break;
-					}
-					if (strcmp(token, "s") == 0) {
-						char* s = va_arg(args, char*);
-						size_t size = 0;
-						if (s != NULL)
-							size = strlen(s);
-
-						for (int j = 0; j < size; j++) {
-							str[length + j] = s[j];
-						}
-						length += (int)size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "l") == 0) {
-						long l = va_arg(args, long);
-						int size = (int)floor(log10(abs(l))) + 1;
-						if (l < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						l = abs(l);
-						for (int j = size - 1; j >= 0; --j) {
-							if (l == 0) { // handling negative numbers
-								str[length + j] = '-';
-								break;
-							}
-							char digit = l % 10 + '0';
-							str[length + j] = digit;
-							l /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "d") == 0) {
-						int d = va_arg(args, int);
-						int size = (int)floor(log10(abs(d))) + 1;
-						if (d < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						d = abs(d);
-						for (int j = size - 1; j >= 0; --j) {
-							if (d == 0) { // handling negative numbers
-								str[length + j] = '-';
-								break;
-							}
-							char digit = d % 10 + '0';
-							str[length + j] = digit;
-							d /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "h") == 0) {
-						short h = va_arg(args, int);
-						int size = (int)floor(log10(abs(h))) + 1;
-						if (h < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						h = abs(h);
-						for (int j = size - 1; j >= 0; --j) {
-							if (h == 0) { // handling negative numbers
-								str[length + j] = '-';
-								break;
-							}
-							char digit = h % 10 + '0';
-							str[length + j] = digit;
-							h /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "c") == 0) {
-						const char c = va_arg(args, int);
-						str[length] = c;
-						length++;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "ul") == 0) {
-						unsigned long ul = va_arg(args, unsigned long);
-						int size = (int)floor(log10(ul)) + 1;
-						for (int j = size - 1; j >= 0; --j) {
-							char digit = ul % 10 + '0';
-							str[length + j] = digit;
-							ul /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "ud") == 0) {
-						unsigned int ud = va_arg(args, unsigned int);
-						int size = (int)floor(log10(ud)) + 1;
-						for (int j = size - 1; j >= 0; --j) {
-							char digit = ud % 10 + '0';
-							str[length + j] = digit;
-							ud /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "uh") == 0) {
-						unsigned short uh = va_arg(args, int);
-						int size = (int)floor(log10(uh)) + 1;
-						for (int j = size - 1; j >= 0; --j) {
-							char digit = uh % 10 + '0';
-							str[length + j] = digit;
-							uh /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "ll") == 0) {
-						long long d = va_arg(args, long long);
-						int size = (int)floor(log10(abs(d))) + 1;
-						if (d < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						d = abs(d);
-						for (int j = size - 1; j >= 0; --j) {
-							if (d == 0) { // handling negative numbers
-								str[length + j] = '-';
-								break;
-							}
-							char digit = d % 10 + '0';
-							str[length + j] = digit;
-							d /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-					if (strcmp(token, "ull") == 0) {
-						unsigned long long ull = va_arg(args, unsigned long long );
-						int size = (int)floor(log10(ull)) + 1;
-						for (int j = size - 1; j >= 0; --j) {
-							char digit = ull % 10 + '0';
-							str[length + j] = digit;
-							ull /= 10;
-						}
-						length += size;
-
-						set = TRUE;
-
-						break;
-					}
-				}
-			}
-
-			if (set) {
-				continue;
-			}
-
 			// floating point numbers printing
-
 			char* precisionstr = malloc(20 * sizeof(char));
 			int precisionstrsize = 10;
 
@@ -2051,7 +1854,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 				int size = snprintf(NULL, 0, formatstr, f);
 				char* memory = malloc(size * sizeof(char));
 				snprintf(memory, size, formatstr, f);
-				strcat(str, memory);
+				setstring(console, memory);
 				free(memory);
 				length += size;
 				free(formatstr);
@@ -2071,7 +1874,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 				int size = snprintf(NULL, 0, formatstr, lf);
 				char* memory = malloc(size * sizeof(char));
 				snprintf(memory, size, formatstr, lf);
-				strcat(str, memory);
+				setstring(console, memory);
 				free(memory);
 				length += size;
 				free(formatstr);
@@ -2091,13 +1894,206 @@ int setstringformatted(struct Console* console, char *format, ...) {
 				int size = snprintf(NULL, 0, formatstr, llf);
 				char* memory = malloc(size * sizeof(char));
 				snprintf(memory, size, formatstr, llf);
-				strcat(str, memory);
+				setstring(console, memory);
 				free(memory);
 				length += size;
 				free(formatstr);
 			}
 			free(precisionstr);
 
+			// standard tokens
+			for (int i = 0; i < tokenssize; i++) {
+				char* token = validtokens[i] + 1;
+				size_t tokensize = strlen(token);
+				if (strncmp(format, token, tokensize) == 0) {
+					// match
+					format += tokensize;
+					if (strcmp(token, "%") == 0) {
+						setchar(console, '%');
+						length++;
+						break;
+					}
+					if (strcmp(token, "s") == 0) {
+						char* s = va_arg(args, char*);
+						setstring(console, s);
+						length += strlen(s);
+						break;
+					}
+					if (strcmp(token, "l") == 0) {
+						long l = va_arg(args, long);
+						int size = (int)floor(log10(abs(l))) + 2;
+						if (l < 0) { // if number is negative we need space for '-'
+							size++;
+						}
+						length += size - 1;
+						char* longstring = malloc(size * sizeof(char));
+						l = abs(l);
+						for (int j = size - 2; j >= 0; --j) {
+							if (l == 0) { // handling negative numbers
+								longstring[j] = '-';
+								break;
+							}
+							char digit = l % 10 + '0';
+							longstring[j] = digit;
+							l /= 10;
+						}
+
+						longstring[size - 1] = '\0';
+						setstring(console, longstring);
+						free(longstring);
+						break;
+					}
+					if (strcmp(token, "d") == 0) {
+						int d = va_arg(args, int);
+						int size = (int)floor(log10(abs(d))) + 2;
+						if (d < 0) { // if number is negative we need space for '-'
+							size++;
+						}
+						length += size - 1;
+						char* intstr = malloc(size * sizeof(char));
+						d = abs(d);
+						for (int j = size - 2; j >= 0; --j) {
+							if (d == 0) { // handling negative numbers
+								intstr[j] = '-';
+								break;
+							}
+							char digit = d % 10 + '0';
+							intstr[j] = digit;
+							d /= 10;
+						}
+
+						intstr[size - 1] = '\0';
+						setstring(console, intstr);
+						free(intstr);
+
+						break;
+					}
+					if (strcmp(token, "h") == 0) {
+						short h = va_arg(args, int);
+						int size = (int)floor(log10(abs(h))) + 2;
+						if (h < 0) { // if number is negative we need space for '-'
+							size++;
+						}
+						length += size - 1;
+						char* shortstr = malloc(size * sizeof(char));
+						h = abs(h);
+						for (int j = size - 2; j >= 0; --j) {
+							if (h == 0) { // handling negative numbers
+								shortstr[j] = '-';
+								break;
+							}
+							char digit = h % 10 + '0';
+							shortstr[j] = digit;
+							h /= 10;
+						}
+
+						shortstr[size - 1] = '\0';
+						setstring(console, shortstr);
+						free(shortstr);
+
+						break;
+					}
+					if (strcmp(token, "c") == 0) {
+						const char c = va_arg(args, int);
+						setchar(console, c);
+						length++;
+						break;
+					}
+					if (strcmp(token, "ul") == 0) {
+						unsigned long ul = va_arg(args, unsigned long);
+						int size = (int)floor(log10(ul)) + 2;
+						length += size - 1;
+						char* unsignedlongstr = malloc(size * sizeof(char));
+						for (int j = size - 2; j >= 0; --j) {
+							char digit = ul % 10 + '0';
+							unsignedlongstr[j] = digit;
+							ul /= 10;
+						}
+
+						unsignedlongstr[size - 1] = '\0';
+						setstring(console, unsignedlongstr);
+						free(unsignedlongstr);
+
+						break;
+					}
+					if (strcmp(token, "ud") == 0) {
+						unsigned int ud = va_arg(args, unsigned int);
+						int size = (int)floor(log10(ud)) + 2;
+						length += size - 1;
+						char* unsignedintstr = malloc(size * sizeof(char));
+						for (int j = size - 2; j >= 0; --j) {
+							char digit = ud % 10 + '0';
+							unsignedintstr[j] = digit;
+							ud /= 10;
+						}
+
+						unsignedintstr[size - 1] = '\0';
+						setstring(console, unsignedintstr);
+						free(unsignedintstr);
+
+						break;
+					}
+					if (strcmp(token, "uh") == 0) {
+						unsigned short uh = va_arg(args, int);
+						int size = (int)floor(log10(uh)) + 2;
+						length += size - 1;
+						char* unsignedshortstr = malloc(size * sizeof(char));
+						for (int j = size - 2; j >= 0; --j) {
+							char digit = uh % 10 + '0';
+							unsignedshortstr[j] = digit;
+							uh /= 10;
+						}
+
+						unsignedshortstr[size - 1] = '\0';
+						setstring(console, unsignedshortstr);
+						free(unsignedshortstr);
+
+						break;
+					}
+					if (strcmp(token, "ll") == 0) {
+						long long ll = va_arg(args, long long);
+						int size = (int)floor(log10(abs(ll))) + 2;
+						if (ll < 0) { // if number is negative we need space for '-'
+							size++;
+						}
+						length += size - 1;
+						char* longlongstr = malloc(size * sizeof(char));
+						ll = abs(ll);
+						for (int j = size - 2; j >= 0; --j) {
+							if (ll == 0) { // handling negative numbers
+								longlongstr[j] = '-';
+								break;
+							}
+							char digit = ll % 10 + '0';
+							longlongstr[j] = digit;
+							ll /= 10;
+						}
+
+						longlongstr[size - 1] = '\0';
+						setstring(console, longlongstr);
+						free(longlongstr);
+
+						break;
+					}
+					if (strcmp(token, "ull") == 0) {
+						unsigned long long ull = va_arg(args, unsigned long long );
+						int size = (int)floor(log10(/*TODO think*/(int)ull)) + 2;
+						length += size - 1;
+						char* unsignedlonglongstr = malloc(size * sizeof(char));
+						for (int j = size - 2; j >= 0; --j) {
+							char digit = ull % 10 + '0';
+							unsignedlonglongstr[j] = digit;
+							ull /= 10;
+						}
+
+						unsignedlonglongstr[size - 1] = '\0';
+						setstring(console, unsignedlonglongstr);
+						free(unsignedlonglongstr);
+
+						break;
+					}
+				}
+			}
 			continue;
 		}
 
@@ -2136,7 +2132,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 			if (*format == '@') {
 				format++;
-				str[length] = '@';
+				setchar(console, '@');
 				length++;
 			}
 			else if (*format == 'b') {
@@ -2149,18 +2145,12 @@ int setstringformatted(struct Console* console, char *format, ...) {
 		}
 
 		// standard non-controlling character
-		str[length] = *format;
+		setchar(console, *format);
 		length++;
 		format++;
 	}
 
 	va_end(args);
-	str[length] = '\0';
-
-	setstring(console, str);
-
-	free(str);
-
 	return length;
 }
 
