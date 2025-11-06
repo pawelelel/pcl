@@ -1917,81 +1917,34 @@ int setstringformatted(struct Console* console, char *format, ...) {
 					if (strcmp(token, "s") == 0) {
 						char* s = va_arg(args, char*);
 						setstring(console, s);
-						length += strlen(s);
+						length += (int)strlen(s);
 						break;
 					}
 					if (strcmp(token, "l") == 0) {
 						long l = va_arg(args, long);
-						int size = (int)floor(log10(abs(l))) + 2;
-						if (l < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						length += size - 1;
-						char* longstring = malloc(size * sizeof(char));
-						l = abs(l);
-						for (int j = size - 2; j >= 0; --j) {
-							if (l == 0) { // handling negative numbers
-								longstring[j] = '-';
-								break;
-							}
-							char digit = l % 10 + '0';
-							longstring[j] = digit;
-							l /= 10;
-						}
-
-						longstring[size - 1] = '\0';
+						int len = snprintf(NULL, 0, "%ld", l);
+						char* longstring = malloc((len+1) * sizeof(char));
+						snprintf(longstring, len+1, "%ld", l);
 						setstring(console, longstring);
 						free(longstring);
 						break;
 					}
 					if (strcmp(token, "d") == 0) {
 						int d = va_arg(args, int);
-						int size = (int)floor(log10(abs(d))) + 2;
-						if (d < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						length += size - 1;
-						char* intstr = malloc(size * sizeof(char));
-						d = abs(d);
-						for (int j = size - 2; j >= 0; --j) {
-							if (d == 0) { // handling negative numbers
-								intstr[j] = '-';
-								break;
-							}
-							char digit = d % 10 + '0';
-							intstr[j] = digit;
-							d /= 10;
-						}
-
-						intstr[size - 1] = '\0';
+						int len = snprintf(NULL, 0, "%d", d);
+						char* intstr = malloc((len+1) * sizeof(char));
+						snprintf(intstr, len+1, "%d", d);
 						setstring(console, intstr);
 						free(intstr);
-
 						break;
 					}
 					if (strcmp(token, "h") == 0) {
 						short h = va_arg(args, int);
-						int size = (int)floor(log10(abs(h))) + 2;
-						if (h < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						length += size - 1;
-						char* shortstr = malloc(size * sizeof(char));
-						h = abs(h);
-						for (int j = size - 2; j >= 0; --j) {
-							if (h == 0) { // handling negative numbers
-								shortstr[j] = '-';
-								break;
-							}
-							char digit = h % 10 + '0';
-							shortstr[j] = digit;
-							h /= 10;
-						}
-
-						shortstr[size - 1] = '\0';
+						int len = snprintf(NULL, 0, "%hd", h);
+						char* shortstr = malloc((len+1) * sizeof(char));
+						snprintf(shortstr, len+1, "%hd", h);
 						setstring(console, shortstr);
 						free(shortstr);
-
 						break;
 					}
 					if (strcmp(token, "c") == 0) {
@@ -2002,95 +1955,47 @@ int setstringformatted(struct Console* console, char *format, ...) {
 					}
 					if (strcmp(token, "ul") == 0) {
 						unsigned long ul = va_arg(args, unsigned long);
-						int size = (int)floor(log10(ul)) + 2;
-						length += size - 1;
-						char* unsignedlongstr = malloc(size * sizeof(char));
-						for (int j = size - 2; j >= 0; --j) {
-							char digit = ul % 10 + '0';
-							unsignedlongstr[j] = digit;
-							ul /= 10;
-						}
-
-						unsignedlongstr[size - 1] = '\0';
+						int len = snprintf(NULL, 0, "%lu", ul);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%lu", ul);
 						setstring(console, unsignedlongstr);
 						free(unsignedlongstr);
-
 						break;
 					}
 					if (strcmp(token, "ud") == 0) {
 						unsigned int ud = va_arg(args, unsigned int);
-						int size = (int)floor(log10(ud)) + 2;
-						length += size - 1;
-						char* unsignedintstr = malloc(size * sizeof(char));
-						for (int j = size - 2; j >= 0; --j) {
-							char digit = ud % 10 + '0';
-							unsignedintstr[j] = digit;
-							ud /= 10;
-						}
-
-						unsignedintstr[size - 1] = '\0';
-						setstring(console, unsignedintstr);
-						free(unsignedintstr);
-
+						int len = snprintf(NULL, 0, "%u", ud);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%u", ud);
+						setstring(console, unsignedlongstr);
+						free(unsignedlongstr);
 						break;
 					}
 					if (strcmp(token, "uh") == 0) {
 						unsigned short uh = va_arg(args, int);
-						int size = (int)floor(log10(uh)) + 2;
-						length += size - 1;
-						char* unsignedshortstr = malloc(size * sizeof(char));
-						for (int j = size - 2; j >= 0; --j) {
-							char digit = uh % 10 + '0';
-							unsignedshortstr[j] = digit;
-							uh /= 10;
-						}
-
-						unsignedshortstr[size - 1] = '\0';
-						setstring(console, unsignedshortstr);
-						free(unsignedshortstr);
-
+						int len = snprintf(NULL, 0, "%hu", uh);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%hu", uh);
+						setstring(console, unsignedlongstr);
+						free(unsignedlongstr);
 						break;
 					}
 					if (strcmp(token, "ll") == 0) {
 						long long ll = va_arg(args, long long);
-						int size = (int)floor(log10(abs(ll))) + 2;
-						if (ll < 0) { // if number is negative we need space for '-'
-							size++;
-						}
-						length += size - 1;
-						char* longlongstr = malloc(size * sizeof(char));
-						ll = abs(ll);
-						for (int j = size - 2; j >= 0; --j) {
-							if (ll == 0) { // handling negative numbers
-								longlongstr[j] = '-';
-								break;
-							}
-							char digit = ll % 10 + '0';
-							longlongstr[j] = digit;
-							ll /= 10;
-						}
-
-						longlongstr[size - 1] = '\0';
-						setstring(console, longlongstr);
-						free(longlongstr);
-
+						int len = snprintf(NULL, 0, "%lld", ll);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%lld", ll);
+						setstring(console, unsignedlongstr);
+						free(unsignedlongstr);
 						break;
 					}
 					if (strcmp(token, "ull") == 0) {
 						unsigned long long ull = va_arg(args, unsigned long long );
-						int size = (int)floor(log10(/*TODO think*/(int)ull)) + 2;
-						length += size - 1;
-						char* unsignedlonglongstr = malloc(size * sizeof(char));
-						for (int j = size - 2; j >= 0; --j) {
-							char digit = ull % 10 + '0';
-							unsignedlonglongstr[j] = digit;
-							ull /= 10;
-						}
-
-						unsignedlonglongstr[size - 1] = '\0';
-						setstring(console, unsignedlonglongstr);
-						free(unsignedlonglongstr);
-
+						int len = snprintf(NULL, 0, "%llu", ull);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%llu", ull);
+						setstring(console, unsignedlongstr);
+						free(unsignedlongstr);
 						break;
 					}
 				}
