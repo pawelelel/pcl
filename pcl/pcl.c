@@ -1557,7 +1557,8 @@ char getlongdoublevariable(struct Console* console, long double* llf) {
  * @param tokens number of tokens
  * @return 0 if format is invalid 1 if valid
  */
-int validateformatstring(char* format, char** validtokens, int tokens) {
+//TODO refactor
+int validateformatstringforgetvariables(char* format, char** validtokens, int tokens) {
 	while (*format) {
 		if (*format == '%') {
 			format++;
@@ -1617,7 +1618,7 @@ int getvariables(struct Console *console, char *format, ...) {
 
 	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
 
-	if (!validateformatstring(format, validtokens, tokenssize)) {
+	if (!validateformatstringforgetvariables(format, validtokens, tokenssize)) {
 		// format string is not valid
 		return -3;
 	}
@@ -1783,6 +1784,115 @@ int getvariables(struct Console *console, char *format, ...) {
 	return assignedvariables;
 }
 
+BOOL validateformatstringforsetstringformatted(char *format) {
+	const size_t length = strlen(format);
+
+	BOOL openToken = FALSE;
+	for (int i = 0; i < length; ++i) {
+		char token = format[i];
+		if (token == '%') {
+			// take next token
+			i++;
+			token = format[i];
+			openToken = TRUE;
+			// variable check
+
+			// integers
+
+			switch (token) {
+				case '%':
+				case 's':
+				case 'd':
+				case 'h':
+				case 'c':
+				case 'f': {
+					openToken = FALSE;
+					break;
+				}
+				case 'l': {
+					openToken = FALSE;
+					if (i + 1 < length) {
+						switch (format[i + 1]) {
+							case 'l': {
+								i++;
+								if (i + 1 < length && format[i + 1] == 'f') {
+									i++;
+									break;
+								}
+								break;
+							}
+							case 'f': {
+								i++;
+								break;
+							}
+							default: ;
+						}
+					}
+					break;
+				}
+				case 'u': { // unsigned
+					if (i + 1 < length) {
+						switch (format[i + 1]) {
+							case 'l': {
+								openToken = FALSE;
+								i++;
+								if (i + 1 < length && format[i + 1] == 'l') {
+									i++;
+								}
+								break;
+							}
+							case 'd':
+							case 'h': {
+								openToken = FALSE;
+								i++;
+								break;
+							}
+							default: ;
+						}
+					}
+					break;
+				}
+				case '.': {
+					// TODO add infinite int handler
+					if (i + 1 < length) {
+						switch (format[i + 1]) {
+							case 'f': {
+								openToken = FALSE;
+								i++;
+								break;
+							}
+							case 'l': {
+								i++;
+								// TODO finish
+								if (i + 1 < length) {}
+							}
+						}
+					}
+					break;
+				}
+				default: ;
+			}
+			// floats
+			// .(precision)
+			// f
+			// lf
+			// llf
+		}
+		else if (token == '@') {
+			// style check
+			openToken = TRUE;
+		}
+		// all other tokens are good
+	}
+	if (openToken) {
+		// format string suddenly ends with unfinished token
+		return FALSE;
+	}
+
+	// format string is valid
+	return TRUE;
+}
+
 //TODO docs
 //TODO refactor
 int setstringformatted(struct Console* console, char *format, ...) {
@@ -1792,6 +1902,10 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 	if (format == NULL) {
 		return -2;
+	}
+
+	if (!validateformatstringforsetstringformatted(format)) {
+		return -3;
 	}
 
 	// valid tokens sorted by length
@@ -1817,9 +1931,10 @@ int setstringformatted(struct Console* console, char *format, ...) {
 			char* precisionstr = malloc(20 * sizeof(char));
 			int precisionstrsize = 10;
 
-			// precision detected
-			// probably float match
 			if (*format == '.') {
+				// precision detected
+				// float match
+
 				format++;
 
 				int i = 0;
@@ -2365,7 +2480,6 @@ int setstring(struct Console* console, char *string) {
 	}
 	const size_t size = strlen(string);
 	for (int i = 0; i < size; ++i) {
-		//TODO add in-string styles
 		setchar(console, string[i]);
 	}
 	return 0;
