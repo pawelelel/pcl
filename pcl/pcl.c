@@ -1790,15 +1790,13 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 	BOOL openToken = FALSE;
 	for (int i = 0; i < length; ++i) {
 		char token = format[i];
+
+		// variable check
 		if (token == '%') {
 			// take next token
 			i++;
 			token = format[i];
 			openToken = TRUE;
-			// variable check
-
-			// integers
-
 			switch (token) {
 				case '%':
 				case 's':
@@ -1806,23 +1804,24 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 				case 'h':
 				case 'c':
 				case 'f': {
+					// standard one letter tokens
 					openToken = FALSE;
 					break;
 				}
 				case 'l': {
-					openToken = FALSE;
+					openToken = FALSE; // %l
 					if (i + 1 < length) {
 						switch (format[i + 1]) {
 							case 'l': {
-								i++;
+								i++; // %ll
 								if (i + 1 < length && format[i + 1] == 'f') {
-									i++;
+									i++; // %llf
 									break;
 								}
 								break;
 							}
 							case 'f': {
-								i++;
+								i++; // %lf
 								break;
 							}
 							default: ;
@@ -1834,17 +1833,17 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 					if (i + 1 < length) {
 						switch (format[i + 1]) {
 							case 'l': {
-								openToken = FALSE;
+								openToken = FALSE; // %ul
 								i++;
 								if (i + 1 < length && format[i + 1] == 'l') {
-									i++;
+									i++; // %ull
 								}
 								break;
 							}
 							case 'd':
 							case 'h': {
 								openToken = FALSE;
-								i++;
+								i++; // %ud and %uh
 								break;
 							}
 							default: ;
@@ -1852,35 +1851,105 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 					}
 					break;
 				}
-				case '.': {
-					// TODO add infinite int handler
+				case '.': { // floating point with precision
+					while (TRUE) {
+						if (i + 1 < length && isdigit(format[i + 1])) {
+							i++; // precision
+						}
+						else {
+							break;
+						}
+					}
 					if (i + 1 < length) {
 						switch (format[i + 1]) {
 							case 'f': {
-								openToken = FALSE;
+								openToken = FALSE; // %.<int>f
 								i++;
 								break;
 							}
 							case 'l': {
-								i++;
-								// TODO finish
-								if (i + 1 < length) {}
+								i++; // %.<int>lf
+								if (i + 1 < length && format[i + 1] == 'l') {
+									openToken = FALSE; // %.<int>llf
+									i++;
+								}
+								break;
 							}
+							default: break;
 						}
 					}
 					break;
 				}
 				default: ;
 			}
-			// floats
-			// .(precision)
-			// f
-			// lf
-			// llf
 		}
 		else if (token == '@') {
 			// style check
+			i++;
+			token = format[i];
 			openToken = TRUE;
+
+			// font tokens
+			switch (token) {
+				case 'b':
+				case 'd':
+				case 'i':
+				case 'l':
+				case 's':
+				case 'c':
+				case '@': {
+					// standard one letter tokens
+					openToken = FALSE;
+					break;
+				}
+				case 'u': {
+					openToken = FALSE;
+					if (i + 1 < length && format[i + 1] == 'u') {
+						i++;
+					}
+					break;
+				}
+				case 'r': {
+					if (i + 1 < length) {
+						i++;
+						switch (format[i]) {
+							case 'b':
+							case 'd':
+							case 'i':
+							case 'l':
+							case 's':{
+								// standard one letter tokens remover
+								openToken = FALSE;
+								break;
+							}
+							case 'u': {
+								openToken = FALSE;
+								if (i + 1 < length && format[i + 1] == 'u') {
+									i++;
+								}
+								break;
+							}
+						}
+					}
+				}
+				default: break;
+			}
+
+			// color tokens
+			int semicolons = 0;
+			while (TRUE) {
+				if (i + 1 < length) {
+					i++;
+					// TODO count semicolons and break on non digits
+				}
+				else {
+					break;
+				}
+			}
+
+			if (semicolons == 2) {
+				// TODO remember to check f and b
+			}
 		}
 		// all other tokens are good
 	}
