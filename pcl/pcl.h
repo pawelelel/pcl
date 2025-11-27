@@ -540,6 +540,46 @@ int getvariables(struct Console* console, char* format, ...);
  * @return size of written string if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL<br>
  * (-2) format parameter is NULL
+ * (-3) format parameter is not a valid format string
+ * %ull unsigned long long
+ * %ll long long
+ * %uh unsigned short
+ * %ud unsigned int
+ * %ul unsigned long
+ * %c char
+ * %h short
+ * %d int
+ * %l long
+ * %s string
+ * %% '%' character
+ *
+ * Possible styles
+ * @<number>;<number>;<number>f foreground color
+ * @<number>;<number>;<number>b background color
+ * @b bold
+ * @rb remove bold
+ *
+ * @d dim
+ * @rd remove dim
+ *
+ * @i italic
+ * @ri remove italic
+ *
+ * @u underline
+ * @ru remove underline
+ *
+ * @l blinking
+ * @rl remove blinking
+ *
+ * @s strikethrough
+ * @rs remove strikethrough
+ *
+ * @uu doubleunderline
+ * @ruu remove doubleunderline
+ *
+ * @c clear all
+ *
+ * @@ at character
  */
 int setstringformatted(struct Console* console, char* format, ...);
 

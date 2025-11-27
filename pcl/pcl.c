@@ -1557,7 +1557,6 @@ char getlongdoublevariable(struct Console* console, long double* llf) {
  * @param tokens number of tokens
  * @return 0 if format is invalid 1 if valid
  */
-//TODO refactor
 int validateformatstringforgetvariables(char* format, char** validtokens, int tokens) {
 	while (*format) {
 		if (*format == '%') {
@@ -1584,7 +1583,6 @@ int validateformatstringforgetvariables(char* format, char** validtokens, int to
 	return 1;
 }
 
-//TODO refactor
 int getvariables(struct Console *console, char *format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -1785,6 +1783,10 @@ int getvariables(struct Console *console, char *format, ...) {
 }
 
 BOOL validateformatstringforsetstringformatted(char *format) {
+	if (format == NULL) {
+		return FALSE;
+	}
+
 	const size_t length = strlen(format);
 
 	BOOL openToken = FALSE;
@@ -1977,8 +1979,6 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 	return TRUE;
 }
 
-//TODO docs
-//TODO refactor
 int setstringformatted(struct Console* console, char *format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -1993,7 +1993,6 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	}
 
 	// valid tokens sorted by length
-	// TODO add format string validation
 	char* validtokens[] = {
 		"%ull", "%ll", "%uh", "%ud",
 		"%ul", "%c", "%h", "%d", "%l", "%s", "%%"
@@ -2204,6 +2203,18 @@ int setstringformatted(struct Console* console, char *format, ...) {
 
 		// font styles
 		/*
+		 * %ull unsigned long long
+		 * %ll long long
+		 * %uh unsigned short
+		 * %ud unsigned int
+		 * %ul unsigned long
+		 * %c char
+		 * %h short
+		 * %d int
+		 * %l long
+		 * %s string
+		 * %% '%' character
+		 *
 		 * Possible styles
 		 * @<number>;<number>;<number>f foreground color
 		 * @<number>;<number>;<number>b background color
