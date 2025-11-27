@@ -1940,7 +1940,13 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 			while (TRUE) {
 				if (i + 1 < length) {
 					i++;
-					// TODO count semicolons and break on non digits
+					if (format[i] == ';') {
+						semicolons++;
+						continue;
+					}
+					if (!isdigit(format[i])) {
+						break;
+					}
 				}
 				else {
 					break;
@@ -1948,7 +1954,16 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 			}
 
 			if (semicolons == 2) {
-				// TODO remember to check f and b
+				if (format[i] == 'f' || format[i] == 'b') {
+					openToken = FALSE;
+					i++;
+				}
+				else {
+					return FALSE;
+				}
+			}
+			else {
+				return FALSE;
 			}
 		}
 		// all other tokens are good
