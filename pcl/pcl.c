@@ -772,7 +772,7 @@ int settimeout(struct Console *console, unsigned int timeout) {
 	return 0;
 }
 
-int gettimeout(struct Console *console) {
+unsigned int gettimeout(struct Console *console) {
 	if (console == NULL) {
 		return -1;
 	}

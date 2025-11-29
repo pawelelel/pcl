@@ -409,7 +409,7 @@ int settimeout(struct Console* console, unsigned int timeout);
  * @return current value of timeout or negative if error occurs:
  * (-1) console parameter is NULL
  */
-int gettimeout(struct Console* console);
+unsigned int gettimeout(struct Console* console);
 
 /**
  * Gets a console title
