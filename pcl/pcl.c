@@ -2026,7 +2026,12 @@ int setstringformatted(struct Console* console, char *format, ...) {
 					i++;
 					if (i == precisionstrsize) {
 						precisionstrsize *= 2;
-						realloc(precisionstr, precisionstrsize);
+						if (!realloc(precisionstr, precisionstrsize)) {
+							// error
+							free(precisionstr);
+							va_end(args);
+							return -4;
+						}
 					}
 					format++;
 				}
@@ -2124,6 +2129,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* longstring = malloc((len+1) * sizeof(char));
 						snprintf(longstring, len+1, "%ld", l);
 						setstring(console, longstring);
+						length += (int)strlen(longstring);
 						free(longstring);
 						break;
 					}
@@ -2133,6 +2139,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* intstr = malloc((len+1) * sizeof(char));
 						snprintf(intstr, len+1, "%d", d);
 						setstring(console, intstr);
+						length += (int)strlen(intstr);
 						free(intstr);
 						break;
 					}
@@ -2142,6 +2149,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* shortstr = malloc((len+1) * sizeof(char));
 						snprintf(shortstr, len+1, "%hd", h);
 						setstring(console, shortstr);
+						length += (int)strlen(shortstr);
 						free(shortstr);
 						break;
 					}
@@ -2157,6 +2165,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* unsignedlongstr = malloc((len+1) * sizeof(char));
 						snprintf(unsignedlongstr, len+1, "%lu", ul);
 						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
 						free(unsignedlongstr);
 						break;
 					}
@@ -2166,16 +2175,18 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* unsignedlongstr = malloc((len+1) * sizeof(char));
 						snprintf(unsignedlongstr, len+1, "%u", ud);
 						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
 						free(unsignedlongstr);
 						break;
 					}
 					if (strcmp(token, "uh") == 0) {
 						unsigned short uh = va_arg(args, int);
 						int len = snprintf(NULL, 0, "%hu", uh);
-						char* unsignedlongstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedlongstr, len+1, "%hu", uh);
-						setstring(console, unsignedlongstr);
-						free(unsignedlongstr);
+						char* unsignedshortstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedshortstr, len+1, "%hu", uh);
+						setstring(console, unsignedshortstr);
+						length += (int)strlen(unsignedshortstr);
+						free(unsignedshortstr);
 						break;
 					}
 					if (strcmp(token, "ll") == 0) {
@@ -2184,6 +2195,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* unsignedlongstr = malloc((len+1) * sizeof(char));
 						snprintf(unsignedlongstr, len+1, "%lld", ll);
 						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
 						free(unsignedlongstr);
 						break;
 					}
@@ -2193,6 +2205,7 @@ int setstringformatted(struct Console* console, char *format, ...) {
 						char* unsignedlongstr = malloc((len+1) * sizeof(char));
 						snprintf(unsignedlongstr, len+1, "%llu", ull);
 						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
 						free(unsignedlongstr);
 						break;
 					}
@@ -2390,7 +2403,6 @@ int setstringformatted(struct Console* console, char *format, ...) {
 	return length;
 }
 
-//TODO refactor same as setstringformatted()
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -2418,32 +2430,429 @@ int setstringformattedcursor(struct Console* console, int row, int col, char* fo
 		return -6;
 	}
 
-	va_list ap, apcopy;
-	va_start(ap, format);
-	va_copy(apcopy, ap);
-
-	const int size = vsnprintf(NULL, 0, format, apcopy);
-	va_end(apcopy);
-
-	char* memory = malloc((size + 1) * sizeof(char));
-
-	vsnprintf(memory, size + 1, format, ap);
-	va_end(ap);
+	if (!validateformatstringforsetstringformatted(format)) {
+		return -7;
+	}
 
 	WaitForSingleObject(mutexHandle, INFINITE);
 	unsigned int cursor = console->cursor;
 	console->cursor = col + row * console->width;
 	ReleaseMutex(mutexHandle);
 
-	setstring(console, memory);
+	va_list args;
+	va_start(args, format);
+	int length = 0;
+
+	// valid tokens sorted by length
+	char* validtokens[] = {
+		"%ull", "%ll", "%uh", "%ud",
+		"%ul", "%c", "%h", "%d", "%l", "%s", "%%"
+	};
+
+	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
+
+	while (*format) {
+
+		// standard printf behaviour
+		if (*format == '%') {
+			format++;
+
+			// floating point numbers printing
+			char* precisionstr = malloc(20 * sizeof(char));
+			int precisionstrsize = 10;
+
+			if (*format == '.') {
+				// precision detected
+				// float match
+
+				format++;
+
+				int i = 0;
+				while (isdigit(*format)) {
+					precisionstr[i] = *format;
+					i++;
+					if (i == precisionstrsize) {
+						precisionstrsize *= 2;
+						if (!realloc(precisionstr, precisionstrsize)) {
+							// error
+							free(precisionstr);
+							va_end(args);
+							return -8;
+						}
+					}
+					format++;
+				}
+				precisionstr[i] = '\0';
+			}
+			else {
+				precisionstr[0] = '5';
+				precisionstr[1] = '\0';
+			}
+
+			// lets handle that float
+			// float
+			if (strncmp(format, "f", 1) == 0) {
+				format++;
+				float f = va_arg(args, double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "f\0");
+
+				int size = snprintf(NULL, 0, formatstr, f);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, f);
+				setstring(console, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			// double
+			if (strncmp(format, "lf", 2) == 0) {
+				format += 2;
+				double lf = va_arg(args, double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "lf\0");
+
+				int size = snprintf(NULL, 0, formatstr, lf);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, lf);
+				setstring(console, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			// long double
+			if (strncmp(format, "llf", 3) == 0) {
+				format += 3;
+				long double llf = va_arg(args, long double);
+
+				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
+				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
+				formatstr[0] = '%';
+				formatstr[1] = '.';
+				strcat(formatstr, precisionstr);
+				strcat(formatstr, "Lf\0");
+
+				int size = snprintf(NULL, 0, formatstr, llf);
+				char* memory = malloc(size * sizeof(char));
+				snprintf(memory, size, formatstr, llf);
+				setstring(console, memory);
+				free(memory);
+				length += size;
+				free(formatstr);
+			}
+			free(precisionstr);
+
+			// standard tokens
+			for (int i = 0; i < tokenssize; i++) {
+				char* token = validtokens[i] + 1;
+				size_t tokensize = strlen(token);
+				if (strncmp(format, token, tokensize) == 0) {
+					// match
+					format += tokensize;
+					if (strcmp(token, "%") == 0) {
+						setchar(console, '%');
+						length++;
+						break;
+					}
+					if (strcmp(token, "s") == 0) {
+						char* s = va_arg(args, char*);
+						setstring(console, s);
+						length += (int)strlen(s);
+						break;
+					}
+					if (strcmp(token, "l") == 0) {
+						long l = va_arg(args, long);
+						int len = snprintf(NULL, 0, "%ld", l);
+						char* longstring = malloc((len+1) * sizeof(char));
+						snprintf(longstring, len+1, "%ld", l);
+						setstring(console, longstring);
+						length += (int)strlen(longstring);
+						free(longstring);
+						break;
+					}
+					if (strcmp(token, "d") == 0) {
+						int d = va_arg(args, int);
+						int len = snprintf(NULL, 0, "%d", d);
+						char* intstr = malloc((len+1) * sizeof(char));
+						snprintf(intstr, len+1, "%d", d);
+						setstring(console, intstr);
+						length += (int)strlen(intstr);
+						free(intstr);
+						break;
+					}
+					if (strcmp(token, "h") == 0) {
+						short h = va_arg(args, int);
+						int len = snprintf(NULL, 0, "%hd", h);
+						char* shortstr = malloc((len+1) * sizeof(char));
+						snprintf(shortstr, len+1, "%hd", h);
+						setstring(console, shortstr);
+						length += (int)strlen(shortstr);
+						free(shortstr);
+						break;
+					}
+					if (strcmp(token, "c") == 0) {
+						const char c = va_arg(args, int);
+						setchar(console, c);
+						length++;
+						break;
+					}
+					if (strcmp(token, "ul") == 0) {
+						unsigned long ul = va_arg(args, unsigned long);
+						int len = snprintf(NULL, 0, "%lu", ul);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%lu", ul);
+						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
+						free(unsignedlongstr);
+						break;
+					}
+					if (strcmp(token, "ud") == 0) {
+						unsigned int ud = va_arg(args, unsigned int);
+						int len = snprintf(NULL, 0, "%u", ud);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%u", ud);
+						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
+						free(unsignedlongstr);
+						break;
+					}
+					if (strcmp(token, "uh") == 0) {
+						unsigned short uh = va_arg(args, int);
+						int len = snprintf(NULL, 0, "%hu", uh);
+						char* unsignedshortstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedshortstr, len+1, "%hu", uh);
+						setstring(console, unsignedshortstr);
+						length += (int)strlen(unsignedshortstr);
+						free(unsignedshortstr);
+						break;
+					}
+					if (strcmp(token, "ll") == 0) {
+						long long ll = va_arg(args, long long);
+						int len = snprintf(NULL, 0, "%lld", ll);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%lld", ll);
+						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
+						free(unsignedlongstr);
+						break;
+					}
+					if (strcmp(token, "ull") == 0) {
+						unsigned long long ull = va_arg(args, unsigned long long );
+						int len = snprintf(NULL, 0, "%llu", ull);
+						char* unsignedlongstr = malloc((len+1) * sizeof(char));
+						snprintf(unsignedlongstr, len+1, "%llu", ull);
+						setstring(console, unsignedlongstr);
+						length += (int)strlen(unsignedlongstr);
+						free(unsignedlongstr);
+						break;
+					}
+				}
+			}
+			continue;
+		}
+
+		// font styles
+		/*
+		 * %ull unsigned long long
+		 * %ll long long
+		 * %uh unsigned short
+		 * %ud unsigned int
+		 * %ul unsigned long
+		 * %c char
+		 * %h short
+		 * %d int
+		 * %l long
+		 * %s string
+		 * %% '%' character
+		 *
+		 * Possible styles
+		 * @<number>;<number>;<number>f foreground color
+		 * @<number>;<number>;<number>b background color
+		 * @b bold
+		 * @rb remove bold
+		 *
+		 * @d dim
+		 * @rd remove dim
+		 *
+		 * @i italic
+		 * @ri remove italic
+		 *
+		 * @u underline
+		 * @ru remove underline
+		 *
+		 * @l blinking
+		 * @rl remove blinking
+		 *
+		 * @s strikethrough
+		 * @rs remove strikethrough
+		 *
+		 * @uu doubleunderline
+		 * @ruu remove doubleunderline
+		 *
+		 * @c clear all
+		 *
+		 * @@ at character
+		*/
+		if (*format == '@') {
+			format++;
+
+			if (*format == '@') {
+				format++;
+				setchar(console, '@');
+				length++;
+			}
+			else if (*format == 'c') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = FALSE;
+				console->dim = FALSE;
+				console->italic = FALSE;
+				console->underline = FALSE;
+				console->blinking = FALSE;
+				console->strikethrough = FALSE;
+				console->doubleunderline = FALSE;
+
+				console->foregroundRed = console->defaultForegroundRed;
+				console->foregroundGreen = console->defaultForegroundGreen;
+				console->foregroundBlue = console->defaultForegroundBlue;
+
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'b') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rb", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->bold = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'd') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->dim = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rd", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->dim = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'i') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->italic = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ri", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->italic = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'u') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->underline = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ru", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->underline = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 'l') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->blinking = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rl", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->blinking = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (*format == 's') {
+				format++;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->strikethrough = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "rs", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->strikethrough = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "uu", 2) == 0) {
+				format += 2;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->doubleunderline = TRUE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (strncmp(format, "ruu", 3) == 0) {
+				format += 3;
+				WaitForSingleObject(mutexHandle, INFINITE);
+				console->doubleunderline = FALSE;
+				ReleaseMutex(mutexHandle);
+			}
+			else if (isdigit(*format)) {
+				int r, g, b;
+				r = g = b = 0;
+				r = strtol(format, &format, 10);
+				format++;
+				g = strtol(format, &format, 10);
+				format++;
+				b = strtol(format, &format, 10);
+				if (*format == 'f') {
+					WaitForSingleObject(mutexHandle, INFINITE);
+					console->foregroundRed = r;
+					console->foregroundGreen = g;
+					console->foregroundBlue = b;
+					ReleaseMutex(mutexHandle);
+				}
+				else if (*format == 'b') {
+					WaitForSingleObject(mutexHandle, INFINITE);
+					console->backgroundRed = r;
+					console->backgroundGreen = g;
+					console->backgroundBlue = b;
+					ReleaseMutex(mutexHandle);
+				}
+				format++;
+			}
+
+			continue;
+		}
+
+		// standard non-controlling character
+		setchar(console, *format);
+		length++;
+		format++;
+	}
+
+	va_end(args);
 
 	WaitForSingleObject(mutexHandle, INFINITE);
 	console->cursor = cursor;
 	ReleaseMutex(mutexHandle);
 
-	free(memory);
-
-	return size;
+	return length;
 }
 
 int getstring(struct Console* console, char *buffer, size_t size) {
