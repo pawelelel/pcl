@@ -171,6 +171,22 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 				free(prebuffer);
 				console->buffer = newbuffer;
+
+				/*
+				 * console->width * console->height => characters
+				 * (19 + 19 + 1) => colors
+				 * (5 * 7) => font
+				 * console->height => last row
+				 * 6 => clear
+				*/
+				console->bufferSize = width * height * (19 + 19 + 1) * (5 * 7) + height + 6;
+
+				free(console->outputBuffer);
+				console->outputBuffer = malloc(console->bufferSize);
+				if (console->outputBuffer == NULL) {
+					// error
+				}
+
 				console->width = width;
 				console->height = height;
 				console->cursor = 0;
@@ -247,6 +263,12 @@ struct Console* start(void) {
 		console->buffer[i].doubleunderline = console->doubleunderline;
 	}
 
+	console->bufferSize = console->width * console->height * (19 + 19 + 1) * (5 * 7) + console->height + 6;
+	console->outputBuffer = malloc(console->bufferSize);
+	if (console->outputBuffer == NULL) {
+		return NULL;
+	}
+
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->blockInput = TRUE;
 	console->blockTimeout = 0;
@@ -267,6 +289,8 @@ int end(struct Console* console) {
 		return -1;
 	}
 
+	free(console->buffer);
+	free(console->outputBuffer);
 	console->threadExitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	SetEvent(console->threadExitEvent);
 	WaitForSingleObject(console->threadHandle, INFINITE);
@@ -1980,6 +2004,8 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 }
 
 int setstringformatted(struct Console* console, char *format, ...) {
+	// TODO resize bug while size is small
+
 	if (console == NULL) {
 		return -1;
 	}
@@ -2404,6 +2430,8 @@ int setstringformatted(struct Console* console, char *format, ...) {
 }
 
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
+	// TODO resize bug while size is small
+
 	if (console == NULL) {
 		return -1;
 	}
@@ -3199,29 +3227,18 @@ int refresh(struct Console* console) {
 	if (console == NULL) {
 		return -1;
 	}
-
-	// init
-	WaitForSingleObject(mutexHandle, INFINITE);
-	/*
-	 * console->width * console->height => characters
-	 * (19 + 19 + 1) => colors
-	 * (5 * 7) => font
-	 * console->height => last row
-	 * 6 => clear
-	*/
-	unsigned int bufferSize = console->width * console->height * (19 + 19 + 1) * (5 * 7) + console->height + 6;
-	ReleaseMutex(mutexHandle);
-	char *outputBuffer = malloc(bufferSize);
-	if (outputBuffer == NULL) {
-		return -2;
-	}
-	memset(outputBuffer, 0, bufferSize);
 	int place = 0;
 
 	// clear
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
-	memcpy(&outputBuffer[place], buff, add);
+
+	// init
+	WaitForSingleObject(mutexHandle, INFINITE);
+
+	memset(console->outputBuffer, 0, console->bufferSize);
+	memcpy(&console->outputBuffer[place], buff, add);
+	ReleaseMutex(mutexHandle);
 	place += add;
 
 	unsigned int foregroundRed = 255;
@@ -3247,7 +3264,7 @@ int refresh(struct Console* console) {
 	WaitForSingleObject(mutexHandle, INFINITE);
 	for (int i = 0; i < console->height * console->width; ++i) {
 		if (i > 0 && i % console->width == 0) {
-			outputBuffer[place] = '\n';
+			console->outputBuffer[place] = '\n';
 			place++;
 		}
 
@@ -3257,13 +3274,13 @@ int refresh(struct Console* console) {
 			if (cell.bold == TRUE) {
 				bold = TRUE;
 				char boldstr[4] = "\x1B[1m";
-				memcpy(&outputBuffer[place], boldstr, 4);
+				memcpy(&console->outputBuffer[place], boldstr, 4);
 				place += 4;
 			}
 			else {
 				bold = FALSE;
 				char boldstr[5] = "\x1B[22m";
-				memcpy(&outputBuffer[place], boldstr, 5);
+				memcpy(&console->outputBuffer[place], boldstr, 5);
 				place += 5;
 			}
 		}
@@ -3272,13 +3289,13 @@ int refresh(struct Console* console) {
 			if (cell.dim == TRUE) {
 				dim = TRUE;
 				char dimstr[4] = "\x1B[2m";
-				memcpy(&outputBuffer[place], dimstr, 4);
+				memcpy(&console->outputBuffer[place], dimstr, 4);
 				place += 4;
 			}
 			else {
 				dim = FALSE;
 				char dimstr[5] = "\x1B[22m";
-				memcpy(&outputBuffer[place], dimstr, 5);
+				memcpy(&console->outputBuffer[place], dimstr, 5);
 				place += 5;
 			}
 		}
@@ -3287,13 +3304,13 @@ int refresh(struct Console* console) {
 			if (cell.underline == TRUE) {
 				underline = TRUE;
 				char underlinestr[4] = "\x1B[4m";
-				memcpy(&outputBuffer[place], underlinestr, 4);
+				memcpy(&console->outputBuffer[place], underlinestr, 4);
 				place += 4;
 			}
 			else {
 				underline = FALSE;
 				char underlinestr[5] = "\x1B[24m";
-				memcpy(&outputBuffer[place], underlinestr, 5);
+				memcpy(&console->outputBuffer[place], underlinestr, 5);
 				place += 5;
 			}
 		}
@@ -3302,13 +3319,13 @@ int refresh(struct Console* console) {
 			if (cell.blinking == TRUE) {
 				blinking = TRUE;
 				char blinkingstr[4] = "\x1B[5m";
-				memcpy(&outputBuffer[place], blinkingstr, 4);
+				memcpy(&console->outputBuffer[place], blinkingstr, 4);
 				place += 4;
 			}
 			else {
 				blinking = FALSE;
 				char blinkingstr[5] = "\x1B[25m";
-				memcpy(&outputBuffer[place], blinkingstr, 5);
+				memcpy(&console->outputBuffer[place], blinkingstr, 5);
 				place += 5;
 			}
 		}
@@ -3317,13 +3334,13 @@ int refresh(struct Console* console) {
 			if (cell.strikethrough == TRUE) {
 				strikethrough = TRUE;
 				char strikethroughstr[4] = "\x1B[9m";
-				memcpy(&outputBuffer[place], strikethroughstr, 4);
+				memcpy(&console->outputBuffer[place], strikethroughstr, 4);
 				place += 4;
 			}
 			else {
 				strikethrough = FALSE;
 				char strikethroughstr[5] = "\x1B[29m";
-				memcpy(&outputBuffer[place], strikethroughstr, 5);
+				memcpy(&console->outputBuffer[place], strikethroughstr, 5);
 				place += 5;
 			}
 		}
@@ -3332,13 +3349,13 @@ int refresh(struct Console* console) {
 			if (cell.doubleunderline == TRUE) {
 				doubleunderline = TRUE;
 				char doubleunderlinestr[5] = "\x1B[21m";
-				memcpy(&outputBuffer[place], doubleunderlinestr, 5);
+				memcpy(&console->outputBuffer[place], doubleunderlinestr, 5);
 				place += 5;
 			}
 			else {
 				doubleunderline = FALSE;
 				char doubleunderlinestr[5] = "\x1B[24m";
-				memcpy(&outputBuffer[place], doubleunderlinestr, 5);
+				memcpy(&console->outputBuffer[place], doubleunderlinestr, 5);
 				place += 5;
 			}
 		}
@@ -3347,13 +3364,13 @@ int refresh(struct Console* console) {
 			if (cell.italic == TRUE) {
 				italic = TRUE;
 				char italicstr[4] = "\x1B[3m";
-				memcpy(&outputBuffer[place], italicstr, 4);
+				memcpy(&console->outputBuffer[place], italicstr, 4);
 				place += 4;
 			}
 			else {
 				italic = FALSE;
 				char italicstr[5] = "\x1B[23m";
-				memcpy(&outputBuffer[place], italicstr, 5);
+				memcpy(&console->outputBuffer[place], italicstr, 5);
 				place += 5;
 			}
 		}
@@ -3364,7 +3381,7 @@ int refresh(struct Console* console) {
 			foregroundBlue = cell.foregroundBlue;
 			char colorbuff[19];
 			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", foregroundRed, foregroundGreen, foregroundBlue);
-			memcpy(&outputBuffer[place], colorbuff, add);
+			memcpy(&console->outputBuffer[place], colorbuff, add);
 			place += add;
 		}
 		if (backgroundRed != cell.backgroundRed || backgroundGreen != cell.backgroundGreen || backgroundBlue != cell.backgroundBlue) {
@@ -3373,14 +3390,14 @@ int refresh(struct Console* console) {
 			backgroundBlue = cell.backgroundBlue;
 			char colorbuff[19];
 			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", backgroundRed, backgroundGreen, backgroundBlue);
-			memcpy(&outputBuffer[place], colorbuff, add);
+			memcpy(&console->outputBuffer[place], colorbuff, add);
 			place += add;
 		}
-		outputBuffer[place] = cell.data;
+		console->outputBuffer[place] = cell.data;
 		place++;
 	}
-	outputBuffer[place] = '\0';
-	WriteConsoleA(console->outputHandle, outputBuffer, strlen(outputBuffer), NULL, NULL);
+	console->outputBuffer[place] = '\0';
+	WriteConsoleA(console->outputHandle, console->outputBuffer, strlen(console->outputBuffer), NULL, NULL);
 
 	unsigned int row = console->cursor / console->width + 1;
 	unsigned int col = console->cursor % console->width + 1;
@@ -3388,6 +3405,5 @@ int refresh(struct Console* console) {
 	WriteConsoleA(console->outputHandle, position, strlen(position), NULL, NULL);
 
 	ReleaseMutex(mutexHandle);
-	free(outputBuffer);
 	return 0;
 }

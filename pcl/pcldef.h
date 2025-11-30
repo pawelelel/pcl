@@ -45,6 +45,8 @@ struct Console {
 	// output
 	HANDLE outputHandle;
 	struct Cell* buffer;
+	int bufferSize;
+	char* outputBuffer;
 	unsigned int width, height;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
