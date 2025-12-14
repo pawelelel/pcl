@@ -939,9 +939,10 @@ int setchar(struct Console* console, char c) {
 		return -1;
 	}
 
+	WaitForSingleObject(mutexHandle, INFINITE);
+
 	switch (c) {
 		case '\n': {
-			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor += console->width;
 			console->cursor -= console->cursor % console->width;
 			if (console->cursor >= console->width * console->height) {
@@ -952,13 +953,11 @@ int setchar(struct Console* console, char c) {
 		}
 		case '\a': {
 			// not supported
-			WaitForSingleObject(mutexHandle, INFINITE);
 			c = console->defaultchar;
 			ReleaseMutex(mutexHandle);
 			break;
 		}
 		case '\b': {
-			WaitForSingleObject(mutexHandle, INFINITE);
 			if (console->cursor == 0) {
 				ReleaseMutex(mutexHandle);
 				return 0;
@@ -975,7 +974,6 @@ int setchar(struct Console* console, char c) {
 			return 0;
 		}
 		case '\v': {
-			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor += console->width;
 			if (console->cursor >= console->width * console->height) {
 				console->cursor = 0;
@@ -984,13 +982,11 @@ int setchar(struct Console* console, char c) {
 			return 0;
 		}
 		case '\r': {
-			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor -= console->cursor % console->width;
 			ReleaseMutex(mutexHandle);
 			return 0;
 		}
 		case '\f': {
-			WaitForSingleObject(mutexHandle, INFINITE);
 			console->cursor = 0;
 			ReleaseMutex(mutexHandle);
 			return 0;
@@ -1006,7 +1002,6 @@ int setchar(struct Console* console, char c) {
 	// v \f - set cursor 0 0
 	// v \t - tab
 
-	WaitForSingleObject(mutexHandle, INFINITE);
 	console->buffer[console->cursor].data = c;
 	console->buffer[console->cursor].foregroundRed = console->foregroundRed;
 	console->buffer[console->cursor].foregroundGreen = console->foregroundGreen;
@@ -1022,7 +1017,7 @@ int setchar(struct Console* console, char c) {
 	console->buffer[console->cursor].blinking = console->blinking;
 	console->buffer[console->cursor].strikethrough = console->strikethrough;
 	console->buffer[console->cursor].doubleunderline = console->doubleunderline;
-	if (console->cursor != console->width * console->height) {
+	if (console->cursor < console->width * console->height - 1) {
 		console->cursor++;
 	}
 	ReleaseMutex(mutexHandle);
@@ -2004,8 +1999,6 @@ BOOL validateformatstringforsetstringformatted(char *format) {
 }
 
 int setstringformatted(struct Console* console, char *format, ...) {
-	// TODO resize bug while size is small
-
 	if (console == NULL) {
 		return -1;
 	}
@@ -2430,8 +2423,6 @@ int setstringformatted(struct Console* console, char *format, ...) {
 }
 
 int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...) {
-	// TODO resize bug while size is small
-
 	if (console == NULL) {
 		return -1;
 	}
