@@ -9,22 +9,12 @@
 
 #include <windows.h>
 
-
-
-
-
-// Queue
-// TODO make separate library for this
-struct Queue {
-	struct Node* head;
-	struct Node* tail;
-};
-
-struct Cell {
+struct AsciiCell {
 	char data;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
+	// specific character decorations
 	BOOL bold;
 	BOOL dim;
 	BOOL italic;
@@ -34,18 +24,53 @@ struct Cell {
 	BOOL doubleunderline;
 };
 
-struct Console {
-	// input
-	HANDLE inputHandle;
+struct UnicodeCell {
+	wchar_t data1;
+	wchar_t data2;
+	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
+	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
-	HANDLE threadHandle;
-	HANDLE threadExitEvent;
-	struct Queue* inputQueue;
+	// specific character decorations
+	BOOL bold;
+	BOOL dim;
+	BOOL italic;
+	BOOL underline;
+	BOOL blinking;
+	BOOL strikethrough;
+	BOOL doubleunderline;
+};
 
-	// output
-	HANDLE outputHandle;
-	struct Cell* buffer;
-	int bufferSize;
+struct UnicodeScreen {
+	struct UnicodeCell* buffer;
+	unsigned int bufferSize;
+	wchar_t* outputBuffer;
+	unsigned int width, height;
+	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
+	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
+
+	// cursor
+	int cursorstyle;
+	unsigned int cursor;
+
+	// font decorations
+	BOOL bold;
+	BOOL dim;
+	BOOL italic;
+	BOOL underline;
+	BOOL blinking;
+	BOOL strikethrough;
+	BOOL doubleunderline;
+
+	// default values
+	wchar_t data1;
+	wchar_t data2;
+	unsigned int defaultForegroundRed, defaultForegroundGreen, defaultForegroundBlue;
+	unsigned int defaultBackgroundRed, defaultBackgroundGreen, defaultBackgroundBlue;
+};
+
+struct AsciiScreen {
+	struct AsciiCell* buffer;
+	unsigned int bufferSize;
 	char* outputBuffer;
 	unsigned int width, height;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
@@ -55,7 +80,7 @@ struct Console {
 	int cursorstyle;
 	unsigned int cursor;
 
-	// font
+	// font decorations
 	BOOL bold;
 	BOOL dim;
 	BOOL italic;
@@ -64,16 +89,33 @@ struct Console {
 	BOOL strikethrough;
 	BOOL doubleunderline;
 
+	// default values
+	char defaultchar;
+	unsigned int defaultForegroundRed, defaultForegroundGreen, defaultForegroundBlue;
+	unsigned int defaultBackgroundRed, defaultBackgroundGreen, defaultBackgroundBlue;
+};
+
+struct Console {
+	// input
+	HANDLE inputHandle;
+	HANDLE threadHandle;
+	HANDLE threadExitEvent;
+	struct Queue* inputQueue;
+
+	// output
+	unsigned int width, height;
+	HANDLE outputHandle;
+	struct AsciiScreen** asciiScreens;
+	int asciiScreensIndex;
+	struct UnicodeScreen** unicodeScreens;
+	int unicodeScreensIndex;
+
 	// error
 	HANDLE errorHandle;
 
 	// settings
 	int blockInput;
-	// works only with getchr function
-	unsigned int blockTimeout;
-	char defaultchar;
-	unsigned int defaultForegroundRed, defaultForegroundGreen, defaultForegroundBlue;
-	unsigned int defaultBackgroundRed, defaultBackgroundGreen, defaultBackgroundBlue;
+	unsigned int blockTimeout; // works only with getchr function
 
 	/**
 	 * That event is raised when console window is focused or unfocused

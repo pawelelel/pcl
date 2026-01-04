@@ -2,9 +2,11 @@
 
 int main(void) {
 	struct Console* console = start();
-	setstring(console, "Hello World!!!\n");
-	refresh(console);
-	end(console);
+	struct AsciiScreen* ascii = initascii(console);
 
+	setfontunderlineascii(ascii);
+	setstringascii(ascii, "Hello World!!!\n");
+	refreshascii(console, ascii);
+	end(console);
 	return 0;
 }
