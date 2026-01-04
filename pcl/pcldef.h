@@ -49,6 +49,7 @@ struct UnicodeScreen {
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
 	// cursor
+	int cursorVisible;
 	int cursorstyle;
 	unsigned int cursor;
 
@@ -77,6 +78,7 @@ struct AsciiScreen {
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
 
 	// cursor
+	int cursorVisible;
 	int cursorstyle;
 	unsigned int cursor;
 

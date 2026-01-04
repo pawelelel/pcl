@@ -5,4 +5,6 @@
 #ifndef PCL_PCL_UNICODE_H
 #define PCL_PCL_UNICODE_H
 
+//TODO add after fully implementing ascii version
+
 #endif //PCL_PCL_UNICODE_H

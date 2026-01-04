@@ -1,5 +1,5 @@
 //
-// Created by pawci on 03.01.2026.
+// Created by pawel on 03.01.2026.
 //
 
 #ifndef PCL_PCL_ASCII_H
@@ -325,6 +325,7 @@ int setstringcursorascii(struct AsciiScreen *ascii, char* string, int row, int c
 int clearascii(struct AsciiScreen *ascii);
 
 /**
+ * TODO add font styles
  * Fills ascii with specified char
  *
  * @param ascii pointer to struct Ascii
@@ -422,6 +423,113 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii);
  * (-3) ascii parameter is NULL
  */
 int getdimensionsascii(struct AsciiScreen *ascii, unsigned int* width, unsigned int* height);
+
+/**
+ * Prints formatted string on cursor position. Changes cursor position.
+ *
+ * @param ascii pointer to struct Console
+ * @param format format string
+ * @param ... variables to format
+ *
+ * @return size of written string if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) format parameter is NULL<br>
+ * (-3) format parameter is not a valid format string<br>
+ * (-4) internal error<br>
+ *
+ * Possible standard tokens:<br>
+ * %ull unsigned long long<br>
+ * %ll long long<br>
+ * %uh unsigned short<br>
+ * %ud unsigned int<br>
+ * %ul unsigned long<br>
+ * %c char<br>
+ * %h short<br>
+ * %d int<br>
+ * %l long<br>
+ * %s string<br>
+ * %% '%' character<br>
+ * Possible styles:<br>
+ * @<number>;<number>;<number>f foreground color<br>
+ * @<number>;<number>;<number>b background color<br>
+ * @b bold<br>
+ * @rb remove bold<br>
+ * @d dim<br>
+ * @rd remove dim<br>
+ * @i italic<br>
+ * @ri remove italic<br>
+ * @u underline<br>
+ * @ru remove underline<br>
+ * @l blinking<br>
+ * @rl remove blinking<br>
+ * @s strikethrough<br>
+ * @rs remove strikethrough<br>
+ * @uu doubleunderline<br>
+ * @ruu remove doubleunderline<br>
+ * @c clear all<br>
+ * @@ at character
+ */
+int setstringformattedascii(struct AsciiScreen *ascii, char* format, ...);
+
+/**
+ * Prints formatted string on cursor position. Do not changes cursor position. See setstringformatted() for more information.
+ *
+ * @param ascii pointer to struct Console
+ * @param format format string
+ * @param row row number
+ * @param col column number
+ * @param ... variables to format
+ *
+ * @return size of written string if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row parameter is lower than zero <br>
+ * (-3) col parameter is lower than zero <br>
+ * (-4) format parameter is NULL<br>
+ * (-5) row parameter is greater than console height <br>
+ * (-6) col parameter is greater than console width<br>
+ * (-7) format parameter is not a valid format string<br>
+ * (-8) internal error
+ */
+int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, char* format, ...);
+
+/**
+ * TODO docs
+ * TODO add cusror equivalent
+ * Sets char on cursor position. Changes cursor position
+ *
+ * @param ascii pointer to structure console
+ * @param c char to set
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+      unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+      BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
+
+/**
+ * Sets char on specified position. Do not changes cursor position
+ *
+ * @param ascii pointer to struct Console
+ * @param c char to set
+ * @param row row number
+ * @param col column number
+ *
+ * @return 0 if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) row is greater than console height
+ * (-3) col is greater than console width
+ */
+int setcharcursorascii(struct AsciiScreen *ascii, char c, unsigned int row, unsigned int col);
+
+/**
+ * Sets char on cursor position. Changes cursor position
+ *
+ * @param ascii pointer to structure console
+ * @param c char to set
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setcharascii(struct AsciiScreen *ascii, char c);
 
 
 #endif //PCL_PCL_ASCII_H

@@ -1,5 +1,5 @@
 //
-// Created by pawci on 03.01.2026.
+// Created by pawel on 03.01.2026.
 //
 
 #include "pcl_ascii.h"
@@ -13,6 +13,7 @@ struct AsciiScreen* initascii(struct Console *console) {
 		return NULL;
 	}
 
+	ascii->cursorVisible = TRUE;
 	ascii->cursorstyle = BLINKING_BAR;
 	ascii->cursor = 0;
 
@@ -93,43 +94,11 @@ struct AsciiScreen* initascii(struct Console *console) {
 }
 
 int setcursorstyleascii(struct AsciiScreen *ascii, int style) {
-	// TODO implement
 	if (ascii == NULL) {
 		return -1;
 	}
-
-	switch (style) {
-		case BLINKING_BLOCK: {
-			char* blinkBlock = "\x1B[1 q";
-			return 0;
-		}
-		case STEADY_BLOCK: {
-			char* steadyBlock = "\x1B[2 q";
-			return 0;
-		}
-		case BLINKING_UNDERLINE: {
-			char* blinkUnderline = "\x1B[3 q";
-			return 0;
-		}
-		case STEADY_UNDERLINE: {
-			char* steadyUnderline = "\x1B[4 q";
-			return 0;
-		}
-		case BLINKING_BAR: {
-			char* blinkBar = "\x1B[5 q";
-			return 0;
-		}
-		case STEADY_BAR: {
-			char* steadyBar = "\x1B[6 q";
-			return 0;
-		}
-		default: {
-			return -2;
-		}
-	}
-
-	//shouldn't happed
-	return -2;
+	ascii->cursorstyle = style;
+	return 0;
 }
 
 int unsetcursorstyleascii(struct AsciiScreen *ascii) {
@@ -141,20 +110,18 @@ int unsetcursorstyleascii(struct AsciiScreen *ascii) {
 }
 
 int showcursorascii(struct AsciiScreen *ascii) {
-	// TODO implement
 	if (ascii == NULL) {
 		return -1;
 	}
-	char* show = "\x1B[?25h";
+	ascii->cursorVisible = TRUE;
 	return 0;
 }
 
 int hidecursorascii(struct AsciiScreen *ascii) {
-	// TODO implement
 	if (ascii == NULL) {
 		return -1;
 	}
-	char* hide = "\x1B[?25l";
+	ascii->cursorVisible = FALSE;
 	return 0;
 }
 
@@ -1585,92 +1552,62 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 				ascii->foregroundRed = ascii->defaultForegroundRed;
 				ascii->foregroundGreen = ascii->defaultForegroundGreen;
 				ascii->foregroundBlue = ascii->defaultForegroundBlue;
-
-				
 			}
 			else if (*format == 'b') {
 				format++;
-				
 				ascii->bold = TRUE;
-				
 			}
 			else if (strncmp(format, "rb", 2) == 0) {
 				format += 2;
-				
 				ascii->bold = FALSE;
-				
 			}
 			else if (*format == 'd') {
 				format++;
-				
 				ascii->dim = TRUE;
-				
 			}
 			else if (strncmp(format, "rd", 2) == 0) {
 				format += 2;
-				
 				ascii->dim = FALSE;
-				
 			}
 			else if (*format == 'i') {
 				format++;
-				
 				ascii->italic = TRUE;
-				
 			}
 			else if (strncmp(format, "ri", 2) == 0) {
 				format += 2;
-				
 				ascii->italic = FALSE;
-				
 			}
 			else if (*format == 'u') {
 				format++;
-				
 				ascii->underline = TRUE;
-				
 			}
 			else if (strncmp(format, "ru", 2) == 0) {
 				format += 2;
-				
 				ascii->underline = FALSE;
-				
 			}
 			else if (*format == 'l') {
 				format++;
-				
 				ascii->blinking = TRUE;
-				
 			}
 			else if (strncmp(format, "rl", 2) == 0) {
 				format += 2;
-				
 				ascii->blinking = FALSE;
-				
 			}
 			else if (*format == 's') {
 				format++;
-				
 				ascii->strikethrough = TRUE;
-				
 			}
 			else if (strncmp(format, "rs", 2) == 0) {
 				format += 2;
-				
 				ascii->strikethrough = FALSE;
-				
 			}
 			else if (strncmp(format, "uu", 2) == 0) {
 				format += 2;
-				
 				ascii->doubleunderline = TRUE;
-				
 			}
 			else if (strncmp(format, "ruu", 3) == 0) {
 				format += 3;
-				
 				ascii->doubleunderline = FALSE;
-				
 			}
 			else if (isdigit(*format)) {
 				int r, g, b;
@@ -1681,18 +1618,14 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 				format++;
 				b = strtol(format, &format, 10);
 				if (*format == 'f') {
-					
 					ascii->foregroundRed = r;
 					ascii->foregroundGreen = g;
 					ascii->foregroundBlue = b;
-					
 				}
 				else if (*format == 'b') {
-					
 					ascii->backgroundRed = r;
 					ascii->backgroundGreen = g;
 					ascii->backgroundBlue = b;
-					
 				}
 				format++;
 			}
@@ -1730,7 +1663,6 @@ int setstringcursorascii(struct AsciiScreen *ascii, char *string, int row, int c
 		return -4;
 	}
 
-	
 	if (row >= ascii->height) {
 		
 		return -5;
@@ -1743,13 +1675,10 @@ int setstringcursorascii(struct AsciiScreen *ascii, char *string, int row, int c
 	const unsigned int cursor = ascii->cursor;
 	ascii->cursor = col + row * ascii->width;
 	
-
 	setstringascii(ascii, string);
 
-	
 	ascii->cursor = cursor;
 	
-
 	return 0;
 }
 
@@ -1757,8 +1686,6 @@ int clearascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-
-	
 
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = ascii->defaultchar;
@@ -1803,8 +1730,6 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		return -7;
 	}
 
-	
-
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = c;
 		ascii->buffer[i].foregroundRed = foregroundRed;
@@ -1817,8 +1742,6 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 
 	ascii->cursor = 0;
 
-	
-
 	return 0;
 }
 
@@ -1827,15 +1750,22 @@ int fillcharascii(struct AsciiScreen *ascii, char c) {
 		return -1;
 	}
 
-	
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = c;
-		ascii->buffer[i].foregroundRed = ascii->defaultForegroundRed;
-		ascii->buffer[i].foregroundGreen = ascii->defaultForegroundGreen;
-		ascii->buffer[i].foregroundBlue = ascii->defaultForegroundBlue;
-		ascii->buffer[i].backgroundRed = ascii->defaultBackgroundRed;
-		ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
-		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
+		ascii->buffer[i].foregroundRed = ascii->foregroundRed;
+		ascii->buffer[i].foregroundGreen = ascii->foregroundGreen;
+		ascii->buffer[i].foregroundBlue = ascii->foregroundBlue;
+		ascii->buffer[i].backgroundRed = ascii->backgroundRed;
+		ascii->buffer[i].backgroundGreen = ascii->backgroundGreen;
+		ascii->buffer[i].backgroundBlue = ascii->backgroundBlue;
+
+		ascii->buffer[i].bold = ascii->bold;
+		ascii->buffer[i].dim = ascii->dim;
+		ascii->buffer[i].italic = ascii->italic;
+		ascii->buffer[i].underline = ascii->underline;
+		ascii->buffer[i].blinking = ascii->blinking;
+		ascii->buffer[i].strikethrough = ascii->strikethrough;
+		ascii->buffer[i].doubleunderline = ascii->doubleunderline;
 	}
 	ascii->cursor = 0;
 	
@@ -2091,10 +2021,51 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii)	 {
 	ascii->outputBuffer[place] = '\0';
 	WriteConsoleA(console->outputHandle, ascii->outputBuffer, strlen(ascii->outputBuffer), NULL, NULL);
 
+	// setting curosor position
 	unsigned int row = ascii->cursor / ascii->width + 1;
 	unsigned int col = ascii->cursor % ascii->width + 1;
 	sprintf(position, "\x1B[%d;%dH", row, col);
 	WriteConsoleA(console->outputHandle, position, strlen(position), NULL, NULL);
+
+	char* cursorstyle;
+	switch (ascii->cursorstyle) {
+		case BLINKING_BLOCK: {
+			cursorstyle = "\x1B[1 q";
+			break;
+		}
+		case STEADY_BLOCK: {
+			cursorstyle = "\x1B[2 q";
+			break;
+		}
+		case BLINKING_UNDERLINE: {
+			cursorstyle = "\x1B[3 q";
+			break;
+		}
+		case STEADY_UNDERLINE: {
+			cursorstyle = "\x1B[4 q";
+			break;
+		}
+		default:
+		case BLINKING_BAR: {
+			cursorstyle = "\x1B[5 q";
+			break;
+		}
+		case STEADY_BAR: {
+			cursorstyle = "\x1B[6 q";
+			break;
+		}
+	}
+	WriteConsoleA(console->outputHandle, cursorstyle, strlen(cursorstyle), NULL, NULL);
+
+
+	if (ascii->cursorVisible) {
+		char* show = "\x1B[?25h";
+		WriteConsoleA(console->outputHandle, show, strlen(show), NULL, NULL);
+	}
+	else {
+		char* hide = "\x1B[?25l";
+		WriteConsoleA(console->outputHandle, hide, strlen(hide), NULL, NULL);
+	}
 
 	return 0;
 }

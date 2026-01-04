@@ -9,6 +9,8 @@
 #include "pcldef.h"
 #include "pcl_ascii.h"
 
+HANDLE pclMutexHandle;
+
 /**
  * Starts library
  *
@@ -171,41 +173,6 @@ int settitle(struct Console* console, char* title);
 char getchr(struct Console* console);
 
 /**
- * Sets char on cursor position. Changes cursor position
- *
- * @param console pointer to structure console
- * @param c char to set
- * @return 0 if eveything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL
- */
-int setchar(struct Console* console, char c);
-
-/**
- * Sets char on cursor position. Changes cursor position
- *
- * @param console pointer to structure console
- * @param c char to set
- * @return 0 if eveything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL
- */
-int setcharsetcharformatted(struct Console* console, char c);
-
-/**
- * Sets char on specified position. Do not changes cursor position
- *
- * @param console pointer to struct Console
- * @param c char to set
- * @param row row number
- * @param col column number
- *
- * @return 0 if everything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL<br>
- * (-2) row is greater than console height
- * (-3) col is greater than console width
- */
-int setcharcursor(struct Console* console, char c, unsigned int row, unsigned int col);
-
-/**
  * Works as standard scanf
  *
  * @param console pointer to struct Console
@@ -244,74 +211,6 @@ int setcharcursor(struct Console* console, char c, unsigned int row, unsigned in
  * (-16) general format processing error
  */
 int getvariables(struct Console* console, char* format, ...);
-
-/**
- * Prints formatted string on cursor position. Changes cursor position.
- *
- * @param console pointer to struct Console
- * @param format format string
- * @param ... variables to format
- *
- * @return size of written string if eveything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL<br>
- * (-2) format parameter is NULL<br>
- * (-3) format parameter is not a valid format string<br>
- * (-4) internal error<br>
- *
- * Possible standard tokens:<br>
- * %ull unsigned long long<br>
- * %ll long long<br>
- * %uh unsigned short<br>
- * %ud unsigned int<br>
- * %ul unsigned long<br>
- * %c char<br>
- * %h short<br>
- * %d int<br>
- * %l long<br>
- * %s string<br>
- * %% '%' character<br>
- * Possible styles:<br>
- * @<number>;<number>;<number>f foreground color<br>
- * @<number>;<number>;<number>b background color<br>
- * @b bold<br>
- * @rb remove bold<br>
- * @d dim<br>
- * @rd remove dim<br>
- * @i italic<br>
- * @ri remove italic<br>
- * @u underline<br>
- * @ru remove underline<br>
- * @l blinking<br>
- * @rl remove blinking<br>
- * @s strikethrough<br>
- * @rs remove strikethrough<br>
- * @uu doubleunderline<br>
- * @ruu remove doubleunderline<br>
- * @c clear all<br>
- * @@ at character
- */
-int setstringformatted(struct Console* console, char* format, ...);
-
-/**
- * Prints formatted string on cursor position. Do not changes cursor position. See setstringformatted() for more information.
- *
- * @param console pointer to struct Console
- * @param format format string
- * @param row row number
- * @param col column number
- * @param ... variables to format
- *
- * @return size of written string if eveything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL<br>
- * (-2) row parameter is lower than zero <br>
- * (-3) col parameter is lower than zero <br>
- * (-4) format parameter is NULL<br>
- * (-5) row parameter is greater than console height <br>
- * (-6) col parameter is greater than console width<br>
- * (-7) format parameter is not a valid format string<br>
- * (-8) internal error
- */
-int setstringformattedcursor(struct Console* console, int row, int col, char* format, ...);
 
 /**
  * Gets chars from stdin till detects '\n' or '\r' or reaches buffer size or execution time reaches timeout time
