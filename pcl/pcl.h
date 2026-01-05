@@ -9,7 +9,7 @@
 #include "pcldef.h"
 #include "pcl_ascii.h"
 
-HANDLE pclMutexHandle;
+extern HANDLE pclMutexHandle;
 
 /**
  * Starts library

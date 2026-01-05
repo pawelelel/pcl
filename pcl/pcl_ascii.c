@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "pcl.h"
+
 struct AsciiScreen* initascii(struct Console *console) {
 	struct AsciiScreen *ascii = malloc(sizeof(struct AsciiScreen));
 	if (ascii == NULL) {
@@ -41,10 +43,19 @@ struct AsciiScreen* initascii(struct Console *console) {
 	ascii->backgroundGreen = ascii->defaultBackgroundGreen;
 	ascii->backgroundBlue = ascii->defaultBackgroundBlue;
 
-	// TODO mutex stuff
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->width = console->width;
 	ascii->height = console->height;
-	ascii->bufferSize = ascii->width * ascii->height;
+	ReleaseMutex(pclMutexHandle);
+
+	/*
+	 * ascii->width * ascii->height => characters
+	 * (19 + 19 + 1) => colors
+	 * (5 * 7) => font
+	 * ascii->height => last row
+	 * 6 => clear
+	 */
+	ascii->bufferSize = ascii->width * ascii->height * (19 + 19 + 1) * (5 * 7) + ascii->height + 6;
 	ascii->buffer = malloc(sizeof (struct AsciiCell) * ascii->bufferSize);
 	if (ascii->buffer == NULL) {
 		free(ascii);
@@ -76,19 +87,20 @@ struct AsciiScreen* initascii(struct Console *console) {
 		return NULL;
 	}
 
-	// TODO mutex stuff
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->asciiScreens[console->asciiScreensIndex] = ascii;
 	console->asciiScreensIndex++;
 
-	 void* temp = realloc(console->asciiScreens,sizeof (struct AsciiScreen*) * console->asciiScreensIndex + 1);
+	void* temp = realloc(console->asciiScreens,sizeof (struct AsciiScreen*) * console->asciiScreensIndex + 1);
 
 	if (temp == NULL) {
-		free(console->asciiScreens);
+		ReleaseMutex(pclMutexHandle);
 		free(ascii->buffer);
 		free(ascii);
 		return NULL;
 	}
 	console->asciiScreens = temp;
+	ReleaseMutex(pclMutexHandle);
 
 	return ascii;
 }
@@ -1769,7 +1781,6 @@ int fillcharascii(struct AsciiScreen *ascii, char c) {
 	}
 	ascii->cursor = 0;
 	
-
 	return 0;
 }
 
@@ -1790,18 +1801,14 @@ int set2darrayascii(struct AsciiScreen *ascii, char* array, unsigned int row, un
 		return -4;
 	}
 
-	
 	if (height + row > ascii->height) {
-		
 		return -5;
 	}
 
 	if (width + col > ascii->width) {
-		
 		return -6;
 	}
 
-	
 	for (int i = 0; i < height * width; ++i) {
 		unsigned int r = row + i / width;
 		unsigned int c = col + i % width;
@@ -1839,17 +1846,13 @@ int getcursorpositionascii(struct AsciiScreen *ascii, unsigned int *row, unsigne
 	if (col == NULL) {
 		return -3;
 	}
-
-	
 	*row = ascii->cursor / ascii->width;
 	*col = ascii->cursor % ascii->width;
-	
+
 	return 0;
 }
 
-int refreshascii(struct Console* console, struct AsciiScreen* ascii)	 {
-	// TODO remember about updating (specially buffer size)
-
+int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
@@ -1880,10 +1883,6 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii)	 {
 	BOOL strikethrough = FALSE;
 	BOOL doubleunderline = FALSE;
 
-	//char* position = "\x1B[%d;%dH";
-	char position[100];
-
-	// TODO mutex stuff
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		if (i > 0 && i % ascii->width == 0) {
 			ascii->outputBuffer[place] = '\n';
@@ -2019,13 +2018,18 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii)	 {
 		place++;
 	}
 	ascii->outputBuffer[place] = '\0';
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, ascii->outputBuffer, strlen(ascii->outputBuffer), NULL, NULL);
+	ReleaseMutex(pclMutexHandle);
 
 	// setting curosor position
 	unsigned int row = ascii->cursor / ascii->width + 1;
 	unsigned int col = ascii->cursor % ascii->width + 1;
+	char position[30];
 	sprintf(position, "\x1B[%d;%dH", row, col);
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, position, strlen(position), NULL, NULL);
+	ReleaseMutex(pclMutexHandle);
 
 	char* cursorstyle;
 	switch (ascii->cursorstyle) {
@@ -2055,16 +2059,22 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii)	 {
 			break;
 		}
 	}
-	WriteConsoleA(console->outputHandle, cursorstyle, strlen(cursorstyle), NULL, NULL);
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+	WriteConsoleA(console->outputHandle, cursorstyle, strlen(cursorstyle), NULL, NULL);
+	ReleaseMutex(pclMutexHandle);
 
 	if (ascii->cursorVisible) {
 		char* show = "\x1B[?25h";
+		WaitForSingleObject(pclMutexHandle, INFINITE);
 		WriteConsoleA(console->outputHandle, show, strlen(show), NULL, NULL);
+		ReleaseMutex(pclMutexHandle);
 	}
 	else {
 		char* hide = "\x1B[?25l";
+		WaitForSingleObject(pclMutexHandle, INFINITE);
 		WriteConsoleA(console->outputHandle, hide, strlen(hide), NULL, NULL);
+		ReleaseMutex(pclMutexHandle);
 	}
 
 	return 0;
@@ -2096,7 +2106,6 @@ int getdimensionsascii(struct AsciiScreen *ascii, unsigned int* width, unsigned 
 		*height = 0;
 		return -3;
 	}
-
 	
 	*width = ascii->width;
 	*height = ascii->height;

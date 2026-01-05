@@ -8,6 +8,8 @@
 #include <math.h>
 #include <stdio.h>
 
+HANDLE pclMutexHandle;
+
 
 DWORD WINAPI inputthread(LPVOID lpParam) {
 	struct Console* console = lpParam;
@@ -126,19 +128,11 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				console->height = height;
 				console->cursor = 0;
 
-*/
-
-
-
-
-
-
-
 
 				ReleaseMutex(pclMutexHandle);
 				if (console->ResizeEvent != NULL) {
 					console->ResizeEvent(console, height, width);
-				}
+				}*/
 				break;
 			}
 			default: break;
@@ -386,10 +380,10 @@ char puregetchar(struct Console* console) {
 	while (1) {
 		WaitForSingleObject(pclMutexHandle, INFINITE);
 
-		const char c = (const char)dequeue(console->inputQueue);
-		if (c != 0) {
+		char* c = dequeue(console->inputQueue);
+		if (*c != 0) {
 			ReleaseMutex(pclMutexHandle);
-			return c;
+			return *c;
 		}
 
 		ReleaseMutex(pclMutexHandle);
@@ -424,9 +418,12 @@ char getchr(struct Console* console) {
 	if (!bi) {
 		// non-blocking input behaviour
 		WaitForSingleObject(pclMutexHandle, INFINITE);
-		const char c = (const char)dequeue(console->inputQueue);
+		char* c = (char*)dequeue(console->inputQueue);
 		ReleaseMutex(pclMutexHandle);
-		return c;
+		if (c == NULL) {
+			return 0;
+		}
+		return *c;
 	}
 
 	if (bt <= 0) {
@@ -1063,14 +1060,14 @@ int getstring(struct Console* console, char *buffer, size_t size) {
 		int i = 0;
 		while (i != size - 1) {
 			WaitForSingleObject(pclMutexHandle, INFINITE);
-			char c = (char)dequeue(console->inputQueue);
+			char* c = (char*)dequeue(console->inputQueue);
 			ReleaseMutex(pclMutexHandle);
 
-			if (c == '\n' || c == '\r') {
+			if (*c == '\n' || *c == '\r') {
 				break;
 			}
-			if (c != 0 && isprint(c)) {
-				buffer[i] = c;
+			if (*c != 0 && isprint(*c)) {
+				buffer[i] = *c;
 				i++;
 			}
 		}
@@ -1126,11 +1123,11 @@ int getstringbuffer(struct Console* console, char *buffer, size_t size) {
 		int i = 0;
 		while (i != size - 1) {
 			WaitForSingleObject(pclMutexHandle, INFINITE);
-			char c = (char)dequeue(console->inputQueue);
+			char* c = (char*)dequeue(console->inputQueue);
 			ReleaseMutex(pclMutexHandle);
 
-			if (c != 0 && isprint(c)) {
-				buffer[i] = c;
+			if (c != 0 && isprint(*c)) {
+				buffer[i] = *c;
 				i++;
 			}
 		}
