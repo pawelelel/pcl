@@ -8,6 +8,8 @@
 #include <math.h>
 #include <stdio.h>
 
+
+// TODO move to pcldef.h
 HANDLE pclMutexHandle;
 
 
@@ -198,10 +200,23 @@ int end(struct Console* console) {
 	CloseHandle(console->threadExitEvent);
 	CloseHandle(pclMutexHandle);
 
-	// TODO free struct console properly
-	// also do not foreget about screeens
+	CloseHandle(console->inputHandle);
+	free(console->inputQueue);
+	CloseHandle(console->outputHandle);
+	CloseHandle(console->errorHandle);
+
+	// TODO same free for unicode
+	for (int i = 0; i < console->asciiScreensIndex; ++i) {
+		struct AsciiScreen* ascii = console->asciiScreens[i];
+		free(ascii->outputBuffer);
+		free(ascii->buffer);
+		free(ascii);
+	}
+	free(console->asciiScreens);
+
 	free(console);
 
+	// TODO is it necessary
 	printf("\x1B[1;1f");
 	return 0;
 }
