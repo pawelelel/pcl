@@ -507,8 +507,6 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 		return -14;
 	}
 
-
-
 	switch (c) {
 		case '\n': {
 			ascii->cursor += ascii->width;
@@ -585,6 +583,118 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	if (ascii->cursor != ascii->width * ascii->height) {
 		ascii->cursor++;
 	}
+	return 0;
+}
+
+int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, unsigned int col, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+						unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+						BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline) {
+	if (ascii == NULL) {
+		return -1;
+	}
+
+	if (row >= ascii->height) {
+		return -2;
+	}
+
+	if (col >= ascii->width) {
+		return -3;
+	}
+
+	if (foregroundRed > 255) {
+		return -4;
+	}
+
+	if (foregroundGreen > 255) {
+		return -5;
+	}
+
+	if (foregroundBlue > 255) {
+		return -6;
+	}
+
+	if (backgroundRed > 255) {
+		return -7;
+	}
+
+	if (backgroundGreen > 255) {
+		return -8;
+	}
+
+	if (backgroundBlue > 255) {
+		return -9;
+	}
+
+	if (bold != TRUE && bold != FALSE) {
+		return -10;
+	}
+
+	if (dim != TRUE && dim != FALSE) {
+		return -11;
+	}
+
+	if (italic != TRUE && italic != FALSE) {
+		return -12;
+	}
+
+	if (underline != TRUE && underline != FALSE) {
+		return -13;
+	}
+
+	if (blinking != TRUE && blinking != FALSE) {
+		return -14;
+	}
+
+	if (strikethrough != TRUE && strikethrough != FALSE) {
+		return -15;
+	}
+
+	if (doubleunderline != TRUE && doubleunderline != FALSE) {
+		return -16;
+	}
+
+	switch (c) {
+		case '\n':
+		case '\a':
+		case '\b':
+		case '\v':
+		case '\r':
+		case '\f': {
+			// all special characters are not supported in that functon variant
+			return 0;
+		}
+		default: break;
+	}
+
+	// \n - new line
+	// \a - not supported (alert/bell)
+	// \b - backspace
+	// \v - vertical enter
+	// \r - carrige return
+	// \f - set cursor 0 0
+	// \t - tab
+
+	unsigned int cursorpos = ascii->cursor;
+	ascii->cursor = col + row * ascii->width;
+
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+	ascii->buffer[ascii->cursor].data = c;
+	ascii->buffer[ascii->cursor].foregroundRed = foregroundRed;
+	ascii->buffer[ascii->cursor].foregroundGreen = foregroundGreen;
+	ascii->buffer[ascii->cursor].foregroundBlue = foregroundBlue;
+	ascii->buffer[ascii->cursor].backgroundRed = backgroundRed;
+	ascii->buffer[ascii->cursor].backgroundGreen = backgroundGreen;
+	ascii->buffer[ascii->cursor].backgroundBlue = backgroundBlue;
+
+	ascii->buffer[ascii->cursor].bold = bold;
+	ascii->buffer[ascii->cursor].dim = dim;
+	ascii->buffer[ascii->cursor].italic = italic;
+	ascii->buffer[ascii->cursor].underline = underline;
+	ascii->buffer[ascii->cursor].blinking = blinking;
+	ascii->buffer[ascii->cursor].strikethrough = strikethrough;
+	ascii->buffer[ascii->cursor].doubleunderline = doubleunderline;
+	ReleaseMutex(pclMutexHandle);
+	ascii->cursor = cursorpos;
 	return 0;
 }
 

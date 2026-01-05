@@ -523,6 +523,19 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
       BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
 
 /**
+ * TODO docs
+ * Sets char on given cursor position. Changes cursor position
+ *
+ * @param ascii pointer to structure console
+ * @param c char to set
+ * @return 0 if eveything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL
+ */
+int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, unsigned int col, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+      unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+      BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
+
+/**
  * Sets char on specified position. Do not changes cursor position
  *
  * @param ascii pointer to struct Console
