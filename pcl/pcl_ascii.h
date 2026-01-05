@@ -510,7 +510,6 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 
 /**
  * TODO docs
- * TODO add cusror equivalent
  * Sets char on cursor position. Changes cursor position
  *
  * @param ascii pointer to structure console
