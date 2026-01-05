@@ -236,9 +236,7 @@ int setfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->blinking = TRUE;
-	
 	return 0;
 }
 
@@ -246,9 +244,7 @@ int unsetfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->blinking = FALSE;
-	
 	return 0;
 }
 
@@ -256,9 +252,7 @@ int getfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	BOOL blinking = ascii->blinking;
-	
 	return blinking;
 }
 
@@ -266,9 +260,7 @@ int setfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->strikethrough = TRUE;
-	
 	return 0;
 }
 
@@ -276,9 +268,7 @@ int unsetfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->strikethrough = FALSE;
-	
 	return 0;
 }
 
@@ -286,9 +276,7 @@ int getfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	BOOL strikethrough = ascii->strikethrough;
-	
 	return strikethrough;
 }
 
@@ -296,9 +284,7 @@ int setfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->doubleunderline = TRUE;
-	
 	return 0;
 }
 
@@ -306,9 +292,7 @@ int unsetfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->doubleunderline = FALSE;
-	
 	return 0;
 }
 
@@ -316,9 +300,9 @@ int getfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
+
 	BOOL doubleunderline = ascii->doubleunderline;
-	
+
 	return doubleunderline;
 }
 
@@ -335,11 +319,9 @@ int setforegroundcolorascii(struct AsciiScreen *ascii, unsigned int red, unsigne
 	if (blue > 255) {
 		return -4;
 	}
-	
 	ascii->foregroundRed = red;
 	ascii->foregroundGreen = green;
 	ascii->foregroundBlue = blue;
-	
 	return 0;
 }
 
@@ -356,11 +338,9 @@ int setbackgroundcolorascii(struct AsciiScreen *ascii, int red, int green, int b
 	if (blue > 255) {
 		return -4;
 	}
-	
 	ascii->backgroundRed = red;
 	ascii->backgroundGreen = green;
 	ascii->backgroundBlue = blue;
-	
 	return 0;
 }
 
@@ -368,11 +348,9 @@ int clearforegroundcolorascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	
 	ascii->foregroundRed = ascii->defaultForegroundRed;
 	ascii->foregroundGreen = ascii->defaultForegroundGreen;
 	ascii->foregroundBlue = ascii->defaultForegroundBlue;
-	
 	return 0;
 }
 
@@ -410,6 +388,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 				return 0;
 			}
 			ascii->cursor--;
+			WaitForSingleObject(pclMutexHandle, INFINITE);
 			ascii->buffer[ascii->cursor].data = ascii->defaultchar;
 			ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 			ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -417,6 +396,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 			ascii->buffer[ascii->cursor].backgroundRed = ascii->backgroundRed;
 			ascii->buffer[ascii->cursor].backgroundGreen = ascii->backgroundGreen;
 			ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\v': {
@@ -445,6 +425,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 	// v \f - set cursor 0 0
 	// v \t - tab
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->buffer[ascii->cursor].data = c;
 	ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 	ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -460,6 +441,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 	ascii->buffer[ascii->cursor].blinking = ascii->blinking;
 	ascii->buffer[ascii->cursor].strikethrough = ascii->strikethrough;
 	ascii->buffer[ascii->cursor].doubleunderline = ascii->doubleunderline;
+	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor < ascii->width * ascii->height - 1) {
 		ascii->cursor++;
 	}
@@ -546,6 +528,7 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 				return 0;
 			}
 			ascii->cursor--;
+			WaitForSingleObject(pclMutexHandle, INFINITE);
 			ascii->buffer[ascii->cursor].data = ascii->defaultchar;
 			ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 			ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -553,6 +536,7 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 			ascii->buffer[ascii->cursor].backgroundRed = ascii->backgroundRed;
 			ascii->buffer[ascii->cursor].backgroundGreen = ascii->backgroundGreen;
 			ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\v': {
@@ -581,6 +565,7 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	// v \f - set cursor 0 0
 	// v \t - tab
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->buffer[ascii->cursor].data = c;
 	ascii->buffer[ascii->cursor].foregroundRed = foregroundRed;
 	ascii->buffer[ascii->cursor].foregroundGreen = foregroundGreen;
@@ -596,6 +581,7 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	ascii->buffer[ascii->cursor].blinking = blinking;
 	ascii->buffer[ascii->cursor].strikethrough = strikethrough;
 	ascii->buffer[ascii->cursor].doubleunderline = doubleunderline;
+	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor != ascii->width * ascii->height) {
 		ascii->cursor++;
 	}
@@ -1108,7 +1094,7 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 			}
 			else if (*format == 'c') {
 				format++;
-				
+
 				ascii->bold = FALSE;
 				ascii->dim = FALSE;
 				ascii->italic = FALSE;
@@ -1121,91 +1107,91 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 				ascii->foregroundGreen = ascii->defaultForegroundGreen;
 				ascii->foregroundBlue = ascii->defaultForegroundBlue;
 
-				
+
 			}
 			else if (*format == 'b') {
 				format++;
-				
+
 				ascii->bold = TRUE;
-				
+
 			}
 			else if (strncmp(format, "rb", 2) == 0) {
 				format += 2;
-				
+
 				ascii->bold = FALSE;
-				
+
 			}
 			else if (*format == 'd') {
 				format++;
-				
+
 				ascii->dim = TRUE;
-				
+
 			}
 			else if (strncmp(format, "rd", 2) == 0) {
 				format += 2;
-				
+
 				ascii->dim = FALSE;
-				
+
 			}
 			else if (*format == 'i') {
 				format++;
-				
+
 				ascii->italic = TRUE;
-				
+
 			}
 			else if (strncmp(format, "ri", 2) == 0) {
 				format += 2;
-				
+
 				ascii->italic = FALSE;
-				
+
 			}
 			else if (*format == 'u') {
 				format++;
-				
+
 				ascii->underline = TRUE;
-				
+
 			}
 			else if (strncmp(format, "ru", 2) == 0) {
 				format += 2;
-				
+
 				ascii->underline = FALSE;
-				
+
 			}
 			else if (*format == 'l') {
 				format++;
-				
+
 				ascii->blinking = TRUE;
-				
+
 			}
 			else if (strncmp(format, "rl", 2) == 0) {
 				format += 2;
-				
+
 				ascii->blinking = FALSE;
-				
+
 			}
 			else if (*format == 's') {
 				format++;
-				
+
 				ascii->strikethrough = TRUE;
-				
+
 			}
 			else if (strncmp(format, "rs", 2) == 0) {
 				format += 2;
-				
+
 				ascii->strikethrough = FALSE;
-				
+
 			}
 			else if (strncmp(format, "uu", 2) == 0) {
 				format += 2;
-				
+
 				ascii->doubleunderline = TRUE;
-				
+
 			}
 			else if (strncmp(format, "ruu", 3) == 0) {
 				format += 3;
-				
+
 				ascii->doubleunderline = FALSE;
-				
+
 			}
 			else if (isdigit(*format)) {
 				int r, g, b;
@@ -1216,18 +1202,18 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 				format++;
 				b = strtol(format, &format, 10);
 				if (*format == 'f') {
-					
+
 					ascii->foregroundRed = r;
 					ascii->foregroundGreen = g;
 					ascii->foregroundBlue = b;
-					
+
 				}
 				else if (*format == 'b') {
-					
+
 					ascii->backgroundRed = r;
 					ascii->backgroundGreen = g;
 					ascii->backgroundBlue = b;
-					
+
 				}
 				format++;
 			}
@@ -1263,11 +1249,11 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 	}
 
 	if (row >= ascii->height) {
-		
+
 		return -5;
 	}
 	if (col >= ascii->width) {
-		
+
 		return -6;
 	}
 
@@ -1552,7 +1538,7 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 			}
 			else if (*format == 'c') {
 				format++;
-				
+
 				ascii->bold = FALSE;
 				ascii->dim = FALSE;
 				ascii->italic = FALSE;
@@ -1676,21 +1662,21 @@ int setstringcursorascii(struct AsciiScreen *ascii, char *string, int row, int c
 	}
 
 	if (row >= ascii->height) {
-		
+
 		return -5;
 	}
 	if (col > ascii->width) {
-		
+
 		return -6;
 	}
 
 	const unsigned int cursor = ascii->cursor;
 	ascii->cursor = col + row * ascii->width;
-	
+
 	setstringascii(ascii, string);
 
 	ascii->cursor = cursor;
-	
+
 	return 0;
 }
 
@@ -1699,6 +1685,7 @@ int clearascii(struct AsciiScreen *ascii) {
 		return -1;
 	}
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = ascii->defaultchar;
 		ascii->buffer[i].foregroundRed = ascii->defaultForegroundRed;
@@ -1708,8 +1695,9 @@ int clearascii(struct AsciiScreen *ascii) {
 		ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
 		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 	}
+	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = 0;
-	
+
 	return 0;
 }
 
@@ -1742,6 +1730,7 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		return -7;
 	}
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = c;
 		ascii->buffer[i].foregroundRed = foregroundRed;
@@ -1751,6 +1740,7 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		ascii->buffer[i].backgroundGreen = backgroundGreen;
 		ascii->buffer[i].backgroundBlue = backgroundBlue;
 	}
+	ReleaseMutex(pclMutexHandle);
 
 	ascii->cursor = 0;
 
@@ -1762,6 +1752,7 @@ int fillcharascii(struct AsciiScreen *ascii, char c) {
 		return -1;
 	}
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = c;
 		ascii->buffer[i].foregroundRed = ascii->foregroundRed;
@@ -1779,8 +1770,9 @@ int fillcharascii(struct AsciiScreen *ascii, char c) {
 		ascii->buffer[i].strikethrough = ascii->strikethrough;
 		ascii->buffer[i].doubleunderline = ascii->doubleunderline;
 	}
+	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = 0;
-	
+
 	return 0;
 }
 
@@ -1821,18 +1813,18 @@ int setcursorpositionascii(struct AsciiScreen *ascii, unsigned int row, unsigned
 	if (ascii == NULL) {
 		return -1;
 	}
-	
+
 	if (row >= ascii->height) {
-		
+
 		return -2;
 	}
 	if (col >= ascii->width) {
-		
+
 		return -3;
 	}
 
 	ascii->cursor = col + row * ascii->width;
-	
+
 	return 0;
 }
 
@@ -1863,9 +1855,10 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 	int add = sprintf(buff, "\x1B[1;1f");
 
 	// init
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	memset(ascii->outputBuffer, 0, ascii->bufferSize);
 	memcpy(&ascii->outputBuffer[place], buff, add);
-	
+
 	place += add;
 
 	unsigned int foregroundRed = 255;
@@ -2017,6 +2010,9 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 		ascii->outputBuffer[place] = cell.data;
 		place++;
 	}
+
+	ReleaseMutex(pclMutexHandle);
+
 	ascii->outputBuffer[place] = '\0';
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, ascii->outputBuffer, strlen(ascii->outputBuffer), NULL, NULL);
@@ -2106,9 +2102,9 @@ int getdimensionsascii(struct AsciiScreen *ascii, unsigned int* width, unsigned 
 		*height = 0;
 		return -3;
 	}
-	
+
 	*width = ascii->width;
 	*height = ascii->height;
-	
+
 	return 0;
 }

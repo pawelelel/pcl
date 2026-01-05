@@ -70,7 +70,7 @@ struct UnicodeScreen {
 };
 
 struct AsciiScreen {
-	struct AsciiCell* buffer;
+	struct AsciiCell* buffer; // TODO buffer needs to be thread safe due to resizing event
 	unsigned int bufferSize;
 	char* outputBuffer;
 	unsigned int width, height;

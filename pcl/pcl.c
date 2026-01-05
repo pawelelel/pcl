@@ -67,72 +67,75 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				break;
 			}
 			case WINDOW_BUFFER_SIZE_EVENT: {
-				int height = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y;
-				int width = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X;
+				const int height = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y;
+				const int width = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X;
 
+				// TODO implemet resizing for unicode
+				WaitForSingleObject(pclMutexHandle, INFINITE);
+				for (int i = 0; i < console->asciiScreensIndex; ++i) {
+					struct AsciiScreen* ascii = console->asciiScreens[i];
 
+					struct AsciiCell* newbuffer = malloc(sizeof(struct AsciiCell) * width * height);
+					struct AsciiCell* previousbuffer = ascii->buffer;
 
+					// newbuffer init
+					for (int j = 0; j < height * width; ++j) {
+						ascii->buffer[i].data = ' ';
+						ascii->buffer[i].foregroundRed = ascii->defaultForegroundRed;
+						ascii->buffer[i].foregroundGreen = ascii->defaultForegroundGreen;
+						ascii->buffer[i].foregroundBlue = ascii->defaultForegroundBlue;
+						ascii->buffer[i].backgroundRed = ascii->defaultBackgroundRed;
+						ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
+						ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 
-
-				/*
-				// TODO implemet resizing
-				struct Cell* newbuffer = malloc(sizeof(struct Cell) * width * height);
-				WaitForSingleObject(mutexHandle, INFINITE);
-				struct Cell* prebuffer = console->buffer;
-
-				for (int i = 0; i < height * width; ++i) {
-					newbuffer[i].data = console->defaultchar;
-					newbuffer[i].foregroundRed = console->defaultForegroundRed;
-					newbuffer[i].foregroundGreen = console->defaultForegroundGreen;
-					newbuffer[i].foregroundBlue = console->defaultForegroundBlue;
-					newbuffer[i].backgroundRed = console->defaultBackgroundRed;
-					newbuffer[i].backgroundGreen = console->defaultBackgroundGreen;
-					newbuffer[i].backgroundBlue = console->defaultBackgroundBlue;
-				}
-
-				// copy prebuffer to newbuffer
-				for (unsigned int i = 0; i < console->width * console->height; i++) {
-					unsigned int row = i / console->width;
-					unsigned int col = i % console->width;
-
-					unsigned int newcursor = col + row * width;
-					if (newcursor >= width * height) {
-						continue;
+						ascii->buffer[i].bold = FALSE;
+						ascii->buffer[i].dim = FALSE;
+						ascii->buffer[i].italic = FALSE;
+						ascii->buffer[i].underline = FALSE;
+						ascii->buffer[i].blinking = FALSE;
+						ascii->buffer[i].strikethrough = FALSE;
+						ascii->buffer[i].doubleunderline = FALSE;
 					}
-					newbuffer[newcursor] = prebuffer[i];
+
+					// copy prebuffer to newbuffer
+					for (unsigned int j = 0; j < ascii->width * ascii->height; j++) {
+						unsigned int row = j / ascii->width;
+						unsigned int col = j % ascii->width;
+
+						unsigned int newcursor = col + row * width;
+						if (newcursor >= width * height) {
+							continue;
+						}
+						newbuffer[newcursor] = previousbuffer[j];
+					}
+
+					free(previousbuffer);
+					ascii->buffer = newbuffer;
+
+					/*
+					 * ascii->width * ascii->height => characters
+					 * (19 + 19 + 1) => colors
+					 * (5 * 7) => font
+					 * ascii->height => last row
+					 * 6 => clear
+					*/
+					ascii->bufferSize = width * height * (19 + 19 + 1) * (5 * 7) + height + 6;
+
+					free(ascii->outputBuffer);
+					ascii->outputBuffer = malloc(ascii->bufferSize);
+					if (ascii->outputBuffer == NULL) {
+						// TODO error
+					}
+
+					ascii->width = width;
+					ascii->height = height;
+					ascii->cursor = 0;
 				}
-
-				free(prebuffer);
-				console->buffer = newbuffer;
-
-				/*
-				 * console->width * console->height => characters
-				 * (19 + 19 + 1) => colors
-				 * (5 * 7) => font
-				 * console->height => last row
-				 * 6 => clear
-				*/
-
-
-
-				/*
-				console->bufferSize = width * height * (19 + 19 + 1) * (5 * 7) + height + 6;
-
-				free(console->outputBuffer);
-				console->outputBuffer = malloc(console->bufferSize);
-				if (console->outputBuffer == NULL) {
-					// error
-				}
-
-				console->width = width;
-				console->height = height;
-				console->cursor = 0;
-
 
 				ReleaseMutex(pclMutexHandle);
 				if (console->ResizeEvent != NULL) {
 					console->ResizeEvent(console, height, width);
-				}*/
+				}
 				break;
 			}
 			default: break;
