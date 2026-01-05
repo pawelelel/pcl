@@ -1998,7 +1998,7 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 	}
 	int place = 0;
 
-	// clear
+	// set cursor position to top left
 	char buff[6];
 	int add = sprintf(buff, "\x1B[1;1f");
 

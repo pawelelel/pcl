@@ -75,6 +75,10 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					struct AsciiScreen* ascii = console->asciiScreens[i];
 
 					struct AsciiCell* newbuffer = malloc(sizeof(struct AsciiCell) * width * height);
+					if (ascii->outputBuffer == NULL) {
+						// TODO report error
+						ExitThread(-1);
+					}
 					struct AsciiCell* previousbuffer = ascii->buffer;
 
 					// newbuffer init
@@ -123,7 +127,8 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					free(ascii->outputBuffer);
 					ascii->outputBuffer = malloc(ascii->bufferSize);
 					if (ascii->outputBuffer == NULL) {
-						// TODO error
+						// TODO report error
+						ExitThread(-2);
 					}
 
 					ascii->width = width;
@@ -197,10 +202,7 @@ int end(struct Console* console) {
 	CloseHandle(console->threadExitEvent);
 	CloseHandle(pclMutexHandle);
 
-	CloseHandle(console->inputHandle);
 	free(console->inputQueue);
-	CloseHandle(console->outputHandle);
-	CloseHandle(console->errorHandle);
 
 	// TODO same free for unicode
 	for (int i = 0; i < console->asciiScreensIndex; ++i) {
@@ -213,8 +215,10 @@ int end(struct Console* console) {
 
 	free(console);
 
-	// TODO is it necessary
-	printf("\x1B[1;1f");
+	// clearing all ansi stuff
+	printf("\x1B[0m");
+	// clearing screen
+	printf("\033[2J");
 	return 0;
 }
 
