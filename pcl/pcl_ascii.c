@@ -1701,7 +1701,9 @@ int clearascii(struct AsciiScreen *ascii) {
 	return 0;
 }
 
-int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue, unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue) {
+int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, unsigned int foregroundGreen,
+	unsigned int foregroundBlue, unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+	BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline) {
 	if (ascii == NULL) {
 		return -1;
 	}
@@ -1730,6 +1732,34 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		return -7;
 	}
 
+	if (bold != TRUE && bold != FALSE) {
+		return -8;
+	}
+
+	if (dim != TRUE && dim != FALSE) {
+		return -9;
+	}
+
+	if (italic != TRUE && italic != FALSE) {
+		return -10;
+	}
+
+	if (underline != TRUE && underline != FALSE) {
+		return -11;
+	}
+
+	if (blinking != TRUE && blinking != FALSE) {
+		return -12;
+	}
+
+	if (strikethrough != TRUE && strikethrough != FALSE) {
+		return -13;
+	}
+
+	if (doubleunderline != TRUE && doubleunderline != FALSE) {
+		return -14;
+	}
+
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		ascii->buffer[i].data = c;
@@ -1739,6 +1769,14 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		ascii->buffer[i].backgroundRed = backgroundRed;
 		ascii->buffer[i].backgroundGreen = backgroundGreen;
 		ascii->buffer[i].backgroundBlue = backgroundBlue;
+
+		ascii->buffer[i].bold = bold;
+		ascii->buffer[i].dim = dim;
+		ascii->buffer[i].italic = italic;
+		ascii->buffer[i].underline = underline;
+		ascii->buffer[i].blinking = blinking;
+		ascii->buffer[i].strikethrough = strikethrough;
+		ascii->buffer[i].doubleunderline = doubleunderline;
 	}
 	ReleaseMutex(pclMutexHandle);
 

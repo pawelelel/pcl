@@ -325,7 +325,6 @@ int setstringcursorascii(struct AsciiScreen *ascii, char* string, int row, int c
 int clearascii(struct AsciiScreen *ascii);
 
 /**
- * TODO add font styles
  * Fills ascii with specified char
  *
  * @param ascii pointer to struct Ascii
@@ -336,6 +335,13 @@ int clearascii(struct AsciiScreen *ascii);
  * @param backgroundRed backround color red value
  * @param backgroundGreen backround color green value
  * @param backgroundBlue backround color blue value
+ * @param bold is text bold
+ * @param dim is text dim
+ * @param italic is text italic
+ * @param underline is text underline
+ * @param blinking is text blinking
+ * @param strikethrough is text strikethrough
+ * @param doubleunderline is text doubleunderline
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) ascii parameter is NULL<br>
  * (-2) foreground red parameter is greater than 255<br>
@@ -343,9 +349,19 @@ int clearascii(struct AsciiScreen *ascii);
  * (-4) foreground blue parameter is greater than 255<br>
  * (-5) background red parameter is greater than 255<br>
  * (-6) background green parameter is greater than 255<br>
- * (-7) background blue parameter is greater than 255
+ * (-7) background blue parameter is greater than 255<br>
+ * (-8) bold parameter is not a valid BOOL vaiable<br>
+ * (-9) dim parameter is not a valid BOOL vaiable<br>
+ * (-10) italic parameter is not a valid BOOL vaiable<br>
+ * (-11) underline parameter is not a valid BOOL vaiable<br>
+ * (-12) blinking parameter is not a valid BOOL vaiable<br>
+ * (-13) strikethrough parameter is not a valid BOOL vaiable<br>
+ * (-14) doubleunderline parameter is not a valid BOOL vaiable
  */
-int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue, unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue);
+int fillascii(struct AsciiScreen *ascii, char c,
+	unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+	unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
+	BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
 
 /**
  * Fills ascii with specified char
