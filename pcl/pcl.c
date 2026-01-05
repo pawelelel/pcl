@@ -8,10 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 
-
-// TODO move to pcldef.h
 HANDLE pclMutexHandle;
-
 
 DWORD WINAPI inputthread(LPVOID lpParam) {
 	struct Console* console = lpParam;
