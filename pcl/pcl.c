@@ -887,7 +887,7 @@ int getvariables(struct Console *console, char *format, ...) {
 	}
 
 	/*
-	 * %<integer>s string
+	 * %<integer>s string // TODO add termination character eg '\n' ';' function ends collecting input when such characters appears; user can choose charaters eg %[\na]s or %3s or %4[\na]s
 	 * %c char
 	 * %h short
 	 * %uh unsigned short
