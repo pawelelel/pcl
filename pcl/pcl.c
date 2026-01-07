@@ -400,7 +400,7 @@ char puregetchar(struct Console* console) {
 		WaitForSingleObject(pclMutexHandle, INFINITE);
 
 		char* c = dequeue(console->inputQueue);
-		if (*c != 0) {
+		if (c != NULL && *c != 0) {
 			ReleaseMutex(pclMutexHandle);
 			return *c;
 		}
@@ -837,30 +837,44 @@ char getlongdoublevariable(struct Console* console, long double* llf) {
  * @param tokens number of tokens
  * @return 0 if format is invalid 1 if valid
  */
-int validateformatstringforgetvariables(char* format, char** validtokens, int tokens) {
+BOOL validateformatstringforgetvariables(char* format, char** validtokens, int tokens) {
+	if (!*format) // empty string
+		return FALSE;
+
 	while (*format) {
 		if (*format == '%') {
 			format++;
-			int matched = 0;
+
+			if (isdigit(*format)) {
+				while (isdigit(*format)) {
+					format++;
+				}
+				if (*format == 's') {
+					format++;
+					continue;
+				}
+			}
+
+			BOOL matched = FALSE;
 			for (int i = 0; i < tokens; i++) {
 				char* token = validtokens[i] + 1;
 				size_t size = strlen(token);
 				if (strncmp(format, token, size) == 0) {
 					format += size;
-					matched = 1;
+					matched = TRUE;
 					break;
 				}
 			}
 			if (!matched) {
 				// format string is invalid
-				return 0;
+				return FALSE;
 			}
 		} else {
 			format++;
 		}
 	}
 	// format string is valid
-	return 1;
+	return TRUE;
 }
 
 int getvariables(struct Console *console, char *format, ...) {
@@ -873,7 +887,7 @@ int getvariables(struct Console *console, char *format, ...) {
 	}
 
 	/*
-	 * TODO %s string
+	 * %<integer>s string
 	 * %c char
 	 * %h short
 	 * %uh unsigned short
@@ -889,6 +903,7 @@ int getvariables(struct Console *console, char *format, ...) {
 	 */
 
 	// valid tokens sorted by length
+	// %s is handled separately
 	char* validtokens[] = {
 		"%llf", "%ull", "%ll", "%uh", "%ud",
 		"%lf", "%ul", "%c", "%h", "%d", "%l", "%f"
@@ -909,6 +924,27 @@ int getvariables(struct Console *console, char *format, ...) {
 		char gotchar = 0;
 		if (*format == '%') {
 			format++;
+
+			if (isdigit(*format)) {
+				size_t size = 0;
+				while (isdigit(*format)) {
+					size *= 10;
+					size += *format - '0';
+					format++;
+				}
+
+				char* str = va_arg(args, char*);
+				// skip last character for null
+				for (int i = 0; i < size - 1; ++i) {
+					char c;
+					getcharvariable(console, &c);
+					str[i] = c;
+				}
+				str[size - 1] = '\0';
+				format++;
+				continue;
+			}
+
 			for (int i = 0; i < tokenssize; i++) {
 				char* token = validtokens[i] + 1;
 				size_t tokensize = strlen(token);
