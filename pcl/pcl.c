@@ -76,7 +76,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 					struct AsciiCell* newbuffer = malloc(sizeof(struct AsciiCell) * width * height);
 					if (ascii->outputBuffer == NULL) {
-						// TODO report error
+						fprintf(stderr, "Bad memory allocation in PCL internal code.\nPCL fatal error.\nTermination suggested.");
 						ExitThread(-1);
 					}
 					struct AsciiCell* previousbuffer = ascii->buffer;
@@ -127,7 +127,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					free(ascii->outputBuffer);
 					ascii->outputBuffer = malloc(ascii->bufferSize);
 					if (ascii->outputBuffer == NULL) {
-						// TODO report error
+						fprintf(stderr, "Bad memory allocation in PCL internal code.\nPCL fatal error.\nTermination suggested.");
 						ExitThread(-2);
 					}
 
