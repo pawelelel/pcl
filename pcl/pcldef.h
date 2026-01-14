@@ -9,19 +9,23 @@
 
 #include <windows.h>
 
+// specific character decorations
+struct Decoration {
+	byte bold:1;
+	byte dim:1;
+	byte italic:1;
+	byte underline:1;
+	byte blinking:1;
+	byte strikethrough:1;
+	byte doubleunderline:1;
+	byte reserved:1; // unused
+};
+
 struct AsciiCell {
 	char data;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
-
-	// specific character decorations
-	BOOL bold;
-	BOOL dim;
-	BOOL italic;
-	BOOL underline;
-	BOOL blinking;
-	BOOL strikethrough;
-	BOOL doubleunderline;
+	struct Decoration decoration;
 };
 
 struct UnicodeCell {
@@ -29,15 +33,7 @@ struct UnicodeCell {
 	wchar_t data2;
 	unsigned int foregroundRed, foregroundGreen, foregroundBlue;
 	unsigned int backgroundRed, backgroundGreen, backgroundBlue;
-
-	// specific character decorations
-	BOOL bold;
-	BOOL dim;
-	BOOL italic;
-	BOOL underline;
-	BOOL blinking;
-	BOOL strikethrough;
-	BOOL doubleunderline;
+	struct Decoration decoration;
 };
 
 struct UnicodeScreen {
@@ -53,14 +49,7 @@ struct UnicodeScreen {
 	int cursorstyle;
 	unsigned int cursor;
 
-	// font decorations
-	BOOL bold;
-	BOOL dim;
-	BOOL italic;
-	BOOL underline;
-	BOOL blinking;
-	BOOL strikethrough;
-	BOOL doubleunderline;
+	struct Decoration decoration;
 
 	// default values
 	wchar_t data1;
@@ -82,14 +71,7 @@ struct AsciiScreen {
 	int cursorstyle;
 	unsigned int cursor;
 
-	// font decorations
-	BOOL bold;
-	BOOL dim;
-	BOOL italic;
-	BOOL underline;
-	BOOL blinking;
-	BOOL strikethrough;
-	BOOL doubleunderline;
+	struct Decoration decoration;
 
 	// default values
 	char defaultchar;

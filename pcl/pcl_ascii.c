@@ -19,13 +19,13 @@ struct AsciiScreen* initascii(struct Console *console) {
 	ascii->cursorstyle = BLINKING_BAR;
 	ascii->cursor = 0;
 
-	ascii->bold = FALSE;
-	ascii->dim = FALSE;
-	ascii->italic = FALSE;
-	ascii->underline = FALSE;
-	ascii->blinking = FALSE;
-	ascii->strikethrough = FALSE;
-	ascii->doubleunderline = FALSE;
+	ascii->decoration.bold = FALSE;
+	ascii->decoration.dim = TRUE;
+	ascii->decoration.italic = TRUE;
+	ascii->decoration.underline = TRUE;
+	ascii->decoration.blinking = TRUE;
+	ascii->decoration.strikethrough = TRUE;
+	ascii->decoration.doubleunderline = TRUE;
 
 	ascii->defaultchar = ' ';
 	ascii->defaultForegroundRed = 255;
@@ -71,13 +71,13 @@ struct AsciiScreen* initascii(struct Console *console) {
 		ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
 		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 
-		ascii->buffer[i].bold = FALSE;
-		ascii->buffer[i].dim = FALSE;
-		ascii->buffer[i].italic = FALSE;
-		ascii->buffer[i].underline = FALSE;
-		ascii->buffer[i].blinking = FALSE;
-		ascii->buffer[i].strikethrough = FALSE;
-		ascii->buffer[i].doubleunderline = FALSE;
+		ascii->decoration.bold = FALSE;
+		ascii->decoration.dim = TRUE;
+		ascii->decoration.italic = TRUE;
+		ascii->decoration.underline = TRUE;
+		ascii->decoration.blinking = TRUE;
+		ascii->decoration.strikethrough = TRUE;
+		ascii->decoration.doubleunderline = TRUE;
 	}
 
 	ascii->outputBuffer = malloc(sizeof (char) * ascii->bufferSize);
@@ -141,7 +141,7 @@ int setfontboldascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->bold = TRUE;
+	ascii->decoration.bold = TRUE;
 	return 0;
 }
 
@@ -149,7 +149,7 @@ int unsetfontboldascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->bold = FALSE;
+	ascii->decoration.bold = FALSE;
 	return 0;
 }
 
@@ -157,14 +157,14 @@ int getfontboldascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	return ascii->bold;
+	return ascii->decoration.bold;
 }
 
 int setfontdimascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->dim = TRUE;
+	ascii->decoration.dim = TRUE;
 	return 0;
 }
 
@@ -172,7 +172,7 @@ int unsetfontdimascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->dim = FALSE;
+	ascii->decoration.dim = FALSE;
 	return 0;
 }
 
@@ -180,15 +180,14 @@ int getfontdimascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	BOOL dim = ascii->dim;
-	return dim;
+	return ascii->decoration.dim;
 }
 
 int setfontitalicascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->italic = TRUE;
+	ascii->decoration.italic = TRUE;
 	return 0;
 }
 
@@ -196,7 +195,7 @@ int unsetfontitalicascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->italic = FALSE;
+	ascii->decoration.italic = FALSE;
 	return 0;
 }
 
@@ -204,15 +203,14 @@ int getfontitalicascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	BOOL italic = ascii->italic;
-	return italic;
+	return ascii->decoration.italic;
 }
 
 int setfontunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->underline = TRUE;
+	ascii->decoration.underline = TRUE;
 	return 0;
 }
 
@@ -220,7 +218,7 @@ int unsetfontunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->underline = FALSE;
+	ascii->decoration.underline = FALSE;
 	return 0;
 }
 
@@ -228,15 +226,14 @@ int getfontunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	BOOL underline = ascii->underline;
-	return underline;
+	return ascii->decoration.underline;
 }
 
 int setfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->blinking = TRUE;
+	ascii->decoration.blinking = TRUE;
 	return 0;
 }
 
@@ -244,7 +241,7 @@ int unsetfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->blinking = FALSE;
+	ascii->decoration.blinking = FALSE;
 	return 0;
 }
 
@@ -252,15 +249,14 @@ int getfontblinkingascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	BOOL blinking = ascii->blinking;
-	return blinking;
+	return ascii->decoration.blinking;
 }
 
 int setfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->strikethrough = TRUE;
+	ascii->decoration.strikethrough = TRUE;
 	return 0;
 }
 
@@ -268,7 +264,7 @@ int unsetfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->strikethrough = FALSE;
+	ascii->decoration.strikethrough = FALSE;
 	return 0;
 }
 
@@ -276,15 +272,14 @@ int getfontstrikethroughascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	BOOL strikethrough = ascii->strikethrough;
-	return strikethrough;
+	return ascii->decoration.strikethrough;
 }
 
 int setfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->doubleunderline = TRUE;
+	ascii->decoration.doubleunderline = TRUE;
 	return 0;
 }
 
@@ -292,7 +287,7 @@ int unsetfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-	ascii->doubleunderline = FALSE;
+	ascii->decoration.doubleunderline = FALSE;
 	return 0;
 }
 
@@ -300,10 +295,7 @@ int getfontdoubleunderlineascii(struct AsciiScreen *ascii) {
 	if (ascii == NULL) {
 		return -1;
 	}
-
-	BOOL doubleunderline = ascii->doubleunderline;
-
-	return doubleunderline;
+	return ascii->decoration.doubleunderline;
 }
 
 int setforegroundcolorascii(struct AsciiScreen *ascii, unsigned int red, unsigned int green, unsigned int blue) {
@@ -434,13 +426,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 	ascii->buffer[ascii->cursor].backgroundGreen = ascii->backgroundGreen;
 	ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
 
-	ascii->buffer[ascii->cursor].bold = ascii->bold;
-	ascii->buffer[ascii->cursor].dim = ascii->dim;
-	ascii->buffer[ascii->cursor].italic = ascii->italic;
-	ascii->buffer[ascii->cursor].underline = ascii->underline;
-	ascii->buffer[ascii->cursor].blinking = ascii->blinking;
-	ascii->buffer[ascii->cursor].strikethrough = ascii->strikethrough;
-	ascii->buffer[ascii->cursor].doubleunderline = ascii->doubleunderline;
+	ascii->buffer[ascii->cursor].decoration = ascii->decoration;
 	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor < ascii->width * ascii->height - 1) {
 		ascii->cursor++;
@@ -572,13 +558,14 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	ascii->buffer[ascii->cursor].backgroundGreen = backgroundGreen;
 	ascii->buffer[ascii->cursor].backgroundBlue = backgroundBlue;
 
-	ascii->buffer[ascii->cursor].bold = bold;
-	ascii->buffer[ascii->cursor].dim = dim;
-	ascii->buffer[ascii->cursor].italic = italic;
-	ascii->buffer[ascii->cursor].underline = underline;
-	ascii->buffer[ascii->cursor].blinking = blinking;
-	ascii->buffer[ascii->cursor].strikethrough = strikethrough;
-	ascii->buffer[ascii->cursor].doubleunderline = doubleunderline;
+	ascii->buffer[ascii->cursor].decoration.bold = bold;
+	ascii->buffer[ascii->cursor].decoration.dim = dim;
+	ascii->buffer[ascii->cursor].decoration.italic = italic;
+	ascii->buffer[ascii->cursor].decoration.underline = underline;
+	ascii->buffer[ascii->cursor].decoration.blinking = blinking;
+	ascii->buffer[ascii->cursor].decoration.strikethrough = strikethrough;
+	ascii->buffer[ascii->cursor].decoration.doubleunderline = doubleunderline;
+
 	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor != ascii->width * ascii->height) {
 		ascii->cursor++;
@@ -686,13 +673,13 @@ int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, uns
 	ascii->buffer[ascii->cursor].backgroundGreen = backgroundGreen;
 	ascii->buffer[ascii->cursor].backgroundBlue = backgroundBlue;
 
-	ascii->buffer[ascii->cursor].bold = bold;
-	ascii->buffer[ascii->cursor].dim = dim;
-	ascii->buffer[ascii->cursor].italic = italic;
-	ascii->buffer[ascii->cursor].underline = underline;
-	ascii->buffer[ascii->cursor].blinking = blinking;
-	ascii->buffer[ascii->cursor].strikethrough = strikethrough;
-	ascii->buffer[ascii->cursor].doubleunderline = doubleunderline;
+	ascii->buffer[ascii->cursor].decoration.bold = bold;
+	ascii->buffer[ascii->cursor].decoration.dim = dim;
+	ascii->buffer[ascii->cursor].decoration.italic = italic;
+	ascii->buffer[ascii->cursor].decoration.underline = underline;
+	ascii->buffer[ascii->cursor].decoration.blinking = blinking;
+	ascii->buffer[ascii->cursor].decoration.strikethrough = strikethrough;
+	ascii->buffer[ascii->cursor].decoration.doubleunderline = doubleunderline;
 	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = cursorpos;
 	return 0;
@@ -1205,103 +1192,73 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 			else if (*format == 'c') {
 				format++;
 
-				ascii->bold = FALSE;
-				ascii->dim = FALSE;
-				ascii->italic = FALSE;
-				ascii->underline = FALSE;
-				ascii->blinking = FALSE;
-				ascii->strikethrough = FALSE;
-				ascii->doubleunderline = FALSE;
+				ascii->buffer[ascii->cursor].decoration.bold = FALSE;
+				ascii->buffer[ascii->cursor].decoration.dim = FALSE;
+				ascii->buffer[ascii->cursor].decoration.italic = FALSE;
+				ascii->buffer[ascii->cursor].decoration.underline = FALSE;
+				ascii->buffer[ascii->cursor].decoration.blinking = FALSE;
+				ascii->buffer[ascii->cursor].decoration.strikethrough = FALSE;
+				ascii->buffer[ascii->cursor].decoration.doubleunderline = FALSE;
 
 				ascii->foregroundRed = ascii->defaultForegroundRed;
 				ascii->foregroundGreen = ascii->defaultForegroundGreen;
 				ascii->foregroundBlue = ascii->defaultForegroundBlue;
-
-
 			}
 			else if (*format == 'b') {
 				format++;
-
-				ascii->bold = TRUE;
-
+				ascii->decoration.bold = TRUE;
 			}
 			else if (strncmp(format, "rb", 2) == 0) {
 				format += 2;
-
-				ascii->bold = FALSE;
-
+				ascii->decoration.bold = FALSE;
 			}
 			else if (*format == 'd') {
 				format++;
-
-				ascii->dim = TRUE;
-
+				ascii->decoration.dim = TRUE;
 			}
 			else if (strncmp(format, "rd", 2) == 0) {
 				format += 2;
-
-				ascii->dim = FALSE;
-
+				ascii->decoration.dim = FALSE;
 			}
 			else if (*format == 'i') {
 				format++;
-
-				ascii->italic = TRUE;
-
+				ascii->decoration.italic = TRUE;
 			}
 			else if (strncmp(format, "ri", 2) == 0) {
 				format += 2;
-
-				ascii->italic = FALSE;
-
+				ascii->decoration.italic = FALSE;
 			}
 			else if (*format == 'u') {
 				format++;
-
-				ascii->underline = TRUE;
-
+				ascii->decoration.underline = TRUE;
 			}
 			else if (strncmp(format, "ru", 2) == 0) {
 				format += 2;
-
-				ascii->underline = FALSE;
-
+				ascii->decoration.underline = FALSE;
 			}
 			else if (*format == 'l') {
 				format++;
-
-				ascii->blinking = TRUE;
-
+				ascii->decoration.blinking = TRUE;
 			}
 			else if (strncmp(format, "rl", 2) == 0) {
 				format += 2;
-
-				ascii->blinking = FALSE;
-
+				ascii->decoration.blinking = FALSE;
 			}
 			else if (*format == 's') {
 				format++;
-
-				ascii->strikethrough = TRUE;
-
+				ascii->decoration.strikethrough = TRUE;
 			}
 			else if (strncmp(format, "rs", 2) == 0) {
 				format += 2;
-
-				ascii->strikethrough = FALSE;
-
+				ascii->decoration.strikethrough = FALSE;
 			}
 			else if (strncmp(format, "uu", 2) == 0) {
 				format += 2;
-
-				ascii->doubleunderline = TRUE;
-
+				ascii->decoration.doubleunderline = TRUE;
 			}
 			else if (strncmp(format, "ruu", 3) == 0) {
 				format += 3;
-
-				ascii->doubleunderline = FALSE;
-
+				ascii->decoration.doubleunderline = FALSE;
 			}
 			else if (isdigit(*format)) {
 				int r, g, b;
@@ -1649,13 +1606,13 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 			else if (*format == 'c') {
 				format++;
 
-				ascii->bold = FALSE;
-				ascii->dim = FALSE;
-				ascii->italic = FALSE;
-				ascii->underline = FALSE;
-				ascii->blinking = FALSE;
-				ascii->strikethrough = FALSE;
-				ascii->doubleunderline = FALSE;
+				ascii->buffer[ascii->cursor].decoration.bold = FALSE;
+				ascii->buffer[ascii->cursor].decoration.dim = FALSE;
+				ascii->buffer[ascii->cursor].decoration.italic = FALSE;
+				ascii->buffer[ascii->cursor].decoration.underline = FALSE;
+				ascii->buffer[ascii->cursor].decoration.blinking = FALSE;
+				ascii->buffer[ascii->cursor].decoration.strikethrough = FALSE;
+				ascii->buffer[ascii->cursor].decoration.doubleunderline = FALSE;
 
 				ascii->foregroundRed = ascii->defaultForegroundRed;
 				ascii->foregroundGreen = ascii->defaultForegroundGreen;
@@ -1663,59 +1620,59 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 			}
 			else if (*format == 'b') {
 				format++;
-				ascii->bold = TRUE;
+				ascii->decoration.bold = TRUE;
 			}
 			else if (strncmp(format, "rb", 2) == 0) {
 				format += 2;
-				ascii->bold = FALSE;
+				ascii->decoration.bold = FALSE;
 			}
 			else if (*format == 'd') {
 				format++;
-				ascii->dim = TRUE;
+				ascii->decoration.dim = TRUE;
 			}
 			else if (strncmp(format, "rd", 2) == 0) {
 				format += 2;
-				ascii->dim = FALSE;
+				ascii->decoration.dim = FALSE;
 			}
 			else if (*format == 'i') {
 				format++;
-				ascii->italic = TRUE;
+				ascii->decoration.italic = TRUE;
 			}
 			else if (strncmp(format, "ri", 2) == 0) {
 				format += 2;
-				ascii->italic = FALSE;
+				ascii->decoration.italic = FALSE;
 			}
 			else if (*format == 'u') {
 				format++;
-				ascii->underline = TRUE;
+				ascii->decoration.underline = TRUE;
 			}
 			else if (strncmp(format, "ru", 2) == 0) {
 				format += 2;
-				ascii->underline = FALSE;
+				ascii->decoration.underline = FALSE;
 			}
 			else if (*format == 'l') {
 				format++;
-				ascii->blinking = TRUE;
+				ascii->decoration.blinking = TRUE;
 			}
 			else if (strncmp(format, "rl", 2) == 0) {
 				format += 2;
-				ascii->blinking = FALSE;
+				ascii->decoration.blinking = FALSE;
 			}
 			else if (*format == 's') {
 				format++;
-				ascii->strikethrough = TRUE;
+				ascii->decoration.strikethrough = TRUE;
 			}
 			else if (strncmp(format, "rs", 2) == 0) {
 				format += 2;
-				ascii->strikethrough = FALSE;
+				ascii->decoration.strikethrough = FALSE;
 			}
 			else if (strncmp(format, "uu", 2) == 0) {
 				format += 2;
-				ascii->doubleunderline = TRUE;
+				ascii->decoration.doubleunderline = TRUE;
 			}
 			else if (strncmp(format, "ruu", 3) == 0) {
 				format += 3;
-				ascii->doubleunderline = FALSE;
+				ascii->decoration.doubleunderline = FALSE;
 			}
 			else if (isdigit(*format)) {
 				int r, g, b;
@@ -1880,13 +1837,13 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		ascii->buffer[i].backgroundGreen = backgroundGreen;
 		ascii->buffer[i].backgroundBlue = backgroundBlue;
 
-		ascii->buffer[i].bold = bold;
-		ascii->buffer[i].dim = dim;
-		ascii->buffer[i].italic = italic;
-		ascii->buffer[i].underline = underline;
-		ascii->buffer[i].blinking = blinking;
-		ascii->buffer[i].strikethrough = strikethrough;
-		ascii->buffer[i].doubleunderline = doubleunderline;
+		ascii->buffer[i].decoration.bold = bold;
+		ascii->buffer[i].decoration.dim = dim;
+		ascii->buffer[i].decoration.italic = italic;
+		ascii->buffer[i].decoration.underline = underline;
+		ascii->buffer[i].decoration.blinking = blinking;
+		ascii->buffer[i].decoration.strikethrough = strikethrough;
+		ascii->buffer[i].decoration.doubleunderline = doubleunderline;
 	}
 	ReleaseMutex(pclMutexHandle);
 
@@ -1910,13 +1867,7 @@ int fillcharascii(struct AsciiScreen *ascii, char c) {
 		ascii->buffer[i].backgroundGreen = ascii->backgroundGreen;
 		ascii->buffer[i].backgroundBlue = ascii->backgroundBlue;
 
-		ascii->buffer[i].bold = ascii->bold;
-		ascii->buffer[i].dim = ascii->dim;
-		ascii->buffer[i].italic = ascii->italic;
-		ascii->buffer[i].underline = ascii->underline;
-		ascii->buffer[i].blinking = ascii->blinking;
-		ascii->buffer[i].strikethrough = ascii->strikethrough;
-		ascii->buffer[i].doubleunderline = ascii->doubleunderline;
+		ascii->buffer[i].decoration = ascii->decoration;
 	}
 	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = 0;
@@ -2030,10 +1981,10 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			place++;
 		}
 
-		const struct AsciiCell cell = ascii->buffer[i];
+		struct AsciiCell cell = ascii->buffer[i];
 
-		if (bold != cell.bold) {
-			if (cell.bold == TRUE) {
+		if (bold != cell.decoration.bold) {
+			if (cell.decoration.bold == TRUE) {
 				bold = TRUE;
 				char boldstr[4] = "\x1B[1m";
 				memcpy(&ascii->outputBuffer[place], boldstr, 4);
@@ -2047,8 +1998,8 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			}
 		}
 
-		if (dim != cell.dim) {
-			if (cell.dim == TRUE) {
+		if (dim != cell.decoration.dim) {
+			if (cell.decoration.dim == TRUE) {
 				dim = TRUE;
 				char dimstr[4] = "\x1B[2m";
 				memcpy(&ascii->outputBuffer[place], dimstr, 4);
@@ -2062,8 +2013,23 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			}
 		}
 
-		if (underline != cell.underline) {
-			if (cell.underline == TRUE) {
+		if (italic != cell.decoration.italic) {
+			if (cell.decoration.italic == TRUE) {
+				italic = TRUE;
+				char italicstr[4] = "\x1B[3m";
+				memcpy(&ascii->outputBuffer[place], italicstr, 4);
+				place += 4;
+			}
+			else {
+				italic = FALSE;
+				char italicstr[5] = "\x1B[23m";
+				memcpy(&ascii->outputBuffer[place], italicstr, 5);
+				place += 5;
+			}
+		}
+
+		if (underline != cell.decoration.underline) {
+			if (cell.decoration.underline == TRUE) {
 				underline = TRUE;
 				char underlinestr[4] = "\x1B[4m";
 				memcpy(&ascii->outputBuffer[place], underlinestr, 4);
@@ -2077,8 +2043,8 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			}
 		}
 
-		if (blinking != cell.blinking) {
-			if (cell.blinking == TRUE) {
+		if (blinking != cell.decoration.blinking) {
+			if (cell.decoration.blinking == TRUE) {
 				blinking = TRUE;
 				char blinkingstr[4] = "\x1B[5m";
 				memcpy(&ascii->outputBuffer[place], blinkingstr, 4);
@@ -2092,8 +2058,8 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			}
 		}
 
-		if (strikethrough != cell.strikethrough) {
-			if (cell.strikethrough == TRUE) {
+		if (strikethrough != cell.decoration.strikethrough) {
+			if (cell.decoration.strikethrough == TRUE) {
 				strikethrough = TRUE;
 				char strikethroughstr[4] = "\x1B[9m";
 				memcpy(&ascii->outputBuffer[place], strikethroughstr, 4);
@@ -2107,8 +2073,8 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			}
 		}
 
-		if (doubleunderline != cell.doubleunderline) {
-			if (cell.doubleunderline == TRUE) {
+		if (doubleunderline != cell.decoration.doubleunderline) {
+			if (cell.decoration.doubleunderline == TRUE) {
 				doubleunderline = TRUE;
 				char doubleunderlinestr[5] = "\x1B[21m";
 				memcpy(&ascii->outputBuffer[place], doubleunderlinestr, 5);
@@ -2118,21 +2084,6 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 				doubleunderline = FALSE;
 				char doubleunderlinestr[5] = "\x1B[24m";
 				memcpy(&ascii->outputBuffer[place], doubleunderlinestr, 5);
-				place += 5;
-			}
-		}
-
-		if (italic != cell.italic) {
-			if (cell.italic == TRUE) {
-				italic = TRUE;
-				char italicstr[4] = "\x1B[3m";
-				memcpy(&ascii->outputBuffer[place], italicstr, 4);
-				place += 4;
-			}
-			else {
-				italic = FALSE;
-				char italicstr[5] = "\x1B[23m";
-				memcpy(&ascii->outputBuffer[place], italicstr, 5);
 				place += 5;
 			}
 		}

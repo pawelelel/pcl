@@ -91,13 +91,13 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 						ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
 						ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 
-						ascii->buffer[i].bold = FALSE;
-						ascii->buffer[i].dim = FALSE;
-						ascii->buffer[i].italic = FALSE;
-						ascii->buffer[i].underline = FALSE;
-						ascii->buffer[i].blinking = FALSE;
-						ascii->buffer[i].strikethrough = FALSE;
-						ascii->buffer[i].doubleunderline = FALSE;
+						ascii->buffer[ascii->cursor].decoration.bold = FALSE;
+						ascii->buffer[ascii->cursor].decoration.dim = FALSE;
+						ascii->buffer[ascii->cursor].decoration.italic = FALSE;
+						ascii->buffer[ascii->cursor].decoration.underline = FALSE;
+						ascii->buffer[ascii->cursor].decoration.blinking = FALSE;
+						ascii->buffer[ascii->cursor].decoration.strikethrough = FALSE;
+						ascii->buffer[ascii->cursor].decoration.doubleunderline = FALSE;
 					}
 
 					// copy prebuffer to newbuffer
