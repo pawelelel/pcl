@@ -845,6 +845,7 @@ BOOL validateformatstringforgetvariables(char* format, char** validtokens, int t
 		if (*format == '%') {
 			format++;
 
+			// string tokens
 			if (isdigit(*format)) {
 				while (isdigit(*format)) {
 					format++;
@@ -855,6 +856,7 @@ BOOL validateformatstringforgetvariables(char* format, char** validtokens, int t
 				}
 			}
 
+			// rest of tokens
 			BOOL matched = FALSE;
 			for (int i = 0; i < tokens; i++) {
 				char* token = validtokens[i] + 1;
