@@ -219,6 +219,8 @@ int end(struct Console* console) {
 	printf("\x1B[0m");
 	// clearing screen
 	printf("\033[2J");
+	// cursor back to start position
+	printf("\x1B[1;1f");
 	return 0;
 }
 

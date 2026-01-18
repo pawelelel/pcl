@@ -20,12 +20,12 @@ struct AsciiScreen* initascii(struct Console *console) {
 	ascii->cursor = 0;
 
 	ascii->decoration.bold = FALSE;
-	ascii->decoration.dim = TRUE;
-	ascii->decoration.italic = TRUE;
-	ascii->decoration.underline = TRUE;
-	ascii->decoration.blinking = TRUE;
-	ascii->decoration.strikethrough = TRUE;
-	ascii->decoration.doubleunderline = TRUE;
+	ascii->decoration.dim = FALSE;
+	ascii->decoration.italic = FALSE;
+	ascii->decoration.underline = FALSE;
+	ascii->decoration.blinking = FALSE;
+	ascii->decoration.strikethrough = FALSE;
+	ascii->decoration.doubleunderline = FALSE;
 
 	ascii->defaultchar = ' ';
 	ascii->defaultForegroundRed = 255;
@@ -72,12 +72,12 @@ struct AsciiScreen* initascii(struct Console *console) {
 		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 
 		ascii->decoration.bold = FALSE;
-		ascii->decoration.dim = TRUE;
-		ascii->decoration.italic = TRUE;
-		ascii->decoration.underline = TRUE;
-		ascii->decoration.blinking = TRUE;
-		ascii->decoration.strikethrough = TRUE;
-		ascii->decoration.doubleunderline = TRUE;
+		ascii->decoration.dim = FALSE;
+		ascii->decoration.italic = FALSE;
+		ascii->decoration.underline = FALSE;
+		ascii->decoration.blinking = FALSE;
+		ascii->decoration.strikethrough = FALSE;
+		ascii->decoration.doubleunderline = FALSE;
 	}
 
 	ascii->outputBuffer = malloc(sizeof (char) * ascii->bufferSize);
@@ -1761,6 +1761,15 @@ int clearascii(struct AsciiScreen *ascii) {
 		ascii->buffer[i].backgroundRed = ascii->defaultBackgroundRed;
 		ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
 		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
+
+
+		ascii->buffer[i].decoration.bold = FALSE;
+		ascii->buffer[i].decoration.dim = FALSE;
+		ascii->buffer[i].decoration.italic = FALSE;
+		ascii->buffer[i].decoration.underline = FALSE;
+		ascii->buffer[i].decoration.blinking = FALSE;
+		ascii->buffer[i].decoration.strikethrough = FALSE;
+		ascii->buffer[i].decoration.doubleunderline = FALSE;
 	}
 	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = 0;
@@ -1891,19 +1900,21 @@ int set2darrayascii(struct AsciiScreen *ascii, char* array, unsigned int row, un
 	if (width == 0) {
 		return -4;
 	}
-
+/*
 	if (height + row > ascii->height) {
 		return -5;
 	}
 
 	if (width + col > ascii->width) {
 		return -6;
-	}
+	}*/
 
 	for (int i = 0; i < height * width; ++i) {
 		unsigned int r = row + i / width;
 		unsigned int c = col + i % width;
-		setcharcursorascii(ascii, array[i], r, c);
+		if (r < ascii->height && c < ascii->width) {
+			setcharcursorascii(ascii, array[i], r, c);
+		}
 	}
 	return 0;
 }
@@ -1967,13 +1978,14 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 	unsigned int backgroundGreen = 0;
 	unsigned int backgroundBlue = 0;
 
-	BOOL bold = FALSE;
-	BOOL italic = FALSE;
-	BOOL dim = FALSE;
-	BOOL underline = FALSE;
-	BOOL blinking = FALSE;
-	BOOL strikethrough = FALSE;
-	BOOL doubleunderline = FALSE;
+	struct Decoration current;
+	current.bold = FALSE;
+	current.italic = FALSE;
+	current.dim = FALSE;
+	current.underline = FALSE;
+	current.blinking = FALSE;
+	current.strikethrough = FALSE;
+	current.doubleunderline = FALSE;
 
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
 		if (i > 0 && i % ascii->width == 0) {
@@ -1983,105 +1995,105 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 
 		struct AsciiCell cell = ascii->buffer[i];
 
-		if (bold != cell.decoration.bold) {
+		if (current.bold != cell.decoration.bold) {
 			if (cell.decoration.bold == TRUE) {
-				bold = TRUE;
+				current.bold = TRUE;
 				char boldstr[4] = "\x1B[1m";
 				memcpy(&ascii->outputBuffer[place], boldstr, 4);
 				place += 4;
 			}
 			else {
-				bold = FALSE;
+				current.bold = FALSE;
 				char boldstr[5] = "\x1B[22m";
 				memcpy(&ascii->outputBuffer[place], boldstr, 5);
 				place += 5;
 			}
 		}
 
-		if (dim != cell.decoration.dim) {
+		if (current.dim != cell.decoration.dim) {
 			if (cell.decoration.dim == TRUE) {
-				dim = TRUE;
+				current.dim = TRUE;
 				char dimstr[4] = "\x1B[2m";
 				memcpy(&ascii->outputBuffer[place], dimstr, 4);
 				place += 4;
 			}
 			else {
-				dim = FALSE;
+				current.dim = FALSE;
 				char dimstr[5] = "\x1B[22m";
 				memcpy(&ascii->outputBuffer[place], dimstr, 5);
 				place += 5;
 			}
 		}
 
-		if (italic != cell.decoration.italic) {
+		if (current.italic != cell.decoration.italic) {
 			if (cell.decoration.italic == TRUE) {
-				italic = TRUE;
+				current.italic = TRUE;
 				char italicstr[4] = "\x1B[3m";
 				memcpy(&ascii->outputBuffer[place], italicstr, 4);
 				place += 4;
 			}
 			else {
-				italic = FALSE;
+				current.italic = FALSE;
 				char italicstr[5] = "\x1B[23m";
 				memcpy(&ascii->outputBuffer[place], italicstr, 5);
 				place += 5;
 			}
 		}
 
-		if (underline != cell.decoration.underline) {
+		if (current.underline != cell.decoration.underline) {
 			if (cell.decoration.underline == TRUE) {
-				underline = TRUE;
+				current.underline = TRUE;
 				char underlinestr[4] = "\x1B[4m";
 				memcpy(&ascii->outputBuffer[place], underlinestr, 4);
 				place += 4;
 			}
 			else {
-				underline = FALSE;
+				current.underline = FALSE;
 				char underlinestr[5] = "\x1B[24m";
 				memcpy(&ascii->outputBuffer[place], underlinestr, 5);
 				place += 5;
 			}
 		}
 
-		if (blinking != cell.decoration.blinking) {
+		if (current.blinking != cell.decoration.blinking) {
 			if (cell.decoration.blinking == TRUE) {
-				blinking = TRUE;
+				current.blinking = TRUE;
 				char blinkingstr[4] = "\x1B[5m";
 				memcpy(&ascii->outputBuffer[place], blinkingstr, 4);
 				place += 4;
 			}
 			else {
-				blinking = FALSE;
+				current.blinking = FALSE;
 				char blinkingstr[5] = "\x1B[25m";
 				memcpy(&ascii->outputBuffer[place], blinkingstr, 5);
 				place += 5;
 			}
 		}
 
-		if (strikethrough != cell.decoration.strikethrough) {
+		if (current.strikethrough != cell.decoration.strikethrough) {
 			if (cell.decoration.strikethrough == TRUE) {
-				strikethrough = TRUE;
+				current.strikethrough = TRUE;
 				char strikethroughstr[4] = "\x1B[9m";
 				memcpy(&ascii->outputBuffer[place], strikethroughstr, 4);
 				place += 4;
 			}
 			else {
-				strikethrough = FALSE;
+				current.strikethrough = FALSE;
 				char strikethroughstr[5] = "\x1B[29m";
 				memcpy(&ascii->outputBuffer[place], strikethroughstr, 5);
 				place += 5;
 			}
 		}
 
-		if (doubleunderline != cell.decoration.doubleunderline) {
+		if (current.doubleunderline != cell.decoration.doubleunderline) {
 			if (cell.decoration.doubleunderline == TRUE) {
-				doubleunderline = TRUE;
+				current.doubleunderline = TRUE;
 				char doubleunderlinestr[5] = "\x1B[21m";
 				memcpy(&ascii->outputBuffer[place], doubleunderlinestr, 5);
 				place += 5;
 			}
 			else {
-				doubleunderline = FALSE;
+				current.doubleunderline = FALSE;
 				char doubleunderlinestr[5] = "\x1B[24m";
 				memcpy(&ascii->outputBuffer[place], doubleunderlinestr, 5);
 				place += 5;
@@ -2110,21 +2122,15 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 		place++;
 	}
 
-	ReleaseMutex(pclMutexHandle);
-
 	ascii->outputBuffer[place] = '\0';
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, ascii->outputBuffer, strlen(ascii->outputBuffer), NULL, NULL);
-	ReleaseMutex(pclMutexHandle);
 
 	// setting curosor position
 	unsigned int row = ascii->cursor / ascii->width + 1;
 	unsigned int col = ascii->cursor % ascii->width + 1;
 	char position[30];
 	sprintf(position, "\x1B[%d;%dH", row, col);
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, position, strlen(position), NULL, NULL);
-	ReleaseMutex(pclMutexHandle);
 
 	char* cursorstyle;
 	switch (ascii->cursorstyle) {
@@ -2155,22 +2161,18 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 		}
 	}
 
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	WriteConsoleA(console->outputHandle, cursorstyle, strlen(cursorstyle), NULL, NULL);
-	ReleaseMutex(pclMutexHandle);
 
 	if (ascii->cursorVisible) {
 		char* show = "\x1B[?25h";
-		WaitForSingleObject(pclMutexHandle, INFINITE);
 		WriteConsoleA(console->outputHandle, show, strlen(show), NULL, NULL);
-		ReleaseMutex(pclMutexHandle);
 	}
 	else {
 		char* hide = "\x1B[?25l";
-		WaitForSingleObject(pclMutexHandle, INFINITE);
 		WriteConsoleA(console->outputHandle, hide, strlen(hide), NULL, NULL);
-		ReleaseMutex(pclMutexHandle);
 	}
+
+	ReleaseMutex(pclMutexHandle);
 
 	return 0;
 }

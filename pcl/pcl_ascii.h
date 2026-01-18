@@ -389,8 +389,6 @@ int fillcharascii(struct AsciiScreen *ascii, char c);
  * (-2) array parameter is NULL<br>
  * (-3) height parameter equals 0<br>
  * (-4) width parameter equals 0<br>
- * (-5) height parameter equals 0<br>
- * (-6) width parameter equals 0<br>
  */
 int set2darrayascii(struct AsciiScreen *ascii, char* array, unsigned int row, unsigned int col, unsigned int width, unsigned int height);
 
