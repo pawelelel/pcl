@@ -1955,6 +1955,7 @@ int getcursorpositionascii(struct AsciiScreen *ascii, unsigned int *row, unsigne
 }
 
 int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
+	// bug every function should hold mutex for all needed time. Avoid jumping
 	if (ascii == NULL) {
 		return -1;
 	}
