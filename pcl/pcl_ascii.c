@@ -360,7 +360,7 @@ int clearbackgroundcolorascii(struct AsciiScreen *ascii) {
  * Sets char on cursor position. Changes cursor position.
  * Dangerous! Do not waits for mutex. Partially validates data.
 */
-int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
+void setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 	switch (c) {
 		case '\n': {
 			ascii->cursor += ascii->width;
@@ -368,7 +368,7 @@ int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 			if (ascii->cursor >= ascii->width * ascii->height) {
 				ascii->cursor = 0;
 			}
-			return 0;
+			return;
 		}
 		case '\a': {
 			// not supported
@@ -377,7 +377,7 @@ int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 		}
 		case '\b': {
 			if (ascii->cursor == 0) {
-				return 0;
+				return;
 			}
 			ascii->cursor--;
 
@@ -388,22 +388,22 @@ int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 			ascii->buffer[ascii->cursor].backgroundRed = ascii->backgroundRed;
 			ascii->buffer[ascii->cursor].backgroundGreen = ascii->backgroundGreen;
 			ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
-			return 0;
+			return;
 		}
 		case '\v': {
 			ascii->cursor += ascii->width;
 			if (ascii->cursor >= ascii->width * ascii->height) {
 				ascii->cursor = 0;
 			}
-			return 0;
+			return;
 		}
 		case '\r': {
 			ascii->cursor -= ascii->cursor % ascii->width;
-			return 0;
+			return;
 		}
 		case '\f': {
 			ascii->cursor = 0;
-			return 0;
+			return;
 		}
 		default: break;
 	}
@@ -428,7 +428,6 @@ int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 	if (ascii->cursor < ascii->width * ascii->height - 1) {
 		ascii->cursor++;
 	}
-	return 0;
 }
 
 int setcharascii(struct AsciiScreen *ascii, char c) {
@@ -934,19 +933,10 @@ int setcharcursorascii(struct AsciiScreen *ascii, char c, unsigned int row, unsi
 	return 0;
 }
 
-int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
-	if (ascii == NULL) {
-		return -1;
-	}
-
-	if (format == NULL) {
-		return -2;
-	}
-
-	if (!validateformatstringforsetstringformattedascii(format)) {
-		return -3;
-	}
-
+/*
+ * Actual printf like logic. Does not provide any data validation
+*/
+int setstringformattedasciinotsafe(struct AsciiScreen *ascii, char *format, va_list args) {
 	// valid tokens sorted by length
 	char* validtokens[] = {
 		"%ull", "%ll", "%uh", "%ud",
@@ -955,8 +945,6 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 
 	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
 
-	va_list args;
-	va_start(args, format);
 	int length = 0;
 
 	while (*format) {
@@ -1068,7 +1056,7 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 					// match
 					format += tokensize;
 					if (strcmp(token, "%") == 0) {
-						setcharascii(ascii, '%');
+						setcharasciinotsafe(ascii, '%');
 						length++;
 						break;
 					}
@@ -1110,7 +1098,7 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 					}
 					if (strcmp(token, "c") == 0) {
 						const char c = va_arg(args, int);
-						setcharascii(ascii, c);
+						setcharasciinotsafe(ascii, c);
 						length++;
 						break;
 					}
@@ -1216,7 +1204,7 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 
 			if (*format == '@') {
 				format++;
-				setcharascii(ascii, '@');
+				setcharasciinotsafe(ascii, '@');
 				length++;
 			}
 			else if (*format == 'c') {
@@ -1319,9 +1307,34 @@ int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
 		}
 
 		// standard non-controlling character
-		setcharascii(ascii, *format);
+		setcharasciinotsafe(ascii, *format);
 		length++;
 		format++;
+	}
+
+	return length;
+}
+
+int setstringformattedascii(struct AsciiScreen *ascii, char *format, ...) {
+	if (ascii == NULL) {
+		return -1;
+	}
+
+	if (format == NULL) {
+		return -2;
+	}
+
+	if (!validateformatstringforsetstringformattedascii(format)) {
+		return -3;
+	}
+
+	va_list args;
+	va_start(args, format);
+	int length = setstringformattedasciinotsafe(ascii, format, args);
+
+	if (length < 0) {
+		va_end(args);
+		return length;
 	}
 
 	va_end(args);
@@ -1363,375 +1376,11 @@ int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, c
 
 	va_list args;
 	va_start(args, format);
-	int length = 0;
+	int length = setstringformattedasciinotsafe(ascii, format, args);
 
-	// valid tokens sorted by length
-	char* validtokens[] = {
-		"%ull", "%ll", "%uh", "%ud",
-		"%ul", "%c", "%h", "%d", "%l", "%s", "%%"
-	};
-
-	int tokenssize = sizeof(validtokens) / sizeof(validtokens[0]);
-
-	while (*format) {
-
-		// standard printf behaviour
-		if (*format == '%') {
-			format++;
-
-			// floating point numbers printing
-			char* precisionstr = malloc(20 * sizeof(char));
-			int precisionstrsize = 10;
-
-			if (*format == '.') {
-				// precision detected
-				// float match
-
-				format++;
-
-				int i = 0;
-				while (isdigit(*format)) {
-					precisionstr[i] = *format;
-					i++;
-					if (i == precisionstrsize) {
-						precisionstrsize *= 2;
-						if (!realloc(precisionstr, precisionstrsize)) {
-							// error
-							free(precisionstr);
-							va_end(args);
-							return -8;
-						}
-					}
-					format++;
-				}
-				precisionstr[i] = '\0';
-			}
-			else {
-				precisionstr[0] = '5';
-				precisionstr[1] = '\0';
-			}
-
-			// lets handle that float
-			// float
-			if (strncmp(format, "f", 1) == 0) {
-				format++;
-				float f = va_arg(args, double);
-
-				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
-				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
-				formatstr[0] = '%';
-				formatstr[1] = '.';
-				strcat(formatstr, precisionstr);
-				strcat(formatstr, "f\0");
-
-				int size = snprintf(NULL, 0, formatstr, f);
-				char* memory = malloc(size * sizeof(char));
-				snprintf(memory, size, formatstr, f);
-				setstringascii(ascii, memory);
-				free(memory);
-				length += size;
-				free(formatstr);
-			}
-			// double
-			if (strncmp(format, "lf", 2) == 0) {
-				format += 2;
-				double lf = va_arg(args, double);
-
-				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
-				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
-				formatstr[0] = '%';
-				formatstr[1] = '.';
-				strcat(formatstr, precisionstr);
-				strcat(formatstr, "lf\0");
-
-				int size = snprintf(NULL, 0, formatstr, lf);
-				char* memory = malloc(size * sizeof(char));
-				snprintf(memory, size, formatstr, lf);
-				setstringascii(ascii, memory);
-				free(memory);
-				length += size;
-				free(formatstr);
-			}
-			// long double
-			if (strncmp(format, "llf", 3) == 0) {
-				format += 3;
-				long double llf = va_arg(args, long double);
-
-				char* formatstr = malloc((precisionstrsize + 4) * sizeof(char));
-				memset(formatstr, 0, (precisionstrsize + 4) * sizeof(char));
-				formatstr[0] = '%';
-				formatstr[1] = '.';
-				strcat(formatstr, precisionstr);
-				strcat(formatstr, "Lf\0");
-
-				int size = snprintf(NULL, 0, formatstr, llf);
-				char* memory = malloc(size * sizeof(char));
-				snprintf(memory, size, formatstr, llf);
-				setstringascii(ascii, memory);
-				free(memory);
-				length += size;
-				free(formatstr);
-			}
-			free(precisionstr);
-
-			// standard tokens
-			for (int i = 0; i < tokenssize; i++) {
-				char* token = validtokens[i] + 1;
-				size_t tokensize = strlen(token);
-				if (strncmp(format, token, tokensize) == 0) {
-					// match
-					format += tokensize;
-					if (strcmp(token, "%") == 0) {
-						setcharascii(ascii, '%');
-						length++;
-						break;
-					}
-					if (strcmp(token, "s") == 0) {
-						char* s = va_arg(args, char*);
-						setstringascii(ascii, s);
-						length += (int)strlen(s);
-						break;
-					}
-					if (strcmp(token, "l") == 0) {
-						long l = va_arg(args, long);
-						int len = snprintf(NULL, 0, "%ld", l);
-						char* longstring = malloc((len+1) * sizeof(char));
-						snprintf(longstring, len+1, "%ld", l);
-						setstringascii(ascii, longstring);
-						length += (int)strlen(longstring);
-						free(longstring);
-						break;
-					}
-					if (strcmp(token, "d") == 0) {
-						int d = va_arg(args, int);
-						int len = snprintf(NULL, 0, "%d", d);
-						char* intstr = malloc((len+1) * sizeof(char));
-						snprintf(intstr, len+1, "%d", d);
-						setstringascii(ascii, intstr);
-						length += (int)strlen(intstr);
-						free(intstr);
-						break;
-					}
-					if (strcmp(token, "h") == 0) {
-						short h = va_arg(args, int);
-						int len = snprintf(NULL, 0, "%hd", h);
-						char* shortstr = malloc((len+1) * sizeof(char));
-						snprintf(shortstr, len+1, "%hd", h);
-						setstringascii(ascii, shortstr);
-						length += (int)strlen(shortstr);
-						free(shortstr);
-						break;
-					}
-					if (strcmp(token, "c") == 0) {
-						const char c = va_arg(args, int);
-						setcharascii(ascii, c);
-						length++;
-						break;
-					}
-					if (strcmp(token, "ul") == 0) {
-						unsigned long ul = va_arg(args, unsigned long);
-						int len = snprintf(NULL, 0, "%lu", ul);
-						char* unsignedlongstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedlongstr, len+1, "%lu", ul);
-						setstringascii(ascii, unsignedlongstr);
-						length += (int)strlen(unsignedlongstr);
-						free(unsignedlongstr);
-						break;
-					}
-					if (strcmp(token, "ud") == 0) {
-						unsigned int ud = va_arg(args, unsigned int);
-						int len = snprintf(NULL, 0, "%u", ud);
-						char* unsignedlongstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedlongstr, len+1, "%u", ud);
-						setstringascii(ascii, unsignedlongstr);
-						length += (int)strlen(unsignedlongstr);
-						free(unsignedlongstr);
-						break;
-					}
-					if (strcmp(token, "uh") == 0) {
-						unsigned short uh = va_arg(args, int);
-						int len = snprintf(NULL, 0, "%hu", uh);
-						char* unsignedshortstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedshortstr, len+1, "%hu", uh);
-						setstringascii(ascii, unsignedshortstr);
-						length += (int)strlen(unsignedshortstr);
-						free(unsignedshortstr);
-						break;
-					}
-					if (strcmp(token, "ll") == 0) {
-						long long ll = va_arg(args, long long);
-						int len = snprintf(NULL, 0, "%lld", ll);
-						char* unsignedlongstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedlongstr, len+1, "%lld", ll);
-						setstringascii(ascii, unsignedlongstr);
-						length += (int)strlen(unsignedlongstr);
-						free(unsignedlongstr);
-						break;
-					}
-					if (strcmp(token, "ull") == 0) {
-						unsigned long long ull = va_arg(args, unsigned long long );
-						int len = snprintf(NULL, 0, "%llu", ull);
-						char* unsignedlongstr = malloc((len+1) * sizeof(char));
-						snprintf(unsignedlongstr, len+1, "%llu", ull);
-						setstringascii(ascii, unsignedlongstr);
-						length += (int)strlen(unsignedlongstr);
-						free(unsignedlongstr);
-						break;
-					}
-				}
-			}
-			continue;
-		}
-
-		// font styles
-		/*
-		 * %ull unsigned long long
-		 * %ll long long
-		 * %uh unsigned short
-		 * %ud unsigned int
-		 * %ul unsigned long
-		 * %c char
-		 * %h short
-		 * %d int
-		 * %l long
-		 * %s string
-		 * %% '%' character
-		 *
-		 * Possible styles
-		 * @<number>;<number>;<number>f foreground color
-		 * @<number>;<number>;<number>b background color
-		 * @b bold
-		 * @rb remove bold
-		 *
-		 * @d dim
-		 * @rd remove dim
-		 *
-		 * @i italic
-		 * @ri remove italic
-		 *
-		 * @u underline
-		 * @ru remove underline
-		 *
-		 * @l blinking
-		 * @rl remove blinking
-		 *
-		 * @s strikethrough
-		 * @rs remove strikethrough
-		 *
-		 * @uu doubleunderline
-		 * @ruu remove doubleunderline
-		 *
-		 * @c clear all
-		 *
-		 * @@ at character
-		*/
-		if (*format == '@') {
-			format++;
-
-			if (*format == '@') {
-				format++;
-				setcharascii(ascii, '@');
-				length++;
-			}
-			else if (*format == 'c') {
-				format++;
-
-				ascii->buffer[ascii->cursor].decoration.bold = FALSE;
-				ascii->buffer[ascii->cursor].decoration.dim = FALSE;
-				ascii->buffer[ascii->cursor].decoration.italic = FALSE;
-				ascii->buffer[ascii->cursor].decoration.underline = FALSE;
-				ascii->buffer[ascii->cursor].decoration.blinking = FALSE;
-				ascii->buffer[ascii->cursor].decoration.strikethrough = FALSE;
-				ascii->buffer[ascii->cursor].decoration.doubleunderline = FALSE;
-
-				ascii->foregroundRed = ascii->defaultForegroundRed;
-				ascii->foregroundGreen = ascii->defaultForegroundGreen;
-				ascii->foregroundBlue = ascii->defaultForegroundBlue;
-			}
-			else if (*format == 'b') {
-				format++;
-				ascii->decoration.bold = TRUE;
-			}
-			else if (strncmp(format, "rb", 2) == 0) {
-				format += 2;
-				ascii->decoration.bold = FALSE;
-			}
-			else if (*format == 'd') {
-				format++;
-				ascii->decoration.dim = TRUE;
-			}
-			else if (strncmp(format, "rd", 2) == 0) {
-				format += 2;
-				ascii->decoration.dim = FALSE;
-			}
-			else if (*format == 'i') {
-				format++;
-				ascii->decoration.italic = TRUE;
-			}
-			else if (strncmp(format, "ri", 2) == 0) {
-				format += 2;
-				ascii->decoration.italic = FALSE;
-			}
-			else if (*format == 'u') {
-				format++;
-				ascii->decoration.underline = TRUE;
-			}
-			else if (strncmp(format, "ru", 2) == 0) {
-				format += 2;
-				ascii->decoration.underline = FALSE;
-			}
-			else if (*format == 'l') {
-				format++;
-				ascii->decoration.blinking = TRUE;
-			}
-			else if (strncmp(format, "rl", 2) == 0) {
-				format += 2;
-				ascii->decoration.blinking = FALSE;
-			}
-			else if (*format == 's') {
-				format++;
-				ascii->decoration.strikethrough = TRUE;
-			}
-			else if (strncmp(format, "rs", 2) == 0) {
-				format += 2;
-				ascii->decoration.strikethrough = FALSE;
-			}
-			else if (strncmp(format, "uu", 2) == 0) {
-				format += 2;
-				ascii->decoration.doubleunderline = TRUE;
-			}
-			else if (strncmp(format, "ruu", 3) == 0) {
-				format += 3;
-				ascii->decoration.doubleunderline = FALSE;
-			}
-			else if (isdigit(*format)) {
-				int r, g, b;
-				r = g = b = 0;
-				r = strtol(format, &format, 10);
-				format++;
-				g = strtol(format, &format, 10);
-				format++;
-				b = strtol(format, &format, 10);
-				if (*format == 'f') {
-					ascii->foregroundRed = r;
-					ascii->foregroundGreen = g;
-					ascii->foregroundBlue = b;
-				}
-				else if (*format == 'b') {
-					ascii->backgroundRed = r;
-					ascii->backgroundGreen = g;
-					ascii->backgroundBlue = b;
-				}
-				format++;
-			}
-
-			continue;
-		}
-
-		// standard non-controlling character
-		setcharascii(ascii, *format);
-		length++;
-		format++;
+	if (length < 0) {
+		va_end(args);
+		return length;
 	}
 
 	va_end(args);
@@ -2220,9 +1869,11 @@ int setstringascii(struct AsciiScreen *ascii, char *string) {
 		return -2;
 	}
 	const size_t size = strlen(string);
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < size; ++i) {
-		setcharascii(ascii, string[i]);
+		setcharasciinotsafe(ascii, string[i]);
 	}
+	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
