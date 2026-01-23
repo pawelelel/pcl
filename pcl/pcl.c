@@ -71,11 +71,12 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 				// TODO implemet resizing for unicode
 				WaitForSingleObject(pclMutexHandle, INFINITE);
+
 				for (int i = 0; i < console->asciiScreensIndex; ++i) {
 					struct AsciiScreen* ascii = console->asciiScreens[i];
 
 					struct AsciiCell* newbuffer = malloc(sizeof(struct AsciiCell) * width * height);
-					if (ascii->outputBuffer == NULL) {
+					if (newbuffer == NULL) {
 						fprintf(stderr, "Bad memory allocation in PCL internal code.\nPCL fatal error.\nTermination suggested.");
 						ExitThread(-1);
 					}
@@ -83,21 +84,21 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 					// newbuffer init
 					for (int j = 0; j < height * width; ++j) {
-						ascii->buffer[i].data = ' ';
-						ascii->buffer[i].foregroundRed = ascii->defaultForegroundRed;
-						ascii->buffer[i].foregroundGreen = ascii->defaultForegroundGreen;
-						ascii->buffer[i].foregroundBlue = ascii->defaultForegroundBlue;
-						ascii->buffer[i].backgroundRed = ascii->defaultBackgroundRed;
-						ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
-						ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
+						newbuffer[j].data = ' ';
+						newbuffer[j].foregroundRed = ascii->defaultForegroundRed;
+						newbuffer[j].foregroundGreen = ascii->defaultForegroundGreen;
+						newbuffer[j].foregroundBlue = ascii->defaultForegroundBlue;
+						newbuffer[j].backgroundRed = ascii->defaultBackgroundRed;
+						newbuffer[j].backgroundGreen = ascii->defaultBackgroundGreen;
+						newbuffer[j].backgroundBlue = ascii->defaultBackgroundBlue;
 
-						ascii->buffer[ascii->cursor].decoration.bold = FALSE;
-						ascii->buffer[ascii->cursor].decoration.dim = FALSE;
-						ascii->buffer[ascii->cursor].decoration.italic = FALSE;
-						ascii->buffer[ascii->cursor].decoration.underline = FALSE;
-						ascii->buffer[ascii->cursor].decoration.blinking = FALSE;
-						ascii->buffer[ascii->cursor].decoration.strikethrough = FALSE;
-						ascii->buffer[ascii->cursor].decoration.doubleunderline = FALSE;
+						newbuffer[j].decoration.bold = FALSE;
+						newbuffer[j].decoration.dim = FALSE;
+						newbuffer[j].decoration.italic = FALSE;
+						newbuffer[j].decoration.underline = FALSE;
+						newbuffer[j].decoration.blinking = FALSE;
+						newbuffer[j].decoration.strikethrough = FALSE;
+						newbuffer[j].decoration.doubleunderline = FALSE;
 					}
 
 					// copy prebuffer to newbuffer
@@ -120,9 +121,9 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					 * (19 + 19 + 1) => colors
 					 * (5 * 7) => font
 					 * ascii->height => last row
-					 * 6 => clear
+					 * 4 => clear
 					*/
-					ascii->bufferSize = width * height * (19 + 19 + 1) * (5 * 7) + height + 6;
+					ascii->bufferSize = width * height * (19 + 19 + 1) * (5 * 7) + height + 4;
 
 					free(ascii->outputBuffer);
 					ascii->outputBuffer = malloc(ascii->bufferSize);

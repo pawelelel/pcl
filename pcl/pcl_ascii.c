@@ -53,9 +53,9 @@ struct AsciiScreen* initascii(struct Console *console) {
 	 * (19 + 19 + 1) => colors
 	 * (5 * 7) => font
 	 * ascii->height => last row
-	 * 6 => clear
+	 * 4 => clear
 	 */
-	ascii->bufferSize = ascii->width * ascii->height * (19 + 19 + 1) * (5 * 7) + ascii->height + 6;
+	ascii->bufferSize = ascii->width * ascii->height * (19 + 19 + 1) * (5 * 7) + ascii->height + 4;
 	ascii->buffer = malloc(sizeof (struct AsciiCell) * ascii->bufferSize);
 	if (ascii->buffer == NULL) {
 		free(ascii);
@@ -356,11 +356,11 @@ int clearbackgroundcolorascii(struct AsciiScreen *ascii) {
 	return 0;
 }
 
-int setcharascii(struct AsciiScreen *ascii, char c) {
-	if (ascii == NULL) {
-		return -1;
-	}
-
+/*
+ * Sets char on cursor position. Changes cursor position.
+ * Dangerous! Do not waits for mutex. Partially validates data.
+*/
+int setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 	switch (c) {
 		case '\n': {
 			ascii->cursor += ascii->width;
@@ -380,7 +380,7 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 				return 0;
 			}
 			ascii->cursor--;
-			WaitForSingleObject(pclMutexHandle, INFINITE);
+
 			ascii->buffer[ascii->cursor].data = ascii->defaultchar;
 			ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 			ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -388,7 +388,6 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 			ascii->buffer[ascii->cursor].backgroundRed = ascii->backgroundRed;
 			ascii->buffer[ascii->cursor].backgroundGreen = ascii->backgroundGreen;
 			ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
-			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\v': {
@@ -409,15 +408,14 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 		default: break;
 	}
 
-	// v \n - new line
-	// v \a - not supported
-	// v \b - backspace
-	// v \v - vertical enter
-	// v \r - carrige return
-	// v \f - set cursor 0 0
-	// v \t - tab
+	// \n - new line
+	// \a - not supported
+	// \b - backspace
+	// \v - vertical enter
+	// \r - carrige return
+	// \f - set cursor 0 0
+	// \t - tab
 
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->buffer[ascii->cursor].data = c;
 	ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 	ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -427,10 +425,22 @@ int setcharascii(struct AsciiScreen *ascii, char c) {
 	ascii->buffer[ascii->cursor].backgroundBlue = ascii->backgroundBlue;
 
 	ascii->buffer[ascii->cursor].decoration = ascii->decoration;
-	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor < ascii->width * ascii->height - 1) {
 		ascii->cursor++;
 	}
+	return 0;
+}
+
+int setcharascii(struct AsciiScreen *ascii, char c) {
+	if (ascii == NULL) {
+		return -1;
+	}
+
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+
+	setcharasciinotsafe(ascii, c);
+
+	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
@@ -493,6 +503,8 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 		return -14;
 	}
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+
 	switch (c) {
 		case '\n': {
 			ascii->cursor += ascii->width;
@@ -500,6 +512,7 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 			if (ascii->cursor >= ascii->width * ascii->height) {
 				ascii->cursor = 0;
 			}
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\a': {
@@ -509,10 +522,11 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 		}
 		case '\b': {
 			if (ascii->cursor == 0) {
+				ReleaseMutex(pclMutexHandle);
 				return 0;
 			}
 			ascii->cursor--;
-			WaitForSingleObject(pclMutexHandle, INFINITE);
+
 			ascii->buffer[ascii->cursor].data = ascii->defaultchar;
 			ascii->buffer[ascii->cursor].foregroundRed = ascii->foregroundRed;
 			ascii->buffer[ascii->cursor].foregroundGreen = ascii->foregroundGreen;
@@ -528,14 +542,17 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 			if (ascii->cursor >= ascii->width * ascii->height) {
 				ascii->cursor = 0;
 			}
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\r': {
 			ascii->cursor -= ascii->cursor % ascii->width;
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		case '\f': {
 			ascii->cursor = 0;
+			ReleaseMutex(pclMutexHandle);
 			return 0;
 		}
 		default: break;
@@ -549,7 +566,6 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	// v \f - set cursor 0 0
 	// v \t - tab
 
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->buffer[ascii->cursor].data = c;
 	ascii->buffer[ascii->cursor].foregroundRed = foregroundRed;
 	ascii->buffer[ascii->cursor].foregroundGreen = foregroundGreen;
@@ -566,10 +582,10 @@ int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregr
 	ascii->buffer[ascii->cursor].decoration.strikethrough = strikethrough;
 	ascii->buffer[ascii->cursor].decoration.doubleunderline = doubleunderline;
 
-	ReleaseMutex(pclMutexHandle);
 	if (ascii->cursor != ascii->width * ascii->height) {
 		ascii->cursor++;
 	}
+	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
@@ -661,10 +677,10 @@ int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, uns
 	// \f - set cursor 0 0
 	// \t - tab
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	unsigned int cursorpos = ascii->cursor;
 	ascii->cursor = col + row * ascii->width;
 
-	WaitForSingleObject(pclMutexHandle, INFINITE);
 	ascii->buffer[ascii->cursor].data = c;
 	ascii->buffer[ascii->cursor].foregroundRed = foregroundRed;
 	ascii->buffer[ascii->cursor].foregroundGreen = foregroundGreen;
@@ -680,8 +696,8 @@ int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, uns
 	ascii->buffer[ascii->cursor].decoration.blinking = blinking;
 	ascii->buffer[ascii->cursor].decoration.strikethrough = strikethrough;
 	ascii->buffer[ascii->cursor].decoration.doubleunderline = doubleunderline;
-	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = cursorpos;
+	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
@@ -882,6 +898,20 @@ BOOL validateformatstringforsetstringformattedascii(char *format) {
 	return TRUE;
 }
 
+/*
+ * Sets char on specified cursor position.Do not changes cursor position.
+ * Dangerous! Do not waits for mutex. Partially validates data.
+*/
+int setcharcursorasciinotsafe(struct AsciiScreen *ascii, char c, unsigned int row, unsigned int col) {
+	unsigned int cursorpos = ascii->cursor;
+	ascii->cursor = col + row * ascii->width;
+
+	setcharasciinotsafe(ascii, c);
+
+	ascii->cursor = cursorpos;
+	return 0;
+}
+
 int setcharcursorascii(struct AsciiScreen *ascii, char c, unsigned int row, unsigned int col) {
 	if (ascii == NULL) {
 		return -1;
@@ -895,12 +925,12 @@ int setcharcursorascii(struct AsciiScreen *ascii, char c, unsigned int row, unsi
 		return -3;
 	}
 
-	unsigned int cursorpos = ascii->cursor;
-	ascii->cursor = col + row * ascii->width;
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 
-	setcharascii(ascii, c);
+	setcharcursorasciinotsafe(ascii, c, row, col);
 
-	ascii->cursor = cursorpos;
+	ReleaseMutex(pclMutexHandle);
+
 	return 0;
 }
 
@@ -1771,8 +1801,8 @@ int clearascii(struct AsciiScreen *ascii) {
 		ascii->buffer[i].decoration.strikethrough = FALSE;
 		ascii->buffer[i].decoration.doubleunderline = FALSE;
 	}
-	ReleaseMutex(pclMutexHandle);
 	ascii->cursor = 0;
+	ReleaseMutex(pclMutexHandle);
 
 	return 0;
 }
@@ -1854,9 +1884,8 @@ int fillascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, uns
 		ascii->buffer[i].decoration.strikethrough = strikethrough;
 		ascii->buffer[i].decoration.doubleunderline = doubleunderline;
 	}
-	ReleaseMutex(pclMutexHandle);
-
 	ascii->cursor = 0;
+	ReleaseMutex(pclMutexHandle);
 
 	return 0;
 }
@@ -1900,7 +1929,9 @@ int set2darrayascii(struct AsciiScreen *ascii, char* array, unsigned int row, un
 	if (width == 0) {
 		return -4;
 	}
-/*
+
+	/*
+	// if we want to show only arrays that can be showed entirely
 	if (height + row > ascii->height) {
 		return -5;
 	}
@@ -1909,13 +1940,15 @@ int set2darrayascii(struct AsciiScreen *ascii, char* array, unsigned int row, un
 		return -6;
 	}*/
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	for (int i = 0; i < height * width; ++i) {
 		unsigned int r = row + i / width;
 		unsigned int c = col + i % width;
 		if (r < ascii->height && c < ascii->width) {
-			setcharcursorascii(ascii, array[i], r, c);
+			setcharcursorasciinotsafe(ascii, array[i], r, c);
 		}
 	}
+	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
@@ -1955,15 +1988,16 @@ int getcursorpositionascii(struct AsciiScreen *ascii, unsigned int *row, unsigne
 }
 
 int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
-	// bug every function should hold mutex for all needed time. Avoid jumping
 	if (ascii == NULL) {
 		return -1;
 	}
+
+	// init
 	int place = 0;
 
 	// set cursor position to top left
-	char buff[6];
-	int add = sprintf(buff, "\x1B[1;1f");
+	char buff[4];
+	int add = sprintf(buff, "\x1B[H");
 
 	// init
 	WaitForSingleObject(pclMutexHandle, INFINITE);
@@ -2205,8 +2239,10 @@ int getdimensionsascii(struct AsciiScreen *ascii, unsigned int* width, unsigned 
 		return -3;
 	}
 
+	WaitForSingleObject(pclMutexHandle, INFINITE);
 	*width = ascii->width;
 	*height = ascii->height;
+	ReleaseMutex(pclMutexHandle);
 
 	return 0;
 }
