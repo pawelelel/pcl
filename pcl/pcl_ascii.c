@@ -360,6 +360,7 @@ int clearbackgroundcolorascii(struct AsciiScreen *ascii) {
  * Sets char on cursor position. Changes cursor position.
  * Dangerous! Do not waits for mutex. Partially validates data.
 */
+// todo make all setchar depend on this/ make more customizable like formatted versions
 void setcharasciinotsafe(struct AsciiScreen *ascii, char c) {
 	switch (c) {
 		case '\n': {
@@ -1672,7 +1673,7 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 	current.doubleunderline = FALSE;
 
 	for (int i = 0; i < ascii->height * ascii->width; ++i) {
-		if (i > 0 && i % ascii->width == 0) {
+		if (i != 0 && i % ascii->width == 0) {
 			ascii->outputBuffer[place] = '\n';
 			place++;
 		}
