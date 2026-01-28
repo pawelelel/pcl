@@ -32,7 +32,6 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 		switch (lpBuffer[0].EventType) {
 			case FOCUS_EVENT: {
-				// bug never hits
 				if (console->FocusEvent != NULL) {
 					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
 				}
@@ -53,9 +52,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				break;
 			}
 			case MOUSE_EVENT: {
-				// bug never hits
 				if (console->MouseEvent != NULL) {
-
 					console->MouseEvent(
 							console,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
@@ -154,7 +151,9 @@ struct Console* start(void) {
 	struct Console* console = malloc(sizeof(struct Console));
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
-	DWORD fdwMode = ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_WINDOW_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
+	// TODO which flags are necessary?
+	//DWORD fdwMode = ENABLE_ECHO_INPUT | ENABLE_INSERT_MODE | ENABLE_LINE_INPUT | ENABLE_MOUSE_INPUT | ENABLE_PROCESSED_INPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_WINDOW_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
+	DWORD fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
 	WINBOOL code = SetConsoleMode(console->inputHandle, fdwMode);
 	if (!code) {
 		return NULL;
