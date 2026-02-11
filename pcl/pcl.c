@@ -855,6 +855,28 @@ BOOL validateformatstringforgetvariables(char* format, char** validtokens, int t
 				while (isdigit(*format)) {
 					format++;
 				}
+				if (!*format) // empty string
+					return FALSE;
+				if (*format == 's') {
+					format++;
+					continue;
+				}
+			}
+
+			if (*format == '[') {
+				// termination characters
+				while (*format != ']') {
+					format++;
+				}
+				if (!*format) // empty string
+					return FALSE;
+				if (*format == ']' && *(format + 1) == ']') {
+					format += 2;
+					while (*format != ']') {
+						format++;
+					}
+					format++;
+				}
 				if (*format == 's') {
 					format++;
 					continue;
@@ -894,7 +916,11 @@ int getvariables(struct Console *console, char *format, ...) {
 	}
 
 	/*
-	 * %<integer>s string // TODO add termination character eg '\n' ';' function ends collecting input when such characters appears; user can choose charaters eg %[\na]s or %3s or %4[\na]s
+	 * %<integer>s string // TODO add termination character eg '\n' ';'
+							function ends collecting input when such characters appears
+							user can choose charaters eg %[\na]s or %3s or %4[\na]s
+							"]]" double ']' character means ']' is ending character
+							every character should be put once
 	 * %c char
 	 * %h short
 	 * %uh unsigned short
@@ -932,6 +958,17 @@ int getvariables(struct Console *console, char *format, ...) {
 		if (*format == '%') {
 			format++;
 
+
+
+
+
+
+
+
+
+
+			/*
+			// string
 			if (isdigit(*format)) {
 				size_t size = 0;
 				while (isdigit(*format)) {
@@ -951,7 +988,52 @@ int getvariables(struct Console *console, char *format, ...) {
 				format++;
 				continue;
 			}
+			if (*format == '[') {
+				// termination characters
+				while (*format != ']') {
+					format++;
+				}
+				if (!*format) // empty string
+					return FALSE;
+				if (*format == ']' && *(format + 1) == ']') {
+					format += 2;
+					while (*format != ']') {
+						format++;
+					}
+					format++;
+				}
+				if (*format == 's') {
+					format++;
+					continue;
+				}
+			}
+*/
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			// other tokens
 			for (int i = 0; i < tokenssize; i++) {
 				char* token = validtokens[i] + 1;
 				size_t tokensize = strlen(token);
