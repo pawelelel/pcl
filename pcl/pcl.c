@@ -857,27 +857,33 @@ BOOL validateformatstringforgetvariables(char* format, char** validtokens, int t
 				}
 				if (!*format) // empty string
 					return FALSE;
-				if (*format == 's') {
-					format++;
-					continue;
-				}
-			}
 
-			if (*format == '[') {
-				// termination characters
-				while (*format != ']') {
-					format++;
-				}
-				if (!*format) // empty string
-					return FALSE;
-				if (*format == ']' && *(format + 1) == ']') {
-					format += 2;
+				if (*format == '[') {
+					// termination characters
 					while (*format != ']') {
 						format++;
 					}
-					format++;
+					if (!*format) // empty string
+						return FALSE;
+					if (*format == ']' && *(format + 1) == ']') {
+						format += 2;
+						while (*format != ']') {
+							format++;
+						}
+						format++;
+					}
+					if (*format == ']') {
+						format++;
+					}
 				}
-				if (*format == 's') {
+
+				if (*format != 's') {
+					//format++;
+					//continue;
+
+					return  FALSE;
+				}
+				else {
 					format++;
 					continue;
 				}
@@ -906,6 +912,15 @@ BOOL validateformatstringforgetvariables(char* format, char** validtokens, int t
 	return TRUE;
 }
 
+BOOL isCharInString(char* string, size_t size, char c) {
+	for (size_t i = 0; i < size; i++) {
+		if (string[i] == c) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 int getvariables(struct Console *console, char *format, ...) {
 	if (console == NULL) {
 		return -1;
@@ -916,9 +931,10 @@ int getvariables(struct Console *console, char *format, ...) {
 	}
 
 	/*
-	 * %<integer>s string // TODO add termination character eg '\n' ';'
+	 * %<integer>s string //
 							function ends collecting input when such characters appears
-							user can choose charaters eg %[\na]s or %3s or %4[\na]s
+							user can choose charaters eg %3s or %4[\na]s
+							you need to pass max number of characters
 							"]]" double ']' character means ']' is ending character
 							every character should be put once
 	 * %c char
@@ -958,80 +974,50 @@ int getvariables(struct Console *console, char *format, ...) {
 		if (*format == '%') {
 			format++;
 
-
-
-
-
-
-
-
-
-
-			/*
-			// string
+			// string token
 			if (isdigit(*format)) {
 				size_t size = 0;
-				while (isdigit(*format)) {
-					size *= 10;
-					size += *format - '0';
-					format++;
+				if (isdigit(*format)) {
+					while (isdigit(*format)) {
+						size *= 10;
+						size += *format - '0';
+						format++;
+					}
+				}
+
+				// termination characters
+				char* start = format + 1;
+				char* end = format + 1;
+				size_t ignored_size = 0;
+				if (*format == '[') {
+					while (TRUE) {
+						ignored_size++;
+						if (*end == ']' && *(end + 1) == 's') {
+							break;
+						}
+						if (*end == ']' && *(end + 1) == ']') {
+							end += 2;
+							continue;
+						}
+						end++;
+					}
 				}
 
 				char* str = va_arg(args, char*);
-				// skip last character for null
-				for (int i = 0; i < size - 1; ++i) {
+				int i = 0;
+				for (; i < size - 1; ++i) {
 					char c;
 					getcharvariable(console, &c);
+					if (isCharInString(start, ignored_size, c)) {
+						break;
+					}
 					str[i] = c;
 				}
-				str[size - 1] = '\0';
-				format++;
+				str[i] = '\0';
+				format = end;
+				format += 2;
 				continue;
 			}
-			if (*format == '[') {
-				// termination characters
-				while (*format != ']') {
-					format++;
-				}
-				if (!*format) // empty string
-					return FALSE;
-				if (*format == ']' && *(format + 1) == ']') {
-					format += 2;
-					while (*format != ']') {
-						format++;
-					}
-					format++;
-				}
-				if (*format == 's') {
-					format++;
-					continue;
-				}
-			}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 			// other tokens
 			for (int i = 0; i < tokenssize; i++) {
