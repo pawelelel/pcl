@@ -44,6 +44,11 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
 					enqueue(console->inputQueue, &lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+
+					// todo unicode
+					if (console->asciiEcho != NULL) {
+						setcharascii(console->asciiEcho, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+					}
 				}
 				break;
 			}
@@ -177,6 +182,8 @@ struct Console* start(void) {
 	console->asciiScreensIndex = 0;
 	console->unicodeScreens = malloc(sizeof(struct UnicodeScreen*) * 1);
 	console->unicodeScreensIndex = 0;
+
+	console->asciiEcho = NULL;
 
 	console->errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 	console->blockInput = TRUE;

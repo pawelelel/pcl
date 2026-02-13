@@ -15,6 +15,24 @@
 struct AsciiScreen* initascii(struct Console *console);
 
 /**
+ * Sets echo struct.
+ * Echoed characters will be visible after refresh
+ *
+ * @param console pointer to struct Console
+ * @param asciiEcho pointer to struct AsciiScreen. Only that struct gets echoed character.
+ * @return 0 if eveything went well otherwise returns -1
+ */
+int setasciiecho(struct Console* console, struct AsciiScreen* asciiEcho);
+
+/**
+ * Unsets echo struct
+ *
+ * @param console pointer to struct Console
+ * @return 0 if eveything went well otherwise returns -1
+ */
+int unsetasciiecho(struct Console* console);
+
+/**
  * Sets cursor style
  *
  * @param ascii pointer to struct ScreenAscii

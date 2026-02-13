@@ -105,6 +105,30 @@ struct AsciiScreen* initascii(struct Console *console) {
 	return ascii;
 }
 
+int setasciiecho(struct Console *console, struct AsciiScreen *asciiEcho) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+	console->asciiEcho = asciiEcho;
+	ReleaseMutex(pclMutexHandle);
+
+	return 0;
+}
+
+int unsetasciiecho(struct Console *console) {
+	if (console == NULL) {
+		return -1;
+	}
+
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+	console->asciiEcho = NULL;
+	ReleaseMutex(pclMutexHandle);
+
+	return 0;
+}
+
 int setcursorstyleascii(struct AsciiScreen *ascii, int style) {
 	if (ascii == NULL) {
 		return -1;

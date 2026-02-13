@@ -94,6 +94,9 @@ struct Console {
 	struct UnicodeScreen** unicodeScreens;
 	int unicodeScreensIndex;
 
+	struct UnicodeScreen* unicodeEcho;
+	struct AsciiScreen* asciiEcho;
+
 	// error
 	HANDLE errorHandle;
 
