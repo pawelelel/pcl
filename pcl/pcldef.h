@@ -208,7 +208,6 @@ struct Console {
 #define KEY_ESC         150
 #define KEY_TAB         151
 #define KEY_BACKSPACE   152
-#define KEY_ENTER       153
 
 
 #endif //PCLDEF_H

@@ -9,6 +9,42 @@
 
 HANDLE pclMutexHandle;
 
+BOOL translatable(WORD vk) {
+	switch (vk)
+	{
+		case VK_UP:
+		case VK_DOWN:
+		case VK_LEFT:
+		case VK_RIGHT:
+
+		case VK_HOME:
+		case VK_END:
+		case VK_INSERT:
+		case VK_DELETE:
+		case VK_PRIOR:
+		case VK_NEXT:
+
+		case VK_F1:
+		case VK_F2:
+		case VK_F3:
+		case VK_F4:
+		case VK_F5:
+		case VK_F6:
+		case VK_F7:
+		case VK_F8:
+		case VK_F9:
+		case VK_F10:
+		case VK_F11:
+		case VK_F12:
+
+		case VK_ESCAPE:
+		case VK_TAB:
+		case VK_BACK:
+			return TRUE;
+		default: return FALSE;
+	}
+}
+
 int translateVirtualKey(WORD vk)
 {
 	switch (vk)
@@ -41,7 +77,6 @@ int translateVirtualKey(WORD vk)
 		case VK_ESCAPE:    return KEY_ESC;
 		case VK_TAB:       return KEY_TAB;
 		case VK_BACK:      return KEY_BACKSPACE;
-		case VK_RETURN:    return KEY_ENTER;
 
 		default:           return 0;
 	}
@@ -82,7 +117,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
 					const KEY_EVENT_RECORD key = lpBuffer[0].Event.KeyEvent;
-					if (key.uChar.AsciiChar != 0) {
+					if (!translatable(key.wVirtualKeyCode)) {
 						int code = (int)key.uChar.AsciiChar;
 						enqueue(console->inputQueue, &code);
 					}
