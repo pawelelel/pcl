@@ -177,4 +177,38 @@ struct Console {
 #define BLINKING_BAR 5
 #define STEADY_BAR 6
 
+
+// virtual keys
+
+#define KEY_UP          128
+#define KEY_DOWN        129
+#define KEY_LEFT        130
+#define KEY_RIGHT       131
+
+#define KEY_HOME        132
+#define KEY_END         133
+#define KEY_INSERT      134
+#define KEY_DELETE      135
+#define KEY_PAGEUP      136
+#define KEY_PAGEDOWN    137
+
+#define KEY_F1          138
+#define KEY_F2          139
+#define KEY_F3          140
+#define KEY_F4          141
+#define KEY_F5          142
+#define KEY_F6          143
+#define KEY_F7          144
+#define KEY_F8          145
+#define KEY_F9          146
+#define KEY_F10         147
+#define KEY_F11         148
+#define KEY_F12         149
+
+#define KEY_ESC         150
+#define KEY_TAB         151
+#define KEY_BACKSPACE   152
+#define KEY_ENTER       153
+
+
 #endif //PCLDEF_H

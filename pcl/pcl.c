@@ -5,10 +5,48 @@
 #include "pcl.h"
 #include "queue.h"
 
-#include <math.h>
 #include <stdio.h>
 
 HANDLE pclMutexHandle;
+
+int translateVirtualKey(WORD vk)
+{
+	switch (vk)
+	{
+		case VK_UP:        return KEY_UP;
+		case VK_DOWN:      return KEY_DOWN;
+		case VK_LEFT:      return KEY_LEFT;
+		case VK_RIGHT:     return KEY_RIGHT;
+
+		case VK_HOME:      return KEY_HOME;
+		case VK_END:       return KEY_END;
+		case VK_INSERT:    return KEY_INSERT;
+		case VK_DELETE:    return KEY_DELETE;
+		case VK_PRIOR:     return KEY_PAGEUP;
+		case VK_NEXT:      return KEY_PAGEDOWN;
+
+		case VK_F1:        return KEY_F1;
+		case VK_F2:        return KEY_F2;
+		case VK_F3:        return KEY_F3;
+		case VK_F4:        return KEY_F4;
+		case VK_F5:        return KEY_F5;
+		case VK_F6:        return KEY_F6;
+		case VK_F7:        return KEY_F7;
+		case VK_F8:        return KEY_F8;
+		case VK_F9:        return KEY_F9;
+		case VK_F10:       return KEY_F10;
+		case VK_F11:       return KEY_F11;
+		case VK_F12:       return KEY_F12;
+
+		case VK_ESCAPE:    return KEY_ESC;
+		case VK_TAB:       return KEY_TAB;
+		case VK_BACK:      return KEY_BACKSPACE;
+		case VK_RETURN:    return KEY_ENTER;
+
+		default:           return 0;
+	}
+}
+
 
 DWORD WINAPI inputthread(LPVOID lpParam) {
 	struct Console* console = lpParam;
@@ -43,7 +81,15 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
-					enqueue(console->inputQueue, &lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
+					const KEY_EVENT_RECORD key = lpBuffer[0].Event.KeyEvent;
+					if (key.uChar.AsciiChar != 0) {
+						int code = (int)key.uChar.AsciiChar;
+						enqueue(console->inputQueue, &code);
+					}
+					else {
+						int code = translateVirtualKey(key.wVirtualKeyCode);
+						enqueue(console->inputQueue, &code);
+					}
 
 					// todo unicode
 					if (console->asciiEcho != NULL) {
@@ -402,6 +448,80 @@ int settitle(struct Console* console, char* title) {
 }
 
 /**
+ * pure ReadConsoleInput() wrapper without any non-blocking or timeout features. Returns also virtual codes
+ *
+ * @param console pointer to struct Console
+ * @return char from console input buffer
+ */
+int puregetcharacter(struct Console* console) {
+	while (1) {
+		WaitForSingleObject(pclMutexHandle, INFINITE);
+
+		int* c = dequeue(console->inputQueue);
+		if (c != NULL && *c != 0) {
+			ReleaseMutex(pclMutexHandle);
+			return *c;
+		}
+
+		ReleaseMutex(pclMutexHandle);
+	}
+}
+
+struct GetPureCharacterThreadArgs {
+	struct Console* console;
+	int readChar;
+};
+
+DWORD puregetcharacterthread(LPVOID lpParam) {
+	struct GetPureCharacterThreadArgs* args = lpParam;
+
+	args->readChar = puregetcharacter(args->console);
+	return 0;
+}
+
+int getcharacter(struct Console *console) {
+	// TODO add unicode
+	if (console == NULL) {
+		return -1;
+	}
+
+	WaitForSingleObject(pclMutexHandle, INFINITE);
+	const int bi = console->blockInput;
+	const unsigned int bt = console->blockTimeout;
+	ReleaseMutex(pclMutexHandle);
+
+	if (!bi) {
+		// non-blocking input behaviour
+		WaitForSingleObject(pclMutexHandle, INFINITE);
+		int* c = dequeue(console->inputQueue);
+		ReleaseMutex(pclMutexHandle);
+		if (c == NULL) {
+			return 0;
+		}
+		return *c;
+	}
+
+	if (bt <= 0) {
+		const int c = puregetcharacter(console);
+		return c;
+	}
+
+	struct GetPureCharacterThreadArgs args;
+	args.console = console;
+	args.readChar = 0;
+	HANDLE thread = CreateThread(NULL, 0, puregetcharacterthread, &args, 0, NULL);
+
+	const DWORD result = WaitForSingleObject(thread, bt);
+	if (result == WAIT_TIMEOUT) {
+		return -2;
+	}
+
+	const int c = args.readChar;
+
+	return c;
+}
+
+/**
  * pure ReadConsoleInput() wrapper without any non-blocking or timeout features
  *
  * @param console pointer to struct Console
@@ -434,9 +554,6 @@ DWORD puregetcharthread(LPVOID lpParam) {
 }
 
 char getchr(struct Console* console) {
-	// TODO add virtual key codes for arrows, special keys etc.
-	// TODO add unicode
-
 	if (console == NULL) {
 		return -1;
 	}

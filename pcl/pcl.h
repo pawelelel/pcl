@@ -161,7 +161,19 @@ int gettitle(struct Console* console, char** title);
 int settitle(struct Console* console, char* title);
 
 /**
- * Gets first char from stdin<br>
+ * Gets first character from input. Including virtual keys<br>
+ * <b>Warning!</b> input blocking is "stronger" than timeout
+ *
+ * @param console pointer to struct Console
+ *
+ * @return char if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ * (-2) function waited too much for input
+ */
+int getcharacter(struct Console* console);
+
+/**
+ * Gets first char from input<br>
  * <b>Warning!</b> input blocking is "stronger" than timeout
  *
  * @param console pointer to struct Console
