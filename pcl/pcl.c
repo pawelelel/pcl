@@ -91,7 +91,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 						enqueue(console->inputQueue, &code);
 					}
 
-					// todo unicode
+					// TODO unicode
 					if (console->asciiEcho != NULL) {
 						setcharascii(console->asciiEcho, lpBuffer[0].Event.KeyEvent.uChar.AsciiChar);
 					}
@@ -119,7 +119,7 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 				const int height = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.Y;
 				const int width = lpBuffer[0].Event.WindowBufferSizeEvent.dwSize.X;
 
-				// TODO implemet resizing for unicode
+				// TODO unicode
 				WaitForSingleObject(pclMutexHandle, INFINITE);
 
 				for (int i = 0; i < console->asciiScreensIndex; ++i) {
@@ -260,7 +260,7 @@ int end(struct Console* console) {
 
 	free(console->inputQueue);
 
-	// TODO same free for unicode
+	// TODO unicode
 	for (int i = 0; i < console->asciiScreensIndex; ++i) {
 		struct AsciiScreen* ascii = console->asciiScreens[i];
 		free(ascii->outputBuffer);
@@ -480,7 +480,7 @@ DWORD puregetcharacterthread(LPVOID lpParam) {
 }
 
 int getcharacter(struct Console *console) {
-	// TODO add unicode
+	// TODO unicode
 	if (console == NULL) {
 		return -1;
 	}

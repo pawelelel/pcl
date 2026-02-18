@@ -8,9 +8,10 @@
 #include "pcldef.h"
 
 /**
- * TODO add docs
+ * Initializes new ascii screen
+ *
  * @param console
- * @return
+ * @return initialized screen
  */
 struct AsciiScreen* initascii(struct Console *console);
 
@@ -435,6 +436,7 @@ int getcursorpositionascii(struct AsciiScreen *ascii, unsigned int *row, unsigne
 /**
  * Prints ascii window
  *
+ * @param console pointer to struct Console
  * @param ascii pointer to struct Ascii
  *
  * @return 0 if eveything went well otherwise returns negative:<br>
@@ -525,28 +527,84 @@ int setstringformattedascii(struct AsciiScreen *ascii, char* format, ...);
 int setstringformattedcursorascii(struct AsciiScreen *ascii, int row, int col, char* format, ...);
 
 /**
- * TODO docs
- * Sets char on cursor position. Changes cursor position
+ * Sets char on cursor position. Changes cursor position. Allows to customize character.
  *
  * @param ascii pointer to structure console
  * @param c char to set
+ * @param foregroundRed foreground color red value
+ * @param foregroundGreen foreground color green value
+ * @param foregroundBlue foreground color blue value
+ * @param backgroundRed backround color red value
+ * @param backgroundGreen backround color green value
+ * @param backgroundBlue backround color blue value
+ * @param bold is text bold
+ * @param dim is text dim
+ * @param italic is text italic
+ * @param underline is text underline
+ * @param blinking is text blinking
+ * @param strikethrough is text strikethrough
+ * @param doubleunderline is text doubleunderline
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL
+ * (-2) foreground red parameter is greater than 255<br>
+ * (-3) foreground green parameter is greater than 255<br>
+ * (-4) foreground blue parameter is greater than 255<br>
+ * (-5) background red parameter is greater than 255<br>
+ * (-6) background green parameter is greater than 255<br>
+ * (-7) background blue parameter is greater than 255<br>
+ * (-8) bold parameter is not a valid BOOL vaiable<br>
+ * (-9) dim parameter is not a valid BOOL vaiable<br>
+ * (-10) italic parameter is not a valid BOOL vaiable<br>
+ * (-11) underline parameter is not a valid BOOL vaiable<br>
+ * (-12) blinking parameter is not a valid BOOL vaiable<br>
+ * (-13) strikethrough parameter is not a valid BOOL vaiable<br>
+ * (-14) doubleunderline parameter is not a valid BOOL vaiable
  */
-int setcharformattedascii(struct AsciiScreen *ascii, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+int setcharformattedascii(struct AsciiScreen *ascii, char c,
+	  unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
       unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
       BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
 
 /**
- * TODO docs
- * Sets char on given cursor position. Changes cursor position
+ * Sets char on given cursor position. Changes cursor position. Allows to customize character.
  *
  * @param ascii pointer to structure console
+ * @param row row number
+ * @param col column number
  * @param c char to set
+ * @param foregroundRed foreground color red value
+ * @param foregroundGreen foreground color green value
+ * @param foregroundBlue foreground color blue value
+ * @param backgroundRed backround color red value
+ * @param backgroundGreen backround color green value
+ * @param backgroundBlue backround color blue value
+ * @param bold is text bold
+ * @param dim is text dim
+ * @param italic is text italic
+ * @param underline is text underline
+ * @param blinking is text blinking
+ * @param strikethrough is text strikethrough
+ * @param doubleunderline is text doubleunderline
  * @return 0 if eveything went well otherwise returns negative:<br>
  * (-1) console parameter is NULL
+ * (-2) row is greater than console height
+ * (-3) col is greater than console width
+ * (-4) foreground red parameter is greater than 255<br>
+ * (-5) foreground green parameter is greater than 255<br>
+ * (-6) foreground blue parameter is greater than 255<br>
+ * (-7) background red parameter is greater than 255<br>
+ * (-8) background green parameter is greater than 255<br>
+ * (-9) background blue parameter is greater than 255<br>
+ * (-10) bold parameter is not a valid BOOL vaiable<br>
+ * (-11) dim parameter is not a valid BOOL vaiable<br>
+ * (-12) italic parameter is not a valid BOOL vaiable<br>
+ * (-13) underline parameter is not a valid BOOL vaiable<br>
+ * (-14) blinking parameter is not a valid BOOL vaiable<br>
+ * (-15) strikethrough parameter is not a valid BOOL vaiable<br>
+ * (-16) doubleunderline parameter is not a valid BOOL vaiable
  */
-int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, unsigned int col, char c, unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
+int setcharformattedcursorascii(struct AsciiScreen *ascii, unsigned int row, unsigned int col, char c,
+	  unsigned int foregroundRed, unsigned int foregroundGreen, unsigned int foregroundBlue,
       unsigned int backgroundRed, unsigned int backgroundGreen, unsigned int backgroundBlue,
       BOOL bold, BOOL dim, BOOL italic, BOOL underline, BOOL blinking, BOOL strikethrough, BOOL doubleunderline);
 
