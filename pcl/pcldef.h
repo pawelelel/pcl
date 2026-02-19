@@ -102,14 +102,21 @@ struct Console {
 
 	// settings
 	int blockInput;
-	unsigned int blockTimeout; // works only with getchr function
+	unsigned int blockTimeout; // works only with getchr and getcharacter functions
+
+	// parameters for event functions
+	void* focusParameter;
+	void* keyParameter;
+	void* mouseParameter;
+	void* resizeParameter;
 
 	/**
 	 * That event is raised when console window is focused or unfocused
 	 *
 	 * @param int current window state can be FOCUSED and UNFOCUSED
+	 * @param void* event parameters
 	 */
-	void(*FocusEvent)(struct Console*, int);
+	void(*FocusEvent)(struct Console*, int, void*);
 
 	/**
 	 * That event is raised when console window is focused and keyboard key is clicked
@@ -117,8 +124,9 @@ struct Console {
 	 *
 	 * @param char key
 	 * @param int keystate can be PRESSED or RELEASED
+	 * @param void* event parameters
 	 */
-	void(*KeyEvent)(struct Console*, char, int);
+	void(*KeyEvent)(struct Console*, char, int, void*);
 
 	/**
 	 * That event is raised when console window is docused or unfocused
@@ -129,16 +137,18 @@ struct Console {
 	 * @param int button - state of mouse buttons. Can be NONE_BUTTON_PRESSED, LEFT_MOUSE_BUTTON_PRESSED, RIGHT_MOUSE_BUTTON_PRESSED, WHEEL_MOUSE_UP, WHEEL_MOUSE_DOWN or WHEEL_MOUSE_BUTTON_PRESSED
 	 * @param int keystate - state of control keys. Can be CONTROL_KEYS_ALT_LEFT, CONTROL_KEYS_ALT_RIGHT or CONTROL_KEYS_CONTROL
 	 * @param int action - specifies what happend. Can be CLICK, MOVE, DOUBLE_CLICK, WHEEL or HORIZONTAL_WHEEL
+	 * @param void* event parameters
 	 */
-	void(*MouseEvent)(struct Console*, int, int, int, int, int);
+	void(*MouseEvent)(struct Console*, int, int, int, int, int, void*);
 
 	/**
 	 * That event is raised when console window is resized
 	 *
 	 * @param int new height
 	 * @param int new width
+	 * @param void* event parameters
 	 */
-	void(*ResizeEvent)(struct Console*, unsigned int, unsigned int);
+	void(*ResizeEvent)(struct Console*, unsigned int, unsigned int, void*);
 };
 
 

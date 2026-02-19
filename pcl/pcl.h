@@ -55,7 +55,7 @@ int getinputblock(struct Console* console);
  * (-1) console parameter is NULL
  * (-1) FocusEvent parameter is NULL
  */
-int setfocusevent(struct Console* console, void(*FocusEvent)(struct Console* , int));
+int setfocusevent(struct Console* console, void* parameter, void(*FocusEvent)(struct Console* , int, void*));
 
 /**
  * Unsets focus event function
@@ -74,7 +74,7 @@ int unsetfocusevent(struct Console* console);
  * (-1) console parameter is NULL
  * (-2) KeyEvent parameter is NULL
  */
-int setkeyevent(struct Console* console, void(*KeyEvent)(struct Console*, char, int));
+int setkeyevent(struct Console* console, void* parameter, void(*KeyEvent)(struct Console*, char, int, void*));
 
 /**
  * 
@@ -92,7 +92,7 @@ int unsetkeyevent(struct Console* console);
  * (-1) console parameter is NULL
  * (-2) MouseEvent parameter is NULL
  */
-int setmouseevent(struct Console* console, void(*MouseEvent)(struct Console*, int, int, int, int, int));
+int setmouseevent(struct Console* console, void* parameter, void(*MouseEvent)(struct Console*, int, int, int, int, int, void*));
 
 /**
  * 
@@ -110,7 +110,7 @@ int unsetmouseevent(struct Console* console);
  * (-1) console parameter is NULL
  * (-2) ResizeEvent parameter is NULL
  */
-int setresizeevent(struct Console* console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int));
+int setresizeevent(struct Console* console, void* parameter, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int, void*));
 
 /**
  * 

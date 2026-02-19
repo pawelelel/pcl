@@ -106,14 +106,18 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 		switch (lpBuffer[0].EventType) {
 			case FOCUS_EVENT: {
 				if (console->FocusEvent != NULL) {
-					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus);
+					WaitForSingleObject(pclMutexHandle, INFINITE);
+					console->FocusEvent(console, lpBuffer[0].Event.FocusEvent.bSetFocus, console->focusParameter);
+					ReleaseMutex(pclMutexHandle);
 				}
 				break;
 			}
 			case KEY_EVENT: {
 				if (console->KeyEvent != NULL) {
+					WaitForSingleObject(pclMutexHandle, INFINITE);
 					console->KeyEvent(
-						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown);
+						console,lpBuffer[0].Event.KeyEvent.uChar.AsciiChar, lpBuffer[0].Event.KeyEvent.bKeyDown, console->keyParameter);
+					ReleaseMutex(pclMutexHandle);
 				}
 				if (lpBuffer[0].Event.KeyEvent.bKeyDown) {
 					const KEY_EVENT_RECORD key = lpBuffer[0].Event.KeyEvent;
@@ -139,14 +143,18 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 			}
 			case MOUSE_EVENT: {
 				if (console->MouseEvent != NULL) {
+					WaitForSingleObject(pclMutexHandle, INFINITE);
 					console->MouseEvent(
 							console,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.Y,
 							lpBuffer[0].Event.MouseEvent.dwMousePosition.X,
 							(int)lpBuffer[0].Event.MouseEvent.dwButtonState,
 							(int)lpBuffer[0].Event.MouseEvent.dwControlKeyState,
-							(int)lpBuffer[0].Event.MouseEvent.dwEventFlags
+							(int)lpBuffer[0].Event.MouseEvent.dwEventFlags,
+							console->mouseParameter
 						);
+
+					ReleaseMutex(pclMutexHandle);
 				}
 				break;
 			}
@@ -222,10 +230,11 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 					ascii->cursor = 0;
 				}
 
-				ReleaseMutex(pclMutexHandle);
 				if (console->ResizeEvent != NULL) {
-					console->ResizeEvent(console, height, width);
+					console->ResizeEvent(console, height, width, console->resizeParameter);
 				}
+
+				ReleaseMutex(pclMutexHandle);
 				break;
 			}
 			default: break;
@@ -335,7 +344,7 @@ int getinputblock(struct Console *console) {
 	return b;
 }
 
-int setfocusevent(struct Console *console, void(*FocusEvent)(struct Console*, int)) {
+int setfocusevent(struct Console *console, void* parameter, void(*FocusEvent)(struct Console*, int, void*)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -344,6 +353,7 @@ int setfocusevent(struct Console *console, void(*FocusEvent)(struct Console*, in
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->FocusEvent = FocusEvent;
+	console->focusParameter = parameter;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
@@ -354,11 +364,12 @@ int unsetfocusevent(struct Console *console) {
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->FocusEvent = NULL;
+	console->focusParameter = NULL;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
-int setkeyevent(struct Console *console, void(*KeyEvent)(struct Console*, char, int)) {
+int setkeyevent(struct Console *console, void* parameter, void(*KeyEvent)(struct Console*, char, int, void*)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -367,6 +378,7 @@ int setkeyevent(struct Console *console, void(*KeyEvent)(struct Console*, char, 
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->KeyEvent = KeyEvent;
+	console->keyParameter = parameter;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
@@ -377,11 +389,12 @@ int unsetkeyevent(struct Console *console) {
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->KeyEvent = NULL;
+	console->keyParameter = NULL;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
-int setmouseevent(struct Console *console, void(*MouseEvent)(struct Console*, int, int, int, int, int)) {
+int setmouseevent(struct Console *console, void* parameter, void(*MouseEvent)(struct Console*, int, int, int, int, int, void*)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -390,6 +403,7 @@ int setmouseevent(struct Console *console, void(*MouseEvent)(struct Console*, in
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->MouseEvent = MouseEvent;
+	console->mouseParameter = parameter;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
@@ -400,11 +414,12 @@ int unsetmouseevent(struct Console *console) {
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->MouseEvent = NULL;
+	console->mouseParameter = NULL;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
 
-int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int)) {
+int setresizeevent(struct Console *console, void* parameter, void(*ResizeEvent)(struct Console*, unsigned int, unsigned int, void*)) {
 	if (console == NULL) {
 		return -1;
 	}
@@ -413,6 +428,7 @@ int setresizeevent(struct Console *console, void(*ResizeEvent)(struct Console*, 
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->ResizeEvent = ResizeEvent;
+	console->resizeParameter = parameter;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
@@ -423,6 +439,7 @@ int unsetresizeevent(struct Console *console) {
 	}
 	WaitForSingleObject(pclMutexHandle, INFINITE);
 	console->ResizeEvent = NULL;
+	console->resizeParameter = NULL;
 	ReleaseMutex(pclMutexHandle);
 	return 0;
 }
