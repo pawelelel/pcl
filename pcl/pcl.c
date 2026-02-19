@@ -238,7 +238,7 @@ struct Console* start(void) {
 	console->inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
 	DWORD fdwMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-	WINBOOL code = SetConsoleMode(console->inputHandle, fdwMode);
+	BOOL code = SetConsoleMode(console->inputHandle, fdwMode);
 	if (!code) {
 		return NULL;
 	}

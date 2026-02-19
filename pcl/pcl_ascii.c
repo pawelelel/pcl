@@ -71,13 +71,13 @@ struct AsciiScreen* initascii(struct Console *console) {
 		ascii->buffer[i].backgroundGreen = ascii->defaultBackgroundGreen;
 		ascii->buffer[i].backgroundBlue = ascii->defaultBackgroundBlue;
 
-		ascii->decoration.bold = FALSE;
-		ascii->decoration.dim = FALSE;
-		ascii->decoration.italic = FALSE;
-		ascii->decoration.underline = FALSE;
-		ascii->decoration.blinking = FALSE;
-		ascii->decoration.strikethrough = FALSE;
-		ascii->decoration.doubleunderline = FALSE;
+		ascii->buffer[i].decoration.bold = FALSE;
+		ascii->buffer[i].decoration.dim = FALSE;
+		ascii->buffer[i].decoration.italic = FALSE;
+		ascii->buffer[i].decoration.underline = FALSE;
+		ascii->buffer[i].decoration.blinking = FALSE;
+		ascii->buffer[i].decoration.strikethrough = FALSE;
+		ascii->buffer[i].decoration.doubleunderline = FALSE;
 	}
 
 	ascii->outputBuffer = malloc(sizeof (char) * ascii->bufferSize);
@@ -1773,7 +1773,7 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			foregroundRed = cell.foregroundRed;
 			foregroundGreen = cell.foregroundGreen;
 			foregroundBlue = cell.foregroundBlue;
-			char colorbuff[19];
+			char colorbuff[20];
 			add = sprintf(colorbuff, "\x1B[38;2;%d;%d;%dm", foregroundRed, foregroundGreen, foregroundBlue);
 			memcpy(&ascii->outputBuffer[place], colorbuff, add);
 			place += add;
@@ -1782,7 +1782,7 @@ int refreshascii(struct Console* console, struct AsciiScreen* ascii) {
 			backgroundRed = cell.backgroundRed;
 			backgroundGreen = cell.backgroundGreen;
 			backgroundBlue = cell.backgroundBlue;
-			char colorbuff[19];
+			char colorbuff[20];
 			add = sprintf(colorbuff, "\x1B[48;2;%d;%d;%dm", backgroundRed, backgroundGreen, backgroundBlue);
 			memcpy(&ascii->outputBuffer[place], colorbuff, add);
 			place += add;
