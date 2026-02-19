@@ -161,6 +161,17 @@ int gettitle(struct Console* console, char** title);
 int settitle(struct Console* console, char* title);
 
 /**
+ * Returns size of console window
+ *
+ * @param console pointer to struct Console
+ * @param width width of console window
+ * @param height height of console window
+ * @return 0 if everything went well otherwise returns negative:<br>
+ * (-1) console parameter is NULL<br>
+ */
+int getsize(struct Console* console, unsigned int* width, unsigned int* height);
+
+/**
  * Gets first character from input. Including virtual keys<br>
  * <b>Warning!</b> input blocking is "stronger" than timeout
  *

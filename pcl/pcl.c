@@ -499,6 +499,19 @@ int settitle(struct Console* console, char* title) {
 	return 0;
 }
 
+int getsize(struct Console *console, unsigned int *width, unsigned int *height) {
+	if (console == NULL) {
+		width = NULL;
+		height = NULL;
+		return -1;
+	}
+
+	*width = console->width;
+	*height = console->height;
+
+	return 0;
+}
+
 /**
  * pure ReadConsoleInput() wrapper without any non-blocking or timeout features. Returns also virtual codes
  *
