@@ -1,10 +1,13 @@
-cmake_minimum_required(VERSION 3.30)
-project(PCL C)
+add_library(pcl
+        pcl.c
+        pcl_ascii.c
+        pcl_Unicode.c
+        queue.c
+)
 
-set(CMAKE_C_STANDARD 99)
+target_include_directories(pcl
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-add_subdirectory(pcl)
-
-add_executable(main main.c)
-
-target_link_libraries(main pcl)
+add_library(pcl::pcl ALIAS pcl)
