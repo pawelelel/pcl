@@ -120,7 +120,6 @@ struct Console {
 
 	/**
 	 * That event is raised when console window is focused and keyboard key is clicked
-	 * TODO Event is run in main thread ???
 	 *
 	 * @param char key
 	 * @param int keystate can be PRESSED or RELEASED
