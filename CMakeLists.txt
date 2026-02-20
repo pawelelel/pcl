@@ -2,7 +2,6 @@ add_library(pcl
         pcl.c
         pcl_ascii.c
         pcl_Unicode.c
-        queue.c
 )
 
 target_include_directories(pcl
