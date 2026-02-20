@@ -263,15 +263,4 @@ int getstring(struct Console* console, char* buffer, size_t size);
  */
 int getstringbuffer(struct Console* console, char* buffer, size_t size);
 
-/**
- * Prints console window
- *
- * @param console pointer to struct Console
- *
- * @return 0 if eveything went well otherwise returns negative:<br>
- * (-1) console parameter is NULL<br>
- * (-2) internal function error
- */
-int refreshunicode(struct Console* console, struct UnicodeScreen* ascii);
-
 #endif //PCL_H
