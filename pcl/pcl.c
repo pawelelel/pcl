@@ -227,6 +227,8 @@ DWORD WINAPI inputthread(LPVOID lpParam) {
 
 					ascii->width = width;
 					ascii->height = height;
+					console->width = width;
+					console->height = height;
 					ascii->cursor = 0;
 				}
 
